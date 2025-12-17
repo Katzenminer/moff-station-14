@@ -1,0 +1,46 @@
+- type: entity
+  name : disabler bolt
+  id: BulletBigIronDisabler
+  parent: BulletDisabler
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: StaminaDamageOnCollide
+    damage: 40
+  - type: Projectile
+    damage:
+      types:
+        Heat: 0
+
+- type: entity
+  name: laser bolt
+  id: BulletBigIronLethal
+  parent: BulletLaser
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Projectile
+    impactEffect: BulletImpactEffectOrangeDisabler
+    damage:
+      types:
+        Heat: 35
+
+# Hallelujah !
+- type: entity
+  id: BaseBulletSilver
+  name: base bullet silver
+  parent: BaseBullet
+  abstract: true
+  components:
+  - type: Sprite
+    sprite: _Moffstation/Objects/Weapons/Guns/Projectiles/projectiles2.rsi
+    layers:
+    - state: silver
+  - type: PointLight
+    enabled: true
+    color: "#FFFFCC"
+    radius: 2.0
+    energy: 7.0
+  - type: Projectile
+    damage:
+      types:
+        Blunt: 1
+        Holy: 13

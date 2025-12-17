@@ -1,14 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Content.Server.GameTicking.Rules.Components;
 using Content.Server.Station.Components;
+using Content.Shared._Moffstation.Pirate.Components; // Moffstation
 using Content.Shared.GameTicking.Components;
 using Content.Shared.Random.Helpers;
-using Robust.Server.GameObjects;
+using Content.Shared.Station.Components;
 using Robust.Shared.Collections;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Random;
 
 namespace Content.Server.GameTicking.Rules;
 
@@ -44,6 +43,12 @@ public abstract partial class GameRuleSystem<T> where T: IComponent
 
         while (query.MoveNext(out var uid, out _))
         {
+            // Moffstation - Start - Pirate "stations" are not real stations
+            // TODO: Fix pirates so we don't have to use this hack
+            if (HasComp<PirateStationComponent>(uid))
+                continue;
+            // Moffstation - End
+
             if (!filter(uid))
                 continue;
 

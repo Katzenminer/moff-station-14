@@ -3,7 +3,7 @@
   name: burrower
   id: MobXeno
   parent: SimpleSpaceMobBase
-  description: They mostly come at night. Mostly.
+  description: A small Xeno which uses its claws to break things and force open doors. # Moffstation - (Xeno Buffs)
   components:
   - type: Insulated
   - type: CombatMode
@@ -24,7 +24,7 @@
   - type: Prying
     pryPowered: true
     force: true
-    speedModifier: 1.5
+    speedModifier: 4 # Moffstation - (Xeno Buffs)
     useSound:
       path: /Audio/Items/crowbar.ogg
   - type: Reactive
@@ -57,17 +57,24 @@
     allowedStates:
     - Alive
     - Dead
+  # Moffstation - Begin (Xeno Buffs) - NOTE: there are a few extra SlowOnDamage and MovementSpeedModifier components which already inherit everything from their parent in the xenos.
   - type: MobThresholds
     thresholds:
       0: Alive
-      50: Dead
+      #50: Dead
+      150: Dead
   - type: SlowOnDamage
     speedModifierThresholds:
-      25: 0.5
+      #25: 0.5
+      90: 0.7
+      120: 0.5
   - type: Stamina
     critThreshold: 200
   - type: Bloodstream
-    bloodReagent: FluorosulfuricAcid
+    bloodReagents:
+      reagents:
+      - ReagentId: FluorosulfuricAcid
+        Quantity: 1
     bloodMaxVolume: 650
   - type: MeleeWeapon
     altDisarm: false
@@ -76,10 +83,15 @@
      collection: AlienClaw
     animation: WeaponArcBite
     damage:
-      groups:
-        Brute: 6
+      #groups:
+        #Brute: 6
+      types:
+        Blunt: 2
+        Slash: 10
+        Structural: 40
+  - type: NightVision
+  # Moffstation - End
   - type: DamageStateVisuals
-    rotate: true
     states:
       Alive:
         Base: running
@@ -114,6 +126,7 @@
       - CannotSuicide
       - DoorBumpOpener
       - FootstepSound
+      - Xeno # Moffstation - (Xeno Buffs)
   - type: NoSlip
   - type: Perishable #Ummmm the acid kills a lot of the bacteria or something
     molsPerSecondPerUnitMass: 0.0005
@@ -124,6 +137,7 @@
   name: praetorian
   parent: MobXeno
   id: MobXenoPraetorian
+  description: A large Xeno which can soak up a huge amount of damage. # Moffstation - (Xeno Buffs)
   components:
   - type: Sprite
     drawdepth: Mobs
@@ -132,15 +146,27 @@
     layers:
     - map: ["enum.DamageStateVisualLayers.Base"]
       state: running
+  # Moffstation - Begin (Xeno Buffs)
   - type: MobThresholds
     thresholds:
       0: Alive
-      100: Dead
+      #100: Dead
+      300: Dead
   - type: Stamina
     critThreshold: 300
   - type: SlowOnDamage
     speedModifierThresholds:
-      50: 0.7
+      #50: 0.7
+      180: 0.7
+      240: 0.5
+  - type: MeleeWeapon
+    damage:
+      types:
+        Blunt: 10
+        Slash: 15
+  - type: Prying
+    speedModifier: 2
+  # Moffstation - End
   - type: Fixtures
     fixtures:
       fix1:
@@ -157,6 +183,7 @@
   name: drone
   parent: MobXeno
   id: MobXenoDrone
+  description: A small xeno which carries things around for the hive. # Moffstation - (Xeno Buffs)
   components:
   - type: Sprite
     drawdepth: Mobs
@@ -165,19 +192,27 @@
     layers:
     - map: ["enum.DamageStateVisualLayers.Base"]
       state: running
+  # Moffstation - Begin (Xeno Buffs)
   - type: MobThresholds
     thresholds:
       0: Alive
-      80: Dead
+      #80: Dead
+      100: Dead
   - type: SlowOnDamage
-    speedModifierThresholds:
-      40: 0.7
+    #speedModifierThresholds:
+      #40: 0.7
   - type: MeleeWeapon
     damage:
-      groups:
-        Brute: 6
-  - type: MovementSpeedModifier
-    baseSprintSpeed: 4
+      #groups:
+        #Brute: 6
+      types:
+        Blunt: 10
+        Slash: 5
+  #- type: MovementSpeedModifier
+    #baseSprintSpeed: 4
+  - type: Prying
+    speedModifier: 2
+  # Moffstation - End
   - type: Fixtures
     fixtures:
       fix1:
@@ -194,6 +229,7 @@
   name: queen
   parent: MobXeno
   id: MobXenoQueen
+  description: A massive Xeno who leads the hive. # Moffstation - (Xeno Buffs)
   components:
   - type: Sprite
     drawdepth: Mobs
@@ -202,18 +238,29 @@
     layers:
     - map: ["enum.DamageStateVisualLayers.Base"]
       state: running
+  # Moffstation - Begin (Xeno Buffs)
   - type: MobThresholds
     thresholds:
       0: Alive
-      300: Dead
+      #300: Dead
+      600: Dead
   - type: SlowOnDamage
     speedModifierThresholds:
-      150: 0.7
-  - type: MovementSpeedModifier
+      #150: 0.7
+      360: 0.7
+      480: 0.5
+  #- type: MovementSpeedModifier
   - type: MeleeWeapon
     damage:
-     groups:
-       Brute: 12
+      #groups:
+        #Brute: 12
+      types:
+        Blunt: 10
+        Slash: 25
+        Structural: 40
+  - type: Prying
+    speedModifier: 2
+  # Moffstation - End
   - type: Fixtures
     fixtures:
       fix1:
@@ -233,6 +280,7 @@
   name: ravager
   parent: MobXeno
   id: MobXenoRavager
+  description: A large Xeno which uses its massive claws to hunt prey. # Moffstation - (Xeno Buffs)
   components:
   - type: Sprite
     drawdepth: Mobs
@@ -241,19 +289,27 @@
     layers:
     - map: ["enum.DamageStateVisualLayers.Base"]
       state: running
-  - type: MobThresholds
-    thresholds:
-      0: Alive
-      100: Dead
-  - type: MovementSpeedModifier
-    baseSprintSpeed: 4
+  # Moffstation - Begin (Xeno Buffs)
+  #- type: MobThresholds
+    #thresholds:
+      #0: Alive
+      #100: Dead
+  #- type: MovementSpeedModifier
+    #baseSprintSpeed: 4
   - type: MeleeWeapon
+    attackRate: 1.5
     damage:
-     groups:
-       Brute: 10
+      #groups:
+        #Brute: 10
+     types:
+       Slash: 20
+       Structural: 20
   - type: SlowOnDamage
-    speedModifierThresholds:
-      50: 0.7
+    #speedModifierThresholds:
+      #50: 0.7
+  - type: Prying
+    speedModifier: 2
+  # Moffstation - End
   - type: Fixtures
     fixtures:
       fix1:
@@ -270,6 +326,7 @@
   name: runner
   parent: MobXeno
   id: MobXenoRunner
+  description: A small, extremely fast Xeno. # Moffstation - (Xeno Buffs)
   components:
   - type: Sprite
     drawdepth: Mobs
@@ -280,10 +337,18 @@
       state: running
   - type: MovementSpeedModifier
     baseSprintSpeed: 6.0
+  # Moffstation - Begin (Xeno Buffs)
   - type: MeleeWeapon
+    attackRate: 2
     damage:
-     groups:
-       Brute: 5
+      #groups:
+        #Brute: 5
+      types:
+        Blunt: 3
+        Slash: 7
+  - type: Prying
+    speedModifier: 2
+  # Moffstation - End
   - type: Fixtures
     fixtures:
       fix1:
@@ -315,6 +380,7 @@
   name: spitter
   parent: MobXeno
   id: MobXenoSpitter
+  description: A large Xeno which can spit acid at long distances. # Moffstation - (Xeno Buffs)
   components:
   - type: Sprite
     drawdepth: Mobs
@@ -323,13 +389,22 @@
     layers:
     - map: ["enum.DamageStateVisualLayers.Base"]
       state: running
-  - type: MobThresholds
-    thresholds:
-      0: Alive
-      50: Dead
+  # Moffstation - Begin (Xeno Buffs)
+  #- type: MobThresholds
+    #thresholds:
+      #0: Alive
+      #50: Dead
   - type: SlowOnDamage
-    speedModifierThresholds:
-      25: 0.7
+    #speedModifierThresholds:
+      #25: 0.7
+  - type: MeleeWeapon
+    damage:
+      types:
+        Blunt: 7
+        Slash: 3
+  - type: Prying
+    speedModifier: 2
+  # Moffstation - End
   - type: HTN
     rootTask:
       task: SimpleRangedHostileCompound
@@ -394,6 +469,7 @@
   - type: NpcFactionMember
     factions:
     - Xeno
+    - SimpleHostile
   - type: MeleeWeapon
     angle: 0
     animation: WeaponArcBite
@@ -454,3 +530,123 @@
       amount: 2
   - type: SolutionTransfer
     maxTransferAmount: 1
+
+# Mob mapped to Xeno Station that can not be ghostrole / pry
+
+- type: entity
+  name: '"Dale"'
+  description: A praetorian left over from the station's initial security sweep. Has a pair of bloodied dog tags engraved with the name "Pvt. Dale" stuck in its maw.
+  parent: SimpleSpaceMobBase
+  id: MobXenoLonePraetorianNoGhost
+  components:
+  - type: Insulated
+  - type: CombatMode
+  - type: InputMover
+  - type: MobMover
+  - type: HTN
+    rootTask:
+      task: XenoCompound
+    blackboard:
+      NavClimb: !type:Bool
+        true
+      NavInteract: !type:Bool
+        true
+      NavPry: !type:Bool
+        true
+      NavSmash: !type:Bool
+        true
+  - type: Reactive
+    groups:
+      Flammable: [Touch]
+      Extinguish: [Touch]
+  - type: NpcFactionMember
+    factions:
+    - Xeno
+  - type: Hands
+  - type: ComplexInteraction
+  - type: MobState
+  - type: Stamina
+    critThreshold: 200
+  - type: Bloodstream
+    bloodReagents:
+      reagents:
+      - ReagentId: FluorosulfuricAcid
+        Quantity: 1
+    bloodMaxVolume: 300
+  - type: MeleeWeapon
+    altDisarm: false
+    angle: 0
+    soundHit:
+     collection: AlienClaw
+    animation: WeaponArcBite
+    damage:
+     groups:
+       Brute: 5
+  - type: DamageStateVisuals
+    states:
+      Alive:
+        Base: running
+      Critical:
+        Base: crit
+      Dead:
+        Base: dead
+  - type: Puller
+  - type: Butcherable
+    butcheringType: Spike
+    spawned:
+    - id: FoodMeatXeno
+      amount: 5
+  - type: TypingIndicator
+    proto: alien
+  - type: Temperature
+    heatDamageThreshold: 360
+    coldDamageThreshold: -150
+    currentTemperature: 310.15
+  - type: NoSlip
+  - type: Perishable #Ummmm the acid kills a lot of the bacteria or something
+    molsPerSecondPerUnitMass: 0.0005
+  - type: Speech
+    speechVerb: LargeMob
+  - type: Sprite
+    drawdepth: Mobs
+    sprite: Mobs/Aliens/Xenos/praetorian.rsi
+    offset: 0,0.4
+    layers:
+    - map: ["enum.DamageStateVisualLayers.Base"]
+      state: running
+  - type: MobThresholds
+    thresholds:
+      0: Alive
+      -1: Critical
+      250: Dead
+  - type: SlowOnDamage
+    speedModifierThresholds:
+      120: 0.7
+  - type: MovementSpeedModifier
+    baseSprintSpeed: 3.7
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.45
+        density: 15500
+        mask:
+        - MobMask
+        layer:
+        - MobLayer
+  - type: Tag
+    tags:
+    - CannotSuicide
+  - type: SolutionContainerManager # Being hit speeds you up so you can escape
+    solutions:
+      bite:
+        reagents:
+        - ReagentId: Stimulants
+          Quantity: 50
+        - ReagentId: TranexamicAcid
+          Quantity: 50
+  - type: MeleeChemicalInjector
+    transferAmount: 1
+    solution: bite
+    pierceArmor: true

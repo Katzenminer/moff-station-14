@@ -30,6 +30,8 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
                 subr.Event<BoundUIOpenedEvent>((uid, component, _) => UpdateUi(uid, component));
                 subr.Event<CharacterRecordConsoleSelectMsg>(OnKeySelect);
                 subr.Event<CharacterRecordsConsoleFilterMsg>(OnFilterApplied);
+                subr.Event<CriminalRecordSetStatusFilter>(OnSecurityFilterApplied);
+                subr.Event<CriminalRecordAddHistory>(OnAddCriminalHistory);
             });
     }
 
@@ -39,10 +41,33 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
         UpdateUi(ent);
     }
 
+    private void OnSecurityFilterApplied(Entity<CharacterRecordConsoleComponent> ent,
+        ref CriminalRecordSetStatusFilter msg)
+    {
+        ent.Comp.SecurityStatusFilter = msg.FilterStatus;
+        UpdateUi(ent);
+    }
+
     private void OnKeySelect(Entity<CharacterRecordConsoleComponent> ent, ref CharacterRecordConsoleSelectMsg msg)
     {
+        // Moffstation - Start - Hack fix for character records being unselectable.
+        //   This is a heinous hack. The bug is that when an item is deselected in the UI, ALL items run their
+        //   "onDeselect" callback, rather than just the one which was actually selected. This means the logic for
+        //   clearing the content pane (right side) is run as many times as there are items in the record list (left
+        //   side), which "overwhelms" the actual update which selects an item. By ignoring "clear the content" messages
+        //   like this, we avoid that bug at the cost of making content impossible to deselect.
+        if (msg.CharacterRecordKey == null)
+            return;
+        // Moffstation - End
+
+
         ent.Comp.SelectedIndex = msg.CharacterRecordKey;
         UpdateUi(ent);
+    }
+
+    private void OnAddCriminalHistory(Entity<CharacterRecordConsoleComponent> ent, ref CriminalRecordAddHistory msg)
+    {
+        UpdateUi(ent, ent);
     }
 
     private void UpdateUi(EntityUid entity, CharacterRecordConsoleComponent? console = null)
@@ -50,7 +75,9 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
         if (!Resolve(entity, ref console))
             return;
 
-        var station = _station.GetOwningStation(entity);
+        var station = console.LongRange
+            ? _station.GetStationInMap(Transform(entity).MapID)
+            : _station.GetOwningStation(entity);
         if (!HasComp<StationRecordsComponent>(station) ||
             !HasComp<CharacterRecordsComponent>(station))
         {
@@ -76,6 +103,13 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
                     continue;
             }
 
+            if (console.SecurityStatusFilter is {} secFilter &&
+                station is {} s &&
+                IsSkippedBySecurityStatus(secFilter, r, s))
+            {
+                continue;
+            }
+
             if (names.ContainsKey(i))
             {
                 Log.Error(
@@ -90,16 +124,15 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
             console.SelectedIndex == null || !characterRecords.TryGetValue(console.SelectedIndex!.Value, out var value)
                 ? null
                 : value;
-        (SecurityStatus, string?)? securityStatus = null;
+        CriminalRecord? criminalRecord = null;
 
         // If we need the character's security status, gather it from the criminal records
         if ((console.ConsoleType == RecordConsoleType.Admin ||
-             console.ConsoleType == RecordConsoleType.Security)
+             console is { ConsoleType: RecordConsoleType.Security, LongRange: false })
             && record?.StationRecordsKey != null)
         {
             var key = new StationRecordKey(record.StationRecordsKey.Value, station.Value);
-            if (_records.TryGetRecord<CriminalRecord>(key, out var entry))
-                securityStatus = (entry.Status, entry.Reason);
+            _records.TryGetRecord(key, out criminalRecord);
         }
 
         SendState(entity,
@@ -110,7 +143,7 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
                 SelectedIndex = console.SelectedIndex,
                 SelectedRecord = record,
                 Filter = console.Filter,
-                SelectedSecurityStatus = securityStatus,
+                SelectedCriminalRecord = criminalRecord,
             });
     }
 
@@ -143,6 +176,21 @@ public sealed class CharacterRecordConsoleSystem : EntitySystem
                                                 && IsFilterWithSomeCodeValue(record.DNA, filterLowerCaseValue),
             _ => throw new ArgumentOutOfRangeException(nameof(filter), "Invalid Character Record filter type"),
         };
+    }
+
+    private bool IsSkippedBySecurityStatus(SecurityStatus filter, FullCharacterRecords record, EntityUid station)
+    {
+        // "None" filter is "Show everything"
+        if (filter == SecurityStatus.None)
+            return false;
+
+        var criminalStatusOfRecord = record.StationRecordsKey is { } key &&
+                                     _records.TryGetRecord<CriminalRecord>(new StationRecordKey(key, station),
+                                         out var criminalRec)
+            ? criminalRec.Status
+            : SecurityStatus.None;
+
+        return filter != criminalStatusOfRecord;
     }
 
     private static bool IsFilterWithSomeCodeValue(string value, string filter)

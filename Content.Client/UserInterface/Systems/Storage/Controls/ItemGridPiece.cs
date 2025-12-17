@@ -15,6 +15,7 @@ public sealed class ItemGridPiece : Control, IEntityControl
     private readonly StorageUIController _storageController;
 
     private readonly List<(Texture, Vector2)> _texturesPositions = new();
+    private readonly Dictionary<EntityUid, Entity<SpriteComponent>> _virtualItems = new(); // Moffstation - Track virtual items made for this UI. This is a map of real entity to virtual entity.
 
     public readonly EntityUid Entity;
     public ItemStorageLocation Location;
@@ -163,21 +164,25 @@ public sealed class ItemGridPiece : Control, IEntityControl
         }
 
         // typically you'd divide by two, but since the textures are half a tile, this is done implicitly
-        var iconPosition = new Vector2((boundingGrid.Width + 1) * size.X + itemComponent.StoredOffset.X * 2,
-            (boundingGrid.Height + 1) * size.Y + itemComponent.StoredOffset.Y * 2);
+        var iconOffset = Location.Rotation.RotateVec(itemComponent.StoredOffset) * 2 * UIScale;
+        var iconPosition = new Vector2(
+            (boundingGrid.Width + 1) * size.X + iconOffset.X,
+            (boundingGrid.Height + 1) * size.Y + iconOffset.Y);
         var iconRotation = Location.Rotation + Angle.FromDegrees(itemComponent.StoredRotation);
 
         if (itemComponent.StoredSprite is { } storageSprite)
         {
             var scale = 2 * UIScale;
-            var offset = (((Box2) boundingGrid).Size - Vector2.One) * size;
             var sprite = _entityManager.System<SpriteSystem>().Frame0(storageSprite);
+
+            var sizeDifference = ((boundingGrid.Size + Vector2i.One) * _centerTexture.Size * 2 - sprite.Size) * UIScale;
 
             var spriteBox = new Box2Rotated(new Box2(0f, sprite.Height * scale, sprite.Width * scale, 0f), -iconRotation, Vector2.Zero);
             var root = spriteBox.CalcBoundingBox().BottomLeft;
             var pos = PixelPosition * 2
                       + (Parent?.GlobalPixelPosition ?? Vector2.Zero)
-                      + offset;
+                      + sizeDifference
+                      + iconOffset;
 
             handle.SetTransform(pos, iconRotation);
             var box = new UIBox2(root, root + sprite.Size * scale);
@@ -186,8 +191,30 @@ public sealed class ItemGridPiece : Control, IEntityControl
         }
         else
         {
+            // Moffstation - Begin, Use AppearanceData for stored sprites.
+            // Get-and-update or create the virtual entity to draw for this entity.
+            Entity<SpriteComponent>? existingVirtualItem = _virtualItems.TryGetValue(Entity, out var e) ? e : null;
+            var virtualItemToDraw = _entityManager.System<ItemSystem>()
+                .SpawnOrUpdateVirtualEntityForInventoryGridStorage((Entity, itemComponent), existingVirtualItem);
+
+            // If the old virtual entity is different from the new one (or the new one doesn't exist), delete the old one.
+            if (existingVirtualItem is not null && virtualItemToDraw != existingVirtualItem)
+            {
+                _virtualItems.Remove(Entity);
+                _entityManager.QueueDeleteEntity(existingVirtualItem.Value);
+            }
+
+            // Put a new virtual entity into the map if it doesn't exist yet.
+            if (existingVirtualItem is null && virtualItemToDraw is not null)
+            {
+                _virtualItems[Entity] = virtualItemToDraw.Value;
+            }
+
+            var toDraw = virtualItemToDraw?.Owner ?? Entity;
+            // Moffstation - End
+
             _entityManager.System<SpriteSystem>().ForceUpdate(Entity);
-            handle.DrawEntity(Entity,
+            handle.DrawEntity(toDraw, // Moffstation - Add appearance data based stored sprites
                 PixelPosition + iconPosition,
                 Vector2.One * 2 * UIScale,
                 Angle.Zero,
@@ -292,6 +319,21 @@ public sealed class ItemGridPiece : Control, IEntityControl
     }
 
     public EntityUid? UiEntity => Entity;
+
+    // Moffstation - Begin - Clean up virtual items made for this UI
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        if (disposing)
+        {
+            foreach (var (_, virtualEntity) in _virtualItems)
+            {
+                _entityManager.QueueDeleteEntity(virtualEntity);
+            }
+        }
+    }
+    // Moffstation - End
 }
 
 public enum ItemGridPieceMarks

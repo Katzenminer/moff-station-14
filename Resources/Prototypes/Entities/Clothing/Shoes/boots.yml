@@ -75,6 +75,7 @@
     footstepSoundCollection:
       collection: FootstepHighHeels
       params:
+        volume: -6
         variation: 0.09
 
 - type: entity
@@ -125,9 +126,9 @@
   name: engineering winter boots
   components:
   - type: Sprite
-    sprite: Clothing/Shoes/Boots/winterbootsengi.rsi
+    sprite: _Moffstation/Clothing/Shoes/winterbootsengi.rsi # Moffstation - Engineering Outfit Resprites
   - type: Clothing
-    sprite: Clothing/Shoes/Boots/winterbootsengi.rsi
+    sprite: _Moffstation/Clothing/Shoes/winterbootsengi.rsi # Moffstation - Engineering Outfit Resprites
 
 - type: entity
   parent: ClothingShoesBaseWinterBoots
@@ -215,6 +216,7 @@
       collection: FootstepSpurs
       params:
         variation: 0.09
+        volume: -6
 
 - type: entity
   parent: ClothingShoesBootsCowboyBrown

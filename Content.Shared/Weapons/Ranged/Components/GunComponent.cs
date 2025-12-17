@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Shared._Moffstation.Weapons.Ranged.Components; // Moffstation
 using Content.Shared.Weapons.Ranged.Events;
 using Content.Shared.Weapons.Ranged.Systems;
 using Robust.Shared.Audio;
@@ -212,7 +213,7 @@ public sealed partial class GunComponent : Component
     /// The base value for how fast the projectile moves.
     /// </summary>
     [DataField]
-    public float ProjectileSpeed = 25f;
+    public float ProjectileSpeed = SharedGunSystem.ProjectileSpeed;
 
     /// <summary>
     /// How fast the projectile moves.
@@ -263,6 +264,17 @@ public sealed partial class GunComponent : Component
     /// </summary>
     [DataField]
     public Vector2 DefaultDirection = new Vector2(0, -1);
+
+    // Moffstation - Start - Gun Recoil Kick
+    [DataField]
+    public RecoilKick? RecoilKick;
+
+    /// <summary>
+    /// Odds that the gun will fire upon landing on the ground
+    /// </summary>
+    [DataField]
+    public float FireOnLandChance = 0.1f;
+    // Moffstation - End
 }
 
 [Flags]

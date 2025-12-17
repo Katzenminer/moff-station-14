@@ -12,16 +12,21 @@
     maxItemSize: Normal
     grid:
     - 0,0,7,5
-    quickInsert: true
-    areaInsert: true
+# Moffstation - Start
+#    quickInsert: true
+#    areaInsert: true
+# Moffstation - End
     storageOpenSound:
       collection: trashBagRustle
     storageInsertSound:
       collection: trashBagRustle
     whitelist:
       tags:
-        - Cartridge
         - Trash
+  # Moffstation - Start
+  - type: QuickPickup
+  - type: AreaPickup
+  # Moffstation - End
   - type: UseDelay
     delay: 0.5
   - type: Tag
@@ -61,6 +66,19 @@
     maxItemSize: Huge
     grid:
     - 0,0,19,9
-    quickInsert: true
-    areaInsert: true
-    areaInsertRadius: 5
+  # Moffstation - Start
+  - type: QuickPickup
+  - type: AreaPickup
+    radius: 5
+  # Moffstation - End
+
+- type: entity
+  parent: TrashBag
+  id: BorgTrashBag
+  name: internal trash bag
+  description: An upgraded trash bag with a larger internal volume, installed directly into a custodial cyborg.
+  components:
+  - type: Storage
+    maxItemSize: Huge
+    grid:
+    - 0,0,7,6

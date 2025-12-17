@@ -12,8 +12,19 @@
 - type: startingGear
   id: PassengerGear
   equipment:
-    id: PassengerPDA
+#    id: PassengerPDA # Moffstation - PDA loadouts
     ears: ClothingHeadsetGrey
   #storage:
     #back:
     #- Stuff
+
+- type: chameleonOutfit
+  id: PassengerChameleonOutfit
+  job: Passenger
+  equipment:
+    head: ClothingHeadHatWelding
+    eyes: ClothingEyesGlassesCheapSunglasses
+    mask: ClothingMaskGas
+    neck: ClothingNeckMantle
+    outerClothing: ClothingOuterWinterCoat
+    gloves: ClothingHandsGlovesColorYellowBudget

@@ -71,9 +71,7 @@ entities:
     - type: Transform
     - type: Map
       mapPaused: True
-    - type: PhysicsMap
     - type: GridTree
-    - type: MovedGrids
     - type: Broadphase
     - type: OccluderTree
     - type: Parallax
@@ -106913,7 +106911,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 05: Chapel, Library'
-    - type: BombingTarget
   - uid: 16438
     components:
     - type: Transform
@@ -106922,7 +106919,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 01: Arrivals, Evacuation'
-    - type: BombingTarget
   - uid: 16439
     components:
     - type: Transform
@@ -106931,7 +106927,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 02: Bar'
-    - type: BombingTarget
   - uid: 16440
     components:
     - type: Transform
@@ -106940,7 +106935,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 03: Kitchen, Hydroponic'
-    - type: BombingTarget
   - uid: 16441
     components:
     - type: Transform
@@ -106949,7 +106943,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 04: HoP, Dormatories'
-    - type: BombingTarget
   - uid: 16442
     components:
     - type: Transform
@@ -106958,7 +106951,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 06: Med'
-    - type: BombingTarget
   - uid: 16443
     components:
     - type: Transform
@@ -106967,7 +106959,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 08: Solar panels'
-    - type: BombingTarget
   - uid: 16444
     components:
     - type: Transform
@@ -106975,7 +106966,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 09: Engneering'
-    - type: BombingTarget
   - uid: 16445
     components:
     - type: Transform
@@ -106984,7 +106974,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 10: Cargo'
-    - type: BombingTarget
   - uid: 16446
     components:
     - type: Transform
@@ -106992,7 +106981,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 11: RnD'
-    - type: BombingTarget
   - uid: 16447
     components:
     - type: Transform
@@ -107000,7 +106988,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 12: Brig'
-    - type: BombingTarget
   - uid: 16448
     components:
     - type: Transform
@@ -107009,7 +106996,6 @@ entities:
       parent: 2
     - type: WarpPoint
       location: 'Car 13: Permabrig'
-    - type: BombingTarget
 - proto: WaterCooler
   entities:
   - uid: 16449

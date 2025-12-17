@@ -13,6 +13,20 @@ As a base, we expect you to follow the [Space Station 14 Contribution Guidelines
 >
 >We highly recommend you use an IDE like [Jetbrains Rider](https://www.jetbrains.com/rider/). It's free for non-commercial use, and it basically holds your hand.
 
+## AI-generated content
+The Moffstation project does not accept any low-effort or wholesale AI-generated contributions.
+This includes the following, but is not limited to:
+- Any code (C#, YAML, XML, etc.) generated from tools like ChatGPT, Github Copilot, Cursor, and whatever ChatGPT wrapper that's currently the hottest thing on the block.
+- Any artwork, sound files, or other assets.
+- Auto-generated documentation, GitHub's issue/PR changes summarization tools, among other tools.
+
+Exceptions to this are simple tools, for example:
+- Machine learning-assisted full line code completion.
+- Intellisense/ReSharper machine learning-sorted autocompletion suggestions (or any other ML-assisted sorting operation).
+- Machine learning-assisted grammar error correction.
+
+Maintainers still hold the right to deny contributions that have been created by AI, even if they only appear as such.
+
 ## Moffstation-exclusive content
 Space Station 14 allows separate content to be added to the game that is not part of the upstream project in a clean and easy way. Separate content is placed in a new subfolder namespace, `_Moffstation`. This is to avoid conflicts with upstream content.
 
@@ -58,6 +72,15 @@ For multi-line YAML changes:
 # Moffstation - End
 ```
 
+Example:
+```yaml
+# Moffstation - Begin - Make warops admin only
+#  inhand:
+#  - NukeOpsDeclarationOfWar
+# Moffstation - End
+```
+
+
 For modifying single lines of C#:
 ```csharp
 public const int LowPressureDamage = 4; // Moffstation - Revert to original value for a better MRP experience
@@ -65,20 +88,41 @@ public const int LowPressureDamage = 4; // Moffstation - Revert to original valu
 
 For multi-line C# changes:
 ```csharp
-public void SetCriminalIcon(string name, SecurityStatus status, EntityUid characterUid)
-{
-...
-    record.StatusIcon = status switch
+public EntityUid SpawnPlayerMob(
+        EntityCoordinates coordinates,
+        ProtoId<JobPrototype>? job,
+        HumanoidCharacterProfile? profile,
+        EntityUid? station,
+        EntityUid? entity = null)
     {
-...
-        SecurityStatus.Suspected => "SecurityIconSuspected",
-        // Moffstation - Begin - Add additional security status icons
-        SecurityStatus.Monitor => "SecurityIconMonitor",
-        SecurityStatus.Search => "SecurityIconSearch",
-        // Harmony - End
-        _ => record.StatusIcon
-    };
-...
+
+[rest of file]
+
+        if (_randomizeCharacters)
+        {
+            profile = HumanoidCharacterProfile.RandomWithSpecies(speciesId);
+        }
+
+        // Moffstation - Begin - Clown/Borg/Mime loadout names (Moved from lower in file, separated from ID processing)
+        if (profile != null)
+        {
+            _humanoidSystem.LoadProfile(entity.Value, profile);
+            _metaSystem.SetEntityName(entity.Value, profile.Name);
+
+            if (profile.FlavorText != "" && _configurationManager.GetCVar(CCVars.FlavorText))
+            {
+                AddComp<DetailExaminableComponent>(entity.Value).Content = profile.FlavorText;
+            }
+        }
+        // Moffstation - End - Clown/Borg/Mime loadout names
+
+        if (loadout != null)
+        {
+            EquipRoleLoadout(entity.Value, loadout, roleProto!);
+        }
+
+[rest of file]
+
 }
 ```
 For easier organization, you can also choose to wrap large sections of Moffstation-specific upstream changes in their own `#region`. Make sure to keep the comments at the top and bottom of the region, as they are used to identify the changes when searching for them.
@@ -131,6 +175,19 @@ We don't have any specific guidelines for new art and sprites other than:
 
 Art is voted on by the community of Moffstation, and if it is accepted, it will be added to the game.
 
+## Balance Changes
+Changes centered around balance are brought under higher scrutiny than normal changes - they are oftentimes not accepted for the following reasons:
+- Balance changes often have to modify upstream files, which make upstream merges more annoying for Maintainers to perform.
+- Microbalancing is often not worth the time discussing and is usually impossible to measure on a fork of this scale.
+- Balancing introduces deviations from upstream gameplay which may have unintended consequences for other mechanics that were balanced considering unmodified mechanics.
+
+**If you wish to make a change that is purely balance centric, we encourage you to submit it to upstream instead.**
+Any sort of balancing that is submitted here must have a **proper lengthy justification** (**not** a 2 sentence explainer of what the balance changes do).
+Even if you explain your changes, this does **not** mean your changes will automatically be merged - your PR can be closed at maintainer discretion.
+
+## Rules Changes
+We do not accept or consider rules changes submitted over GitHub by non-staff. Please use the appropriate channel within the discord to suggest changes to the rules.
+
 ## Before submitting a pull request
 Before submitting a pull request, make sure to:
 - Test your changes in a development environment running Moffstation.
@@ -140,8 +197,9 @@ Before submitting a pull request, make sure to:
 - Revert any unnecessary whitespace changes in your pull request.
 
 ## HELP I ACCIDENTALLY INCLUDED ROBUSTTOOLBOX IN MY CHANGES
-```
+```commandline
 git checkout upstream/master RobustToolbox
+git submodule update --init --recursive
 ```
 This will revert the changes to the RobustToolbox submodule to the upstream version. You can then commit this change and push it to your branch.
 

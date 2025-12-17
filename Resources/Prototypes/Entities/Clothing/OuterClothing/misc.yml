@@ -8,6 +8,10 @@
     sprite: Clothing/OuterClothing/Misc/apron.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/apron.rsi
+  - type: Tag
+    tags:
+    - Apron
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterStorageBase
@@ -20,6 +24,10 @@
     sprite: Clothing/OuterClothing/Misc/apronbar.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/apronbar.rsi
+  - type: Tag
+    tags:
+    - Apron
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterStorageBase
@@ -32,6 +40,10 @@
     sprite: Clothing/OuterClothing/Misc/apronbotanist.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/apronbotanist.rsi
+  - type: Tag
+    tags:
+    - Apron
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterStorageBase
@@ -44,6 +56,10 @@
     sprite: Clothing/OuterClothing/Misc/apronchef.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/apronchef.rsi
+  - type: Tag
+    tags:
+    - Apron
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterStorageBase
@@ -52,12 +68,12 @@
   description: An apron-jacket used by a high class chef.
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/Misc/chef.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/Misc/chef.rsi # Moffstation - (New Chef Jacket)
   - type: Clothing
-    sprite: Clothing/OuterClothing/Misc/chef.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/Misc/chef.rsi # Moffstation - (New Chef Jacket)
 
 - type: entity
-  parent: ClothingOuterBase
+  parent: ClothingOuterStorageFoldableBase
   id: ClothingOuterHoodieBlack
   name: black hoodie
   description: Oh my God, it's a black hoodie!
@@ -68,7 +84,7 @@
     sprite: Clothing/OuterClothing/Misc/black_hoodie.rsi
 
 - type: entity
-  parent: ClothingOuterBase
+  parent: ClothingOuterStorageFoldableBase
   id: ClothingOuterHoodieGrey
   name: grey hoodie
   description: A grey hoodie.
@@ -95,7 +111,7 @@
     - WhitelistChameleon
 
 - type: entity
-  parent: ClothingOuterBaseToggleable
+  parent: ClothingOuterStorageToggleableBase
   id: ClothingOuterHoodieChaplain
   name: chaplain's hoodie
   description: Black and strict chaplain hoodie.
@@ -121,7 +137,7 @@
     accent: SpanishAccent
 
 - type: entity
-  parent: ClothingOuterBase
+  parent: ClothingOuterStorageBase
   id: ClothingOuterRobesCult
   name: cult robes
   description: There's no cult without classic red/crimson cult robes.
@@ -184,6 +200,10 @@
     sprite: Clothing/OuterClothing/Misc/violetwizard.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/violetwizard.rsi
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterWizardBase
@@ -195,6 +215,10 @@
     sprite: Clothing/OuterClothing/Misc/wizard.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/wizard.rsi
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterWizardBase
@@ -206,6 +230,10 @@
     sprite: Clothing/OuterClothing/Misc/redwizard.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/Misc/redwizard.rsi
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 - type: entity
   parent: ClothingOuterBase
@@ -219,7 +247,7 @@
     sprite: Clothing/OuterClothing/Misc/skubbody.rsi
 
 - type: entity
-  parent: ClothingOuterBase
+  parent: ClothingOuterStorageBase
   id: ClothingOuterPlagueSuit
   name: plague doctor suit
   description: A bad omen.
@@ -230,7 +258,7 @@
     sprite: Clothing/OuterClothing/Misc/plaguedoctorsuit.rsi
 
 - type: entity
-  parent: ClothingOuterBase
+  parent: ClothingOuterStorageBase
   id: ClothingOuterNunRobe
   name: nun robe
   description: Maximum piety in this star system.

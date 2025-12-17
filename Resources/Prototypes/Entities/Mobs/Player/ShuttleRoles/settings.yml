@@ -409,6 +409,11 @@
   components:
     - type: GhostRole
       name: job-name-chef
+      # Moffstation - Freeagent visitors
+      rules: ghost-role-information-freeagent-rules
+      mindRoles:
+      - MindRoleGhostRoleFreeAgent
+      # Moffstation - Freeagent visitors
     - type: Loadout
       prototypes: [ VisitorChef, VisitorChefAlt ]
       roleLoadout: [ RoleSurvivalStandard ]
@@ -420,6 +425,11 @@
   components:
     - type: GhostRole
       name: job-name-clown
+      # Moffstation - Freeagent visitors
+      rules: ghost-role-information-freeagent-rules
+      mindRoles:
+      - MindRoleGhostRoleFreeAgent
+      # Moffstation - Freeagent visitors
     - type: Loadout
       prototypes: [ VisitorClown ]
       roleLoadout: [ RoleSurvivalClown ]
@@ -577,9 +587,11 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 - type: randomHumanoidSettings
   id: ChallengeVictimChiefEngineer
+  parent: EventHumanoidMindShielded
   randomizeName: false
   components:
     - type: GhostRole
@@ -596,9 +608,11 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 - type: randomHumanoidSettings
   id: ChallengeVictimCMO
+  parent: EventHumanoidMindShielded
   randomizeName: false
   components:
     - type: GhostRole
@@ -615,9 +629,11 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 - type: randomHumanoidSettings
   id: ChallengeVictimHeadOfPersonnel
+  parent: EventHumanoidMindShielded
   randomizeName: false
   components:
     - type: GhostRole
@@ -634,9 +650,11 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 - type: randomHumanoidSettings
   id: ChallengeVictimHeadOfSecurity
+  parent: EventHumanoidMindShielded
   randomizeName: false
   components:
     - type: GhostRole
@@ -653,9 +671,11 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 - type: randomHumanoidSettings
   id: ChallengeVictimResearchDirector
+  parent: EventHumanoidMindShielded
   randomizeName: false
   components:
     - type: GhostRole
@@ -672,9 +692,11 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 - type: randomHumanoidSettings
   id: ChallengeVictimQuartermaster
+  parent: EventHumanoidMindShielded
   randomizeName: false
   components:
     - type: GhostRole
@@ -691,6 +713,7 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 # Security
 # Following use EventHumanoidMindShielded since they are heads and probably should have mindshields
@@ -715,6 +738,7 @@
       nameSegments:
       - NamesFirst
       - NamesLast
+      nameFormat: name-format-standard
 
 # Engineering
 
@@ -840,7 +864,7 @@
       raffle:
         settings: default
     - type: Loadout
-      prototypes: [ VisitorBlackmarketeer, VisitorBlackmarketeer ]
+      prototypes: [ MercenaryBasicGear, MercenaryBasicGear ] # Moffstation - (Mercenary Loadouts)
       roleLoadout: [ RoleSurvivalStandard ]
 
 - type: randomHumanoidSettings

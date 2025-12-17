@@ -1,5 +1,6 @@
 using Content.Server.Construction.Components;
 using Content.Server.Stack;
+using Content.Shared._Moffstation.BladeServer; // Moffstation
 using Content.Shared.Construction.Components;
 using Content.Shared.Examine;
 using Content.Shared.Interaction;
@@ -13,7 +14,6 @@ namespace Content.Server.Construction;
 
 public sealed class MachineFrameSystem : EntitySystem
 {
-    [Dependency] private readonly IComponentFactory _factory = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
     [Dependency] private readonly TagSystem _tag = default!;
     [Dependency] private readonly StackSystem _stack = default!;
@@ -43,7 +43,10 @@ public sealed class MachineFrameSystem : EntitySystem
         if (TryComp<ConstructionComponent>(uid, out var construction) && construction.TargetNode == null)
         {
             // Attempt to set pathfinding to the machine node...
-            _construction.SetPathfindingTarget(uid, "machine", construction);
+            // Moffstation - Start - Blade Server Construction
+            if (!_construction.SetPathfindingTarget(uid, "machine", construction))
+                _construction.SetPathfindingTarget(uid, "bladeServer", construction);
+            // Moffstation - End
         }
     }
 
@@ -75,7 +78,7 @@ public sealed class MachineFrameSystem : EntitySystem
             if (component.ComponentProgress[compName] >= info.Amount)
                 continue;
 
-            var registration = _factory.GetRegistration(compName);
+            var registration = Factory.GetRegistration(compName);
 
             if (!HasComp(args.Used, registration.Type))
                 continue;
@@ -140,6 +143,12 @@ public sealed class MachineFrameSystem : EntitySystem
         if (!TryComp<MachineBoardComponent>(used, out var machineBoard))
             return false;
 
+        // Moffstation - Begin - Blade Server construction
+        // If this is a Blade Server frame, make sure the board is a Blade Server board.
+        if (HasComp<BladeServerFrameComponent>(uid) && !HasComp<BladeServerBoardComponent>(used))
+            return false;
+        // Moffstation - End
+
         if (!_container.TryRemoveFromContainer(used))
             return false;
 
@@ -183,7 +192,7 @@ public sealed class MachineFrameSystem : EntitySystem
             return true;
         }
 
-        var splitStack = _stack.Split(used, needed, Transform(uid).Coordinates, stack);
+        var splitStack = _stack.Split((used, stack), needed, Transform(uid).Coordinates);
 
         if (splitStack == null)
             return false;
@@ -294,7 +303,7 @@ public sealed class MachineFrameSystem : EntitySystem
             // I have many regrets.
             foreach (var (compName, _) in component.ComponentRequirements)
             {
-                var registration = _factory.GetRegistration(compName);
+                var registration = Factory.GetRegistration(compName);
 
                 if (!HasComp(part, registration.Type))
                     continue;

@@ -1,35 +1,37 @@
 using Content.Server.Administration;
 using Content.Server.Administration.Managers;
 using Content.Server.Chat.Managers;
-using Content.Server.DeviceNetwork;
-using Content.Server.DeviceNetwork.Components;
 using Content.Server.DeviceNetwork.Systems;
-using Content.Server.Labels;
 using Content.Server.Popups;
 using Content.Server.Power.Components;
 using Content.Server.Tools;
-using Content.Shared.UserInterface;
 using Content.Shared.Administration.Logs;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Database;
+using Content.Shared.DeviceLinking; // Moffstation
+using Content.Shared.DeviceLinking.Events; // Moffstation
 using Content.Shared.DeviceNetwork;
-using Content.Shared.Emag.Components;
+using Content.Shared.DeviceNetwork.Components;
+using Content.Shared.DeviceNetwork.Events;
 using Content.Shared.Emag.Systems;
 using Content.Shared.Fax;
-using Content.Shared.Fax.Systems;
 using Content.Shared.Fax.Components;
+using Content.Shared.Fax.Systems;
 using Content.Shared.Interaction;
 using Content.Shared.Labels.Components;
+using Content.Shared.Labels.EntitySystems;
 using Content.Shared.Mobs.Components;
+using Content.Shared.NameModifier.Components;
 using Content.Shared.Paper;
+using Content.Shared.Power;
+using Content.Shared.Tools;
+using Content.Shared.UserInterface;
 using Robust.Server.GameObjects;
 using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
-using Content.Shared.NameModifier.Components;
-using Content.Shared.Power;
 
 namespace Content.Server.Fax;
 
@@ -52,6 +54,12 @@ public sealed class FaxSystem : EntitySystem
     [Dependency] private readonly FaxecuteSystem _faxecute = default!;
     [Dependency] private readonly EmagSystem _emag = default!;
 
+    private static readonly ProtoId<ToolQualityPrototype> ScrewingQuality = "Screwing";
+    // Moffstation - Start
+    private static readonly ProtoId<SinkPortPrototype> SendPort = "FaxSend";
+    private static readonly ProtoId<SinkPortPrototype> CopyPort = "FaxCopy";
+    // Moffstation - End
+
     private const string PaperSlotId = "Paper";
 
     public override void Initialize()
@@ -67,6 +75,7 @@ public sealed class FaxSystem : EntitySystem
         SubscribeLocalEvent<FaxMachineComponent, EntRemovedFromContainerMessage>(OnItemSlotChanged);
         SubscribeLocalEvent<FaxMachineComponent, PowerChangedEvent>(OnPowerChanged);
         SubscribeLocalEvent<FaxMachineComponent, DeviceNetworkPacketEvent>(OnPacketReceived);
+        SubscribeLocalEvent<FaxMachineComponent, SignalReceivedEvent>(OnSignalReceived); // Moffstation
 
         // Interaction
         SubscribeLocalEvent<FaxMachineComponent, InteractUsingEvent>(OnInteractUsing);
@@ -211,7 +220,7 @@ public sealed class FaxSystem : EntitySystem
     {
         if (args.Handled ||
             !TryComp<ActorComponent>(args.User, out var actor) ||
-            !_toolSystem.HasQuality(args.Used, "Screwing")) // Screwing because Pulsing already used by device linking
+            !_toolSystem.HasQuality(args.Used, ScrewingQuality)) // Screwing because Pulsing already used by device linking
             return;
 
         _quickDialog.OpenDialog(actor.PlayerSession,
@@ -307,6 +316,20 @@ public sealed class FaxSystem : EntitySystem
         }
     }
 
+    // Moffstation - Start
+    private void OnSignalReceived(Entity<FaxMachineComponent> entity, ref SignalReceivedEvent args)
+    {
+        if (args.Port == CopyPort)
+        {
+            Copy(entity.AsNullable(), user: null);
+        }
+        else if (args.Port == SendPort)
+        {
+            Send(entity.AsNullable(), user: null);
+        }
+    }
+    // Moffstation - End
+
     private void OnToggleInterface(EntityUid uid, FaxMachineComponent component, AfterActivatableUIOpenEvent args)
     {
         UpdateUserInterface(uid, component);
@@ -321,18 +344,24 @@ public sealed class FaxSystem : EntitySystem
 
     private void OnCopyButtonPressed(EntityUid uid, FaxMachineComponent component, FaxCopyMessage args)
     {
-        if (HasComp<MobStateComponent>(component.PaperSlot.Item))
-            _faxecute.Faxecute(uid, component); // when button pressed it will hurt the mob.
-        else
-            Copy(uid, component, args);
+        // Moffstation - Start - Make `Copy` Reuseable
+        Copy((uid, component), args.Actor);
+        // if (HasComp<MobStateComponent>(component.PaperSlot.Item))
+        //     _faxecute.Faxecute(uid, component); // when button pressed it will hurt the mob.
+        // else
+        //     Copy(uid, component, args);
+        // Moffstation - End
     }
 
     private void OnSendButtonPressed(EntityUid uid, FaxMachineComponent component, FaxSendMessage args)
     {
-        if (HasComp<MobStateComponent>(component.PaperSlot.Item))
-            _faxecute.Faxecute(uid, component); // when button pressed it will hurt the mob.
-        else
-            Send(uid, component, args);
+        // Moffstation - Start - Make `Send` Reuseable
+        Send((uid, component), args.Actor);
+        // if (HasComp<MobStateComponent>(component.PaperSlot.Item))
+        //     _faxecute.Faxecute(uid, component); // when button pressed it will hurt the mob.
+        // else
+        //     Send(uid, component, args);
+        // Moffstation - End
     }
 
     private void OnRefreshButtonPressed(EntityUid uid, FaxMachineComponent component, FaxRefreshMessage args)
@@ -446,10 +475,19 @@ public sealed class FaxSystem : EntitySystem
     ///     Copies the paper in the fax. A timeout is set after copying,
     ///     which is shared by the send button.
     /// </summary>
-    public void Copy(EntityUid uid, FaxMachineComponent? component, FaxCopyMessage args)
+    // Moffstation - Start - Make `Copy` Reuseable
+    public void Copy(Entity<FaxMachineComponent?> entity, EntityUid? user)
     {
-        if (!Resolve(uid, ref component))
+        var (uid, component) = entity;
+        if (!Resolve(entity, ref component))
             return;
+
+        if (HasComp<MobStateComponent>(component.PaperSlot.Item))
+        {
+            _faxecute.Faxecute(entity, component);
+            return;
+        }
+        // Moffstation - End
 
         if (component.SendTimeoutRemaining > 0)
             return;
@@ -484,7 +522,7 @@ public sealed class FaxSystem : EntitySystem
 
         _adminLogger.Add(LogType.Action,
             LogImpact.Low,
-            $"{ToPrettyString(args.Actor):actor} " +
+            $"{ToPrettyString(user):actor} " + // Moffstation
             $"added copy job to \"{component.FaxName}\" {ToPrettyString(uid):tool} " +
             $"of {ToPrettyString(sendEntity):subject}: {printout.Content}");
     }
@@ -493,10 +531,19 @@ public sealed class FaxSystem : EntitySystem
     ///     Sends message to addressee if paper is set and a known fax is selected
     ///     A timeout is set after sending, which is shared by the copy button.
     /// </summary>
-    public void Send(EntityUid uid, FaxMachineComponent? component, FaxSendMessage args)
+    // Moffstaiton - Start - Make `Send` Reuseable
+    public void Send(Entity<FaxMachineComponent?> entity, EntityUid? user)
     {
-        if (!Resolve(uid, ref component))
+        var (uid, component) = entity;
+        if (!Resolve(entity, ref component))
             return;
+
+        if (HasComp<MobStateComponent>(component.PaperSlot.Item))
+        {
+            _faxecute.Faxecute(uid, component);
+            return;
+        }
+        // Moffstation - End
 
         if (component.SendTimeoutRemaining > 0)
             return;
@@ -547,7 +594,7 @@ public sealed class FaxSystem : EntitySystem
 
         _adminLogger.Add(LogType.Action,
             LogImpact.Low,
-            $"{ToPrettyString(args.Actor):actor} " +
+            $"{ToPrettyString(user):actor} " + // Moffstation
             $"sent fax from \"{component.FaxName}\" {ToPrettyString(uid):tool} " +
             $"to \"{faxName}\" ({component.DestinationFaxAddress}) " +
             $"of {ToPrettyString(sendEntity):subject}: {paper.Content}");
@@ -589,7 +636,7 @@ public sealed class FaxSystem : EntitySystem
         var printout = component.PrintingQueue.Dequeue();
 
         var entityToSpawn = printout.PrototypeId.Length == 0 ? component.PrintPaperId.ToString() : printout.PrototypeId;
-        var printed = EntityManager.SpawnEntity(entityToSpawn, Transform(uid).Coordinates);
+        var printed = Spawn(entityToSpawn, Transform(uid).Coordinates);
 
         if (TryComp<PaperComponent>(printed, out var paper))
         {

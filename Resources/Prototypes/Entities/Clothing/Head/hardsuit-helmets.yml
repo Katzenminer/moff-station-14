@@ -5,24 +5,6 @@
 #Generally, unless you're adding something like caustic damage, you should probably avoid messing with armor here outside of the above scenario.
 
 #CREW HARDSUITS
-#Standard Hardsuit
-- type: entity
-  parent: ClothingHeadHardsuitBase
-  id: ClothingHeadHelmetHardsuitBasic
-  name: basic hardsuit helmet
-  description: A basic-looking hardsuit helmet that provides minor protection against most sources of damage.
-  components:
-  - type: Sprite
-    sprite: Clothing/Head/Hardsuits/basic.rsi
-  - type: Clothing
-    sprite: Clothing/Head/Hardsuits/basic.rsi
-  - type: HideLayerClothing
-    slots:
-    - Hair
-    - Snout
-    - HeadTop
-    - HeadSide
-
 #Atmospherics Hardsuit
 - type: entity
   parent: [ ClothingHeadHardsuitBase, ClothingHeadSuitWithLightBase ]
@@ -42,7 +24,7 @@
       map: [ "light" ]
   - type: HandheldLight
     addPrefix: false
-  - type: ToggleableLightVisuals
+  - type: ToggleableVisuals
     spriteLayer: light
     clothingVisuals:
       head:
@@ -51,6 +33,20 @@
       head-vox:
       - state: equipped-head-light-vox
         shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-light-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-light-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-light-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-light-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: Clothing
     clothingVisuals:
       head:
@@ -61,6 +57,24 @@
       - state: equipped-head-vox
       - state: equipped-head-unshaded-vox
         shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-vulpkanin
+      - state: equipped-head-unshaded-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+      - state: equipped-head-unshaded-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-dog
+      - state: equipped-head-unshaded-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-resomi
+      - state: equipped-head-unshaded-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: PointLight
     color: "#adffe6"
   - type: PressureProtection
@@ -71,6 +85,10 @@
     coolingCoefficient: 0.005
   - type: FireProtection
     reduction: 0.2
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Engineering Hardsuit
 - type: entity
@@ -81,13 +99,76 @@
   components:
   - type: Sprite
     sprite: Clothing/Head/Hardsuits/engineering.rsi
+    layers:
+    - state: icon
+    - state: icon-unshaded
+      shader: unshaded
+    - state: light-overlay
+      visible: false
+      shader: unshaded
+      map: [ "light" ]
+  - type: HandheldLight
+    addPrefix: false
+  - type: ToggleableVisuals
+    spriteLayer: light
+    clothingVisuals:
+      head:
+      - state: equipped-head-light
+        shader: unshaded
+      head-vox:
+      - state: equipped-head-light-vox
+        shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-light-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-light-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-light-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-light-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: Clothing
-    sprite: Clothing/Head/Hardsuits/engineering.rsi
+    clothingVisuals:
+      head:
+      - state: equipped-head
+      - state: equipped-head-unshaded
+        shader: unshaded
+      head-vox:
+      - state: equipped-head-vox
+      - state: equipped-head-unshaded-vox
+        shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-vulpkanin
+      - state: equipped-head-unshaded-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+      - state: equipped-head-unshaded-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-dog
+      - state: equipped-head-unshaded-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-resomi
+      - state: equipped-head-unshaded-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: PointLight
     color: "#ffdbad"
   - type: PressureProtection
     highPressureMultiplier: 0.1
     lowPressureMultiplier: 1000
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Spationaut Hardsuit
 - type: entity
@@ -108,7 +189,7 @@
       map: [ "light" ]
   - type: HandheldLight
     addPrefix: false
-  - type: ToggleableLightVisuals
+  - type: ToggleableVisuals
     clothingVisuals:
       head:
       - state: equipped-head-light
@@ -116,6 +197,20 @@
       head-vox:
       - state: equipped-head-light-vox
         shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-light-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-light-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-light-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-light-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: Clothing
     clothingVisuals:
       head:
@@ -126,11 +221,33 @@
       - state: equipped-head-vox
       - state: equipped-head-unshaded-vox
         shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-vulpkanin
+      - state: equipped-head-unshaded-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+      - state: equipped-head-unshaded-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-dog
+      - state: equipped-head-unshaded-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-resomi
+      - state: equipped-head-unshaded-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: PointLight
     radius: 6
   - type: PressureProtection
     highPressureMultiplier: 0.72
     lowPressureMultiplier: 1000
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Salvage Hardsuit
 - type: entity
@@ -149,7 +266,12 @@
   - type: PointLight
     radius: 7
     energy: 3
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
+#Goliath Hardsuit
 - type: entity
   parent: [ ClothingHeadHardsuitBase, ClothingHeadSuitWithLightBase ]
   id: ClothingHeadHelmetHardsuitGoliath
@@ -168,13 +290,19 @@
       map: [ "light" ]
   - type: HandheldLight
     addPrefix: false
-  - type: ToggleableLightVisuals
+  - type: ToggleableVisuals
     clothingVisuals:
       head:
       - state: equipped-head-light
         shader: unshaded
       head-vox:
       - state: equipped-head-light-vox
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-light-dog
         shader: unshaded
   - type: Clothing
     clothingVisuals:
@@ -186,12 +314,25 @@
       - state: equipped-head-vox
       - state: equipped-head-unshaded-vox
         shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+      - state: equipped-head-unshaded-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-dog
+      - state: equipped-head-unshaded-dog
+        shader: unshaded
   - type: PointLight
     radius: 6
   - type: PressureProtection
     highPressureMultiplier: 0.72
     lowPressureMultiplier: 1000
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
+#Maxim Hardsuit
 - type: entity
   parent: ClothingHeadHardsuitBase
   id: ClothingHeadHelmetHardsuitMaxim
@@ -237,6 +378,10 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Brigmedic Hardsuit
 - type: entity
@@ -302,6 +447,10 @@
   - type: PressureProtection
     highPressureMultiplier: 0.3
     lowPressureMultiplier: 1000
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Chief Engineer's Hardsuit
 - type: entity
@@ -312,8 +461,67 @@
   components:
   - type: Sprite
     sprite: Clothing/Head/Hardsuits/engineering-white.rsi
+    layers:
+    - state: icon
+    - state: icon-unshaded
+      shader: unshaded
+    - state: light-overlay
+      visible: false
+      shader: unshaded
+      map: [ "light" ]
+  - type: HandheldLight
+    addPrefix: false
+  - type: ToggleableVisuals
+    spriteLayer: light
+    clothingVisuals:
+      head:
+      - state: equipped-head-light
+        shader: unshaded
+      head-vox:
+      - state: equipped-head-light-vox
+        shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-light-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-light-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-light-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-light-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: Clothing
-    sprite: Clothing/Head/Hardsuits/engineering-white.rsi
+    clothingVisuals:
+      head:
+      - state: equipped-head
+      - state: equipped-head-unshaded
+        shader: unshaded
+      head-vox:
+      - state: equipped-head-vox
+      - state: equipped-head-unshaded-vox
+        shader: unshaded
+      head-vulpkanin:
+      - state: equipped-head-vulpkanin
+      - state: equipped-head-unshaded-vulpkanin
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+      - state: equipped-head-unshaded-reptilian
+        shader: unshaded
+      head-dog:
+      - state: equipped-head-dog
+      - state: equipped-head-unshaded-dog
+        shader: unshaded
+      # Moffstation - Start - Add Hardsuits for Resomi.
+      head-resomi:
+      - state: equipped-head-resomi
+      - state: equipped-head-unshaded-resomi
+        shader: unshaded
+      # Moffstation - End - Add Hardsuits for Resomi.
   - type: PointLight
     color: "#daffad"
   - type: PressureProtection
@@ -321,6 +529,10 @@
     lowPressureMultiplier: 1000
   - type: FireProtection
     reduction: 0.2
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Chief Medical Officer's Hardsuit
 - type: entity
@@ -338,6 +550,10 @@
   - type: PressureProtection
     highPressureMultiplier: 0.6
     lowPressureMultiplier: 1000
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Research Director's Hardsuit
 - type: entity
@@ -355,6 +571,10 @@
   - type: PressureProtection
     highPressureMultiplier: 0.60
     lowPressureMultiplier: 1000
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Head of Security's hardsuit
 - type: entity
@@ -423,6 +643,10 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Blood-red Medic Hardsuit
 - type: entity
@@ -453,7 +677,7 @@
   parent: [ ClothingHeadHardsuitBase, ClothingHeadSuitWithLightBase ]
   id: ClothingHeadHelmetHardsuitSyndieElite
   name: syndicate elite helmet
-  description: An elite version of the blood-red hardsuit's helmet, with improved armor and fireproofing. Property of Gorlex Marauders.
+  description: An elite version of the blood-red hardsuit's helmet, with improved radiation resistance and fireproofing. Property of Gorlex Marauders.
   components:
   - type: Sprite
     sprite: Clothing/Head/Hardsuits/syndieelite.rsi
@@ -476,6 +700,10 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Syndicate Commander Hardsuit
 - type: entity
@@ -500,6 +728,10 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Cybersun Juggernaut Hardsuit
 - type: entity
@@ -522,6 +754,10 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Wizard Hardsuit
 - type: entity
@@ -546,6 +782,10 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: Tag
+    tags:
+    - CorgiWearable
+    - WhitelistChameleon
 
 #Organic Space Suit
 - type: entity
@@ -580,19 +820,54 @@
 
 #Pirate Captain Hardsuit
 - type: entity
-  parent: ClothingHeadHardsuitBase
-  id: ClothingHeadHelmetHardsuitPirateCap
+  parent: [ ClothingHeadHardsuitBase, ClothingHeadSuitWithLightBase ]
+  id: ClothingHeadHelmetHardsuitPirateCapUpstream # Moffstation - Use our own
   name: pirate captain's hardsuit helmet
   suffix: Pirate
   description: A special hardsuit helmet, made for the captain of a pirate ship.
   components:
   - type: Sprite
     sprite: Clothing/Head/Hardsuits/piratecaptainhelm.rsi
+  - type: ToggleableVisuals
+    clothingVisuals:
+      head:
+      - state: equipped-HELMET-light
+        shader: unshaded
+      head-vox:
+      - state: equipped-HELMET-light-vox
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-HELMET-light-reptilian
+        shader: unshaded
   - type: Clothing
     sprite: Clothing/Head/Hardsuits/piratecaptainhelm.rsi
+    clothingVisuals:
+      head:
+      - state: equipped-HELMET
+      - state: equipped-HELMET-unshaded
+        shader: unshaded
+      head-vox:
+      - state: equipped-HELMET-vox
+      - state: equipped-HELMET-unshaded-vox
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-HELMET-reptilian
+      - state: equipped-HELMET-unshaded-reptilian
+        shader: unshaded
+  - type: PointLight # Color matches visor colors, radius/energy same as mining hardsuit for the big captain.
+    color: "#f3ea9c"
+    radius: 7
+    energy: 3
   - type: PressureProtection
     highPressureMultiplier: 0.3
     lowPressureMultiplier: 1000
+  - type: Armor
+    modifiers:
+      coefficients:
+        Blunt: 0.9
+        Slash: 0.9
+        Piercing: 0.9
+        Heat: 0.9
 
 #CENTCOMM / ERT HARDSUITS
 #ERT Leader Hardsuit
@@ -643,6 +918,8 @@
     sprite: Clothing/Head/Hardsuits/ERThelmets/ertengineer.rsi
   - type: PointLight
     color: "#f4ffad"
+  - type: FireProtection
+    reduction: 0.2
   - type: Armor
     modifiers:
       coefficients:
@@ -723,6 +1000,14 @@
       - state: equipped-head
       - state: equipped-head-unshaded
         shader: unshaded
+      head-vox:
+      - state: equipped-head-vox
+      - state: equipped-head-unshaded-vox
+        shader: unshaded
+      head-reptilian:
+      - state: equipped-head-reptilian
+      - state: equipped-head-unshaded-reptilian
+        shader: unshaded
   - type: PointLight
     color: orange
   - type: PressureProtection
@@ -738,6 +1023,8 @@
         Slash: 0.9
         Piercing: 0.9
         Heat: 0.9
+  - type: ZombificationResistance
+    zombificationResistanceCoefficient: 0.75
 
 #Deathsquad Hardsuit
 - type: entity

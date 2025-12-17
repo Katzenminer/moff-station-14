@@ -16,6 +16,7 @@
     prototypes:
       - DrinkAbsintheGlass
       - DrinkAleGlass
+      - DrinkAlienBrainHemorrhage
       - DrinkAloe
       - DrinkAndalusia
       - DrinkAntifreeze
@@ -32,17 +33,21 @@
       - DrinkBloodyMaryGlass
       - DrinkBooger
       - DrinkBraveBullGlass
+      - DrinkBronxGlass
       - BudgetInsulsDrinkGlass
       - DrinkCarrotJuice
       - DrinkCoconutRum
       - DrinkChocolateGlass
       - DrinkCognacGlass
       - DrinkCosmopolitan
+      - DrinkCrushDepthGlass
       - DrinkCubaLibreGlass
+      - DrinkDarkandStormyGlass
       - DrinkDeadRumGlass
       - DrinkDevilsKiss
       - DrinkDriestMartiniGlass
       - DrinkDrGibbGlass
+      - DrinkElectricSharkGlass
       - DrinkErikaSurprise
       - DrinkFourteenLokoGlass
       - DrinkGargleBlasterGlass
@@ -62,7 +67,10 @@
       - DrinkIrishSlammer
       - DrinkIrishCoffeeGlass
       - DrinkLemonadeGlass
-      - DrinkKiraSpecial
+      - DrinkJackRoseGlass
+      - DrinkJungleBirdGlass
+      - DrinkKalimotxoGlass
+      - DrinkOrangeLimeSodaGlass
       - DrinkLongIslandIcedTeaGlass
       - DrinkManhattanGlass
       - DrinkManlyDorfGlass
@@ -71,11 +79,13 @@
       - DrinkMeadGlass
       - DrinkMilkshake
       - DrinkMojito
+      - DrinkMonkeyBusinessGlass
       - DrinkNTCahors
       - DrinkPainkillerGlass
       - DrinkPatronGlass
       - DrinkPinaColadaGlass
       - DrinkPoscaGlass
+      - DrinkRadlerGlass
       - DrinkRedMeadGlass
       - DrinkRewriter
       - DrinkRoyRogersGlass
@@ -92,7 +102,9 @@
       - DrinkSyndicatebomb
       - DrinkTequilaSunriseGlass
       - DrinkThreeMileIslandGlass
+      - DrinkTortugaGlass
       - DrinkToxinsSpecialGlass
+      - DrinkVampiroGlass
       - DrinkVodkaMartiniGlass
       - DrinkVodkaRedBool
       - DrinkVodkaTonicGlass
@@ -107,6 +119,16 @@
       - DrinkShakeWhite
       - DrinkTheMartinez
       - DrinkMoonshineGlass
+      # Moffstation - Start - Add Lemon, Lime and Bitters.
+      - LemonLimeBittersGlass
+      - PinkGinGlass
+      - PlatersPunchGlass
+      - BreathalyzerGlass
+      - CorpseReviverGlass
+      - PrairieCocktailGlass
+      - MossySpecialGlass
+      - DrinkScrantonSpecialGlass
+      # Moffstation - End
     chance: 0.8
     offset: 0.0
     #rare

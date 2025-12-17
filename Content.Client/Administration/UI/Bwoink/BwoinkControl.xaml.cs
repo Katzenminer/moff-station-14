@@ -29,7 +29,6 @@ namespace Content.Client.Administration.UI.Bwoink
         public AdminAHelpUIHandler AHelpHelper = default!;
 
         private PlayerInfo? _currentPlayer;
-        private readonly Dictionary<Button, ConfirmationData> _confirmations = new();
 
         public BwoinkControl()
         {
@@ -83,6 +82,11 @@ namespace Content.Client.Administration.UI.Bwoink
                 // Mark new players with symbol
                 if (IsNewPlayer(info))
                     sb.Append(new Rune(0x23F2)); // ⏲
+
+                // Moffstation - Start - Visible watchlist
+                if (info.HasWatchlist)
+                    sb.Append("(WATCHLIST) ");
+                // Moffstation - End
 
                 sb.AppendFormat("\"{0}\"", text);
 
@@ -178,11 +182,6 @@ namespace Content.Client.Administration.UI.Bwoink
 
             Kick.OnPressed += _ =>
             {
-                if (!AdminUIHelpers.TryConfirm(Kick, _confirmations))
-                {
-                    return;
-                }
-
                 // TODO: Reason field
                 if (_currentPlayer is not null)
                     _console.ExecuteCommand($"kick \"{_currentPlayer.Username}\"");
@@ -196,11 +195,6 @@ namespace Content.Client.Administration.UI.Bwoink
 
             Respawn.OnPressed += _ =>
             {
-                if (!AdminUIHelpers.TryConfirm(Respawn, _confirmations))
-                {
-                    return;
-                }
-
                 if (_currentPlayer is not null)
                     _console.ExecuteCommand($"respawn \"{_currentPlayer.Username}\"");
             };

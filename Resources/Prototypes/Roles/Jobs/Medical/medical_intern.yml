@@ -6,7 +6,7 @@
   requirements:
     - !type:DepartmentTimeRequirement
       department: Medical
-      time: 54000 # 15 hrs
+      time: 5h
       inverted: true # stop playing intern if you're good at med!
   startingGear: MedicalInternGear
   icon: "JobIconMedicalIntern"
@@ -15,6 +15,7 @@
   access:
   - Medical
   - Maintenance
+  setPreference: false  # Moffstation - Remove assistant roles
 
 - type: startingGear
   id: MedicalInternGear
@@ -27,3 +28,14 @@
   #storage:
     #back:
     #- Stuff
+
+- type: chameleonOutfit
+  id: MedicalInternChameleonOutfit
+  job: MedicalIntern
+  equipment:
+    head: ClothingHeadHatBeretMedic
+    eyes: ClothingEyesHudMedical
+    mask: ClothingMaskSterile
+    neck: ClothingNeckStethoscope
+    outerClothing: ClothingOuterCoatLabOpened
+    gloves: ClothingHandsGlovesLatex

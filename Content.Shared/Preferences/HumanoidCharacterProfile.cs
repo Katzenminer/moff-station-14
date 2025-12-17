@@ -129,17 +129,19 @@ namespace Content.Shared.Preferences
         public PreferenceUnavailableMode PreferenceUnavailable { get; private set; } =
             PreferenceUnavailableMode.SpawnAsOverflow;
 
+        // Moffstation Start - CD Profile
         [DataField("cosmaticDriftCharacterHeight")]
         public float Height = 1f;
 
         [DataField("cosmaticDriftCharacterRecords")]
         public PlayerProvidedCharacterRecords? CDCharacterRecords;
+        // Moffstation End
 
         public HumanoidCharacterProfile(
             string name,
             string flavortext,
             string species,
-            float height,
+            float height, // Moffstation - CD Height
             int age,
             Sex sex,
             Gender gender,
@@ -150,12 +152,12 @@ namespace Content.Shared.Preferences
             HashSet<ProtoId<AntagPrototype>> antagPreferences,
             HashSet<ProtoId<TraitPrototype>> traitPreferences,
             Dictionary<string, RoleLoadout> loadouts,
-            PlayerProvidedCharacterRecords? cdCharacterRecords)
+            PlayerProvidedCharacterRecords? cdCharacterRecords) // Moffstation - CD Profile
         {
             Name = name;
             FlavorText = flavortext;
             Species = species;
-            Height = height;
+            Height = height; // Moffstation - CD Height
             Age = age;
             Sex = sex;
             Gender = gender;
@@ -166,7 +168,7 @@ namespace Content.Shared.Preferences
             _antagPreferences = antagPreferences;
             _traitPreferences = traitPreferences;
             _loadouts = loadouts;
-            CDCharacterRecords = cdCharacterRecords;
+            CDCharacterRecords = cdCharacterRecords; // Moffstation - CD Profile
 
             var hasHighPrority = false;
             foreach (var (key, value) in _jobPriorities)
@@ -188,7 +190,7 @@ namespace Content.Shared.Preferences
             : this(other.Name,
                 other.FlavorText,
                 other.Species,
-                other.Height,
+                other.Height, // Moffstation - CD Height
                 other.Age,
                 other.Sex,
                 other.Gender,
@@ -199,7 +201,7 @@ namespace Content.Shared.Preferences
                 new HashSet<ProtoId<AntagPrototype>>(other.AntagPreferences),
                 new HashSet<ProtoId<TraitPrototype>>(other.TraitPreferences),
                 new Dictionary<string, RoleLoadout>(other.Loadouts),
-                other.CDCharacterRecords)
+                other.CDCharacterRecords) // Moffstation - CD Profile
         {
         }
 
@@ -217,11 +219,14 @@ namespace Content.Shared.Preferences
         /// </summary>
         /// <param name="species">The species to use in this default profile. The default species is <see cref="SharedHumanoidAppearanceSystem.DefaultSpecies"/>.</param>
         /// <returns>Humanoid character profile with default settings.</returns>
-        public static HumanoidCharacterProfile DefaultWithSpecies(string species = SharedHumanoidAppearanceSystem.DefaultSpecies)
+        public static HumanoidCharacterProfile DefaultWithSpecies(string? species = null)
         {
+            species ??= SharedHumanoidAppearanceSystem.DefaultSpecies;
+
             return new()
             {
                 Species = species,
+                Appearance = HumanoidCharacterAppearance.DefaultWithSpecies(species),
             };
         }
 
@@ -240,14 +245,16 @@ namespace Content.Shared.Preferences
             return RandomWithSpecies(species);
         }
 
-        public static HumanoidCharacterProfile RandomWithSpecies(string species = SharedHumanoidAppearanceSystem.DefaultSpecies)
+        public static HumanoidCharacterProfile RandomWithSpecies(string? species = null)
         {
+            species ??= SharedHumanoidAppearanceSystem.DefaultSpecies;
+
             var prototypeManager = IoCManager.Resolve<IPrototypeManager>();
             var random = IoCManager.Resolve<IRobustRandom>();
 
             var sex = Sex.Unsexed;
             var age = 18;
-            var height = 1f;
+            var height = 1f; // Moffstation - CD Height
             if (prototypeManager.TryIndex<SpeciesPrototype>(species, out var speciesPrototype))
             {
                 sex = random.Pick(speciesPrototype.Sexes);
@@ -277,6 +284,7 @@ namespace Content.Shared.Preferences
                 Age = age,
                 Gender = gender,
                 Species = species,
+                Height = height, // Moffstation - CD Height
                 Appearance = HumanoidCharacterAppearance.Random(species, sex),
             };
         }
@@ -311,10 +319,12 @@ namespace Content.Shared.Preferences
             return new(this) { Species = species };
         }
 
+        // Moffstation Start - CD Height
         public HumanoidCharacterProfile WithHeight(float height)
         {
             return new(this) { Height = height };
         }
+        // Moffstation End
 
         public HumanoidCharacterProfile WithCharacterAppearance(HumanoidCharacterAppearance appearance)
         {
@@ -421,7 +431,7 @@ namespace Content.Shared.Preferences
             // Category not found so dump it.
             TraitCategoryPrototype? traitCategory = null;
 
-            if (category != null && !protoManager.TryIndex(category, out traitCategory))
+            if (category != null && !protoManager.Resolve(category, out traitCategory))
                 return new(this);
 
             var list = new HashSet<ProtoId<TraitPrototype>>(_traitPreferences) { traitId };
@@ -469,10 +479,12 @@ namespace Content.Shared.Preferences
             };
         }
 
+        // Moffstation Start - CD Profile
         public HumanoidCharacterProfile WithCDCharacterRecords(PlayerProvidedCharacterRecords records)
         {
             return new HumanoidCharacterProfile(this) { CDCharacterRecords = records };
         }
+        // Moffstation End
 
         public string Summary =>
             Loc.GetString(
@@ -487,7 +499,7 @@ namespace Content.Shared.Preferences
             if (maybeOther is not HumanoidCharacterProfile other) return false;
             if (Name != other.Name) return false;
             if (Age != other.Age) return false;
-            if (Height != other.Height) return false;
+            if (Height != other.Height) return false; // Moffstation - CD Height
             if (Sex != other.Sex) return false;
             if (Gender != other.Gender) return false;
             if (Species != other.Species) return false;
@@ -498,8 +510,10 @@ namespace Content.Shared.Preferences
             if (!_traitPreferences.SequenceEqual(other._traitPreferences)) return false;
             if (!Loadouts.SequenceEqual(other.Loadouts)) return false;
             if (FlavorText != other.FlavorText) return false;
+            // Moffstation Start - CD Profile
             if (CDCharacterRecords != null && other.CDCharacterRecords != null &&
                 !CDCharacterRecords.MemberwiseEquals(other.CDCharacterRecords)) return false;
+            // Moffstation End
             return Appearance.MemberwiseEquals(other.Appearance);
         }
 
@@ -538,13 +552,14 @@ namespace Content.Shared.Preferences
             };
 
             string name;
+            var maxNameLength = configManager.GetCVar(CCVars.MaxNameLength);
             if (string.IsNullOrEmpty(Name))
             {
                 name = GetName(Species, gender);
             }
-            else if (Name.Length > MaxNameLength)
+            else if (Name.Length > maxNameLength)
             {
-                name = Name[..MaxNameLength];
+                name = Name[..maxNameLength];
             }
             else
             {
@@ -570,18 +585,17 @@ namespace Content.Shared.Preferences
             }
 
             string flavortext;
-            if (FlavorText.Length > MaxDescLength)
+            var maxFlavorTextLength = configManager.GetCVar(CCVars.MaxFlavorTextLength);
+            if (FlavorText.Length > maxFlavorTextLength)
             {
-                flavortext = FormattedMessage.RemoveMarkupOrThrow(FlavorText)[..MaxDescLength];
+                flavortext = FormattedMessage.RemoveMarkupOrThrow(FlavorText)[..maxFlavorTextLength];
             }
             else
             {
                 flavortext = FormattedMessage.RemoveMarkupOrThrow(FlavorText);
             }
 
-            var height = Height;
-            if (speciesPrototype != null)
-                height = Math.Clamp(MathF.Round(Height, 2), speciesPrototype.MinHeight, speciesPrototype.MaxHeight);
+            var height = Math.Clamp(MathF.Round(Height, 2), speciesPrototype.MinHeight, speciesPrototype.MaxHeight); // Moffstation - CD Height
 
             var appearance = HumanoidCharacterAppearance.EnsureValid(Appearance, Species, Sex);
 
@@ -632,7 +646,7 @@ namespace Content.Shared.Preferences
             Name = name;
             FlavorText = flavortext;
             Age = age;
-            Height = height;
+            Height = height; // Moffstation - CD Height
             Sex = sex;
             Gender = gender;
             Appearance = appearance;
@@ -653,6 +667,7 @@ namespace Content.Shared.Preferences
             _traitPreferences.Clear();
             _traitPreferences.UnionWith(GetValidTraits(traits, prototypeManager));
 
+            // Moffstation Start - CD Profile
             if (CDCharacterRecords == null)
             {
                 CDCharacterRecords = PlayerProvidedCharacterRecords.DefaultRecords();
@@ -661,6 +676,7 @@ namespace Content.Shared.Preferences
             {
                 CDCharacterRecords!.EnsureValid();
             }
+            // Moffstation End
 
             // Checks prototypes exist for all loadouts and dump / set to default if not.
             var toRemove = new ValueList<string>();
@@ -673,6 +689,9 @@ namespace Content.Shared.Preferences
                     continue;
                 }
 
+                // This happens after we verify the prototype exists
+                // These values are set equal in the database and we need to make sure they're equal here too!
+                loadouts.Role = roleName;
                 loadouts.EnsureValid(this, session, collection);
             }
 
@@ -704,7 +723,7 @@ namespace Content.Shared.Preferences
                 }
 
                 // No category so dump it.
-                if (!protoManager.TryIndex(traitProto.Category, out var category))
+                if (!protoManager.Resolve(traitProto.Category, out var category))
                     continue;
 
                 var existing = groups.GetOrNew(category.ID);
@@ -735,10 +754,17 @@ namespace Content.Shared.Preferences
             var namingSystem = IoCManager.Resolve<IEntitySystemManager>().GetEntitySystem<NamingSystem>();
             return namingSystem.GetName(species, gender);
         }
+        public bool Equals(HumanoidCharacterProfile? other)
+        {
+            if (other is null)
+                return false;
+
+            return ReferenceEquals(this, other) || MemberwiseEquals(other);
+        }
 
         public override bool Equals(object? obj)
         {
-            return ReferenceEquals(this, obj) || obj is HumanoidCharacterProfile other && Equals(other);
+            return obj is HumanoidCharacterProfile other && Equals(other);
         }
 
         public override int GetHashCode()

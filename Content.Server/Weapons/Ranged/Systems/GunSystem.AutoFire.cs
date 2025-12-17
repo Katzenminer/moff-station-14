@@ -1,4 +1,4 @@
-using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
 using Content.Shared.Weapons.Ranged.Components;
 using Robust.Shared.Map;
 
@@ -6,9 +6,9 @@ namespace Content.Server.Weapons.Ranged.Systems;
 
 public sealed partial class GunSystem
 {
-    public override void Update(float frameTime)
+    private void UpdateAutoFire() // Moffstation
     {
-        base.Update(frameTime);
+//        base.Update(frameTime); // Moffstation
 
         /*
          * On server because client doesn't want to predict other's guns.
@@ -31,7 +31,7 @@ public sealed partial class GunSystem
             }
             else if (gun.BurstActivated)
             {
-                var parent = _transform.GetParentUid(uid);
+                var parent = TransformSystem.GetParentUid(uid);
                 if (HasComp<DamageableComponent>(parent))
                     AttemptShoot(parent, uid, gun, gun.ShootCoordinates ?? new EntityCoordinates(uid, gun.DefaultDirection));
                 else

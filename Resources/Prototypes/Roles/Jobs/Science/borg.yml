@@ -1,19 +1,25 @@
 # No idea why it's in sci but we ball.
+# Why is this one file?
 - type: job
   id: StationAi
   name: job-name-station-ai
   description: job-description-station-ai
   playTimeTracker: JobStationAi
   requirements:
+  # Moffstation - Start - Change role timers
+  - !type:OverallPlaytimeRequirement
+    time: 20h
+  # Moffstation - End
   - !type:RoleTimeRequirement
     role: JobBorg
-    time: 54000  # 15 hrs
+    time: 5h
   canBeAntag: false
   icon: JobIconStationAi
   supervisors: job-supervisors-rd
   jobEntity: StationAiBrain
   jobPreviewEntity: PlayerStationAiPreview
   applyTraits: false
+  ignoreArrivals: true  # Moffstation - AI ignores arrivals
   # CD: Skip records
   special:
   - !type:AddComponentSpecial
@@ -28,7 +34,7 @@
   playTimeTracker: JobBorg
   requirements:
     - !type:OverallPlaytimeRequirement
-      time: 144000 # 40 hrs
+      time: 10h
   canBeAntag: false
   icon: JobIconBorg
   supervisors: job-supervisors-rd

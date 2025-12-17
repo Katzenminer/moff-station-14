@@ -1,3 +1,6 @@
+#While you were busy charging your batong... I studied the blade.
+
+#BaseSword
 - type: entity
   parent: BaseItem
   id: BaseSword
@@ -19,12 +22,127 @@
     qualities:
     - Slicing
 
+#Shortswords
 - type: entity
-  name: captain's sabre
+  name: cutlass
+  parent: [ BaseSword, BaseMajorContraband ]
+  id: Cutlass
+  description: A wickedly curved blade, often seen in the hands of space pirates.
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Melee/cutlass.rsi
+  - type: MeleeWeapon
+    damage:
+      types:
+        Slash: 16
+    soundHit:
+      path: /Audio/Weapons/bladeslice.ogg
+  - type: Item
+    storedSprite:
+      state: storage
+      sprite: Objects/Weapons/Melee/cutlass.rsi
+    shape:
+    - 0,0,0,2
+  - type: DisarmMalus
+
+- type: entity
+  name: machete
+  parent: [ BaseSword, BaseMajorContraband ]
+  id: Machete
+  description: A large, vicious looking blade.
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Melee/machete.rsi
+  - type: MeleeWeapon
+    damage:
+      types:
+        Slash: 15
+    soundHit:
+      path: /Audio/Weapons/bladeslice.ogg
+  - type: Item
+    storedSprite:
+      state: storage
+      sprite: Objects/Weapons/Melee/machete.rsi
+    shape:
+    - 0,0,0,2
+  - type: DisarmMalus
+
+#Longswords
+- type: entity
+  # Moffstation - Begin (Persona Saber)
+  name: captain's persona sabre
   parent: [ BaseSword, BaseCommandContraband ]
   id: CaptainSabre
-  description: A ceremonial weapon belonging to the captain of the station.
+  description: A ceremonial weapon belonging to the captain of the station. A PAI is built into the grip, for advising the captain on various official matters.
   components:
+  - type: Instrument
+    allowPercussion: false
+    handheld: false
+    bank: 1
+    program: 2
+  - type: UserInterface
+    interfaces:
+      enum.StoreUiKey.Key:
+        type: StoreBoundUserInterface
+        requireInputValidation: false
+      # available in pai shop
+      enum.RadarConsoleUiKey.Key:
+        type: RadarConsoleBoundUserInterface
+        requireInputValidation: false
+      enum.InstrumentUiKey.Key:
+        type: InstrumentBoundUserInterface
+        requireInputValidation: false
+      enum.StationMapUiKey.Key:
+        type: StationMapBoundUserInterface
+        requireInputValidation: false
+  - type: Input
+    context: "human"
+  - type: PAI
+  - type: BlockMovement
+  - type: ToggleableGhostRole
+    examineTextMindPresent: pai-system-pai-installed
+    examineTextMindSearching: pai-system-still-searching
+    examineTextNoMind: pai-system-off
+    beginSearchingText: pai-system-searching
+    roleName: Captain's Persona Sabre
+    roleDescription: pai-system-role-description
+    roleRules: ghost-role-information-familiar-rules
+    mindRoles:
+    - MindRoleGhostRoleFamiliar
+    wipeVerbText: pai-system-wipe-device-verb-text
+    wipeVerbPopup: pai-system-wiped-device
+    stopSearchVerbText: pai-system-stop-searching-verb-text
+    stopSearchVerbPopup: pai-system-stopped-searching
+  - type: Examiner
+  - type: IntrinsicRadioReceiver
+  - type: ActiveRadio
+    channels:
+    - Common
+    - Command
+    - Engineering
+    - Medical
+    - Science
+    - Security
+    - Service
+    - Supply
+  - type: DoAfter
+  - type: Actions
+  - type: Store
+    categories:
+    - PAIAbilities
+    currencyWhitelist:
+    - SiliconMemory
+    balance:
+      SiliconMemory: 30
+  - type: RadarConsole
+    maxRange: 256
+    followEntity: true
+  - type: TypingIndicator
+    proto: robot
+  - type: Speech
+    speechVerb: Robotic
+    speechSounds: Pai
+  # Moffstation - End
   - type: Sprite
     sprite: Objects/Weapons/Melee/captain_sabre.rsi
   - type: MeleeWeapon
@@ -38,16 +156,24 @@
     reflectProb: .1
     spread: 90
   - type: Item
-    sprite: Objects/Weapons/Melee/captain_sabre.rsi
+    storedSprite:
+      state: storage
+      sprite: Objects/Weapons/Melee/captain_sabre_storage_64x.rsi #Done in 64x64 because it looks way too puny in 32x32
+    shape:
+    - 0,0,0,3
   - type: Tag
     tags:
     - CaptainSabre
   - type: DisarmMalus
-  - type: SentienceTarget
-    flavorKind: station-event-random-sentience-flavor-inanimate
-    weight: 0.0002 # 5,000 times less likely than 1 regular animal
-  - type: PirateAccent
-    # not putting a BlockMovement component here cause that's funny.
+  # Moffstation - Begin (Persona Saber)
+#  - type: SentienceTarget
+#    flavorKind: station-event-random-sentience-flavor-inanimate
+#    weight: 0.0002 # 5,000 times less likely than 1 regular animal
+#  - type: PirateAccent
+#    # not putting a BlockMovement component here cause that's funny.
+  # Moffstation - End
+  - type: StealTarget
+    stealGroup: CaptainSword
 
 - type: entity
   name: katana
@@ -55,9 +181,6 @@
   id: Katana
   description: Ancient craftwork made with not so ancient plasteel.
   components:
-  - type: Tag
-    tags:
-    - Katana
   - type: Sprite
     sprite: Objects/Weapons/Melee/katana.rsi
   - type: MeleeWeapon
@@ -67,7 +190,16 @@
     soundHit:
         path: /Audio/Weapons/bladeslice.ogg
   - type: Item
+    storedSprite:
+      state: storage
+      sprite: Objects/Weapons/Melee/katana_storage_64x.rsi #Done in 64x64 because it looks way too puny in 32x32
+    shape:
+    - 0,0,0,3
+  - type: Clothing
     sprite: Objects/Weapons/Melee/katana.rsi
+    slots:
+    - Back
+    - Belt
   - type: DisarmMalus
 
 - type: entity
@@ -76,6 +208,8 @@
   id: EnergyKatana
   description: A katana infused with strong energy.
   components:
+  - type: Contraband
+    severity: HighlyIllegal
   - type: Sprite
     sprite: Objects/Weapons/Melee/energykatana.rsi
   - type: MeleeWeapon
@@ -84,12 +218,15 @@
       types:
         Slash: 30
   - type: Item
-    sprite: Objects/Weapons/Melee/energykatana.rsi
+    storedSprite:
+      state: storage
+      sprite: Objects/Weapons/Melee/energykatana_storage_64x.rsi #Done in 64x64 because it looks way too puny in 32x32
+    shape:
+    - 0,0,0,3
   - type: EnergyKatana
   - type: DashAbility
   - type: LimitedCharges
     maxCharges: 3
-    charges: 3
   - type: AutoRecharge
     rechargeDuration: 20
   - type: Clothing
@@ -98,28 +235,10 @@
     - Back
     - Belt
   - type: Reflect
+    slotFlags:
+    - NONE
 
-- type: entity
-  name: machete
-  parent: [ BaseSword, BaseMajorContraband ]
-  id: Machete
-  description: A large, vicious looking blade.
-  components:
-  - type: Tag
-    tags:
-    - Machete
-  - type: Sprite
-    sprite: Objects/Weapons/Melee/machete.rsi
-  - type: MeleeWeapon
-    damage:
-      types:
-        Slash: 15
-    soundHit:
-        path: /Audio/Weapons/bladeslice.ogg
-  - type: Item
-    sprite: Objects/Weapons/Melee/machete.rsi
-  - type: DisarmMalus
-
+#Greatswords
 - type: entity
   name: claymore
   parent: [ BaseSword, BaseMajorContraband ]
@@ -136,38 +255,24 @@
     soundHit:
         path: /Audio/Weapons/bladeslice.ogg
   - type: Item
+    storedSprite:
+      state: storage
+      sprite: Objects/Weapons/Melee/claymore_storage_64x.rsi #Done in 64x64 because it looks way too puny in 32x32
+    shape:
+    - 0,0,1,3
   - type: Clothing
     sprite: Objects/Weapons/Melee/claymore.rsi
     slots:
-    - back
+    - Back
+    - SuitStorage #Bigger than the other swords, easier to strap to your suit.
   - type: DisarmMalus
 
-- type: entity
-  name: cutlass
-  parent: [ BaseSword, BaseMajorContraband ]
-  id: Cutlass
-  description: A wickedly curved blade, often seen in the hands of space pirates.
-  components:
-  - type: Tag
-    tags:
-    - Machete
-  - type: Sprite
-    sprite: Objects/Weapons/Melee/cutlass.rsi
-  - type: MeleeWeapon
-    damage:
-      types:
-        Slash: 16
-    soundHit:
-        path: /Audio/Weapons/bladeslice.ogg
-  - type: Item
-    sprite: Objects/Weapons/Melee/cutlass.rsi
-  - type: DisarmMalus
-
+#Other/Weird
 - type: entity
   name: throngler
   parent: [ BaseSword, BaseMajorContraband ]
   id: Throngler
-  description: Why would you make this?
+  description: If Security dares take it from you, just remind them that they are indeed mortal.
   components:
     - type: Sprite
       sprite: Objects/Weapons/Melee/Throngler2.rsi

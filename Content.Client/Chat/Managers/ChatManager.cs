@@ -14,6 +14,7 @@ internal sealed class ChatManager : IChatManager
     [Dependency] private readonly IEntitySystemManager _systems = default!;
 
     private ISawmill _sawmill = default!;
+    public event Action? PermissionsUpdated; // Starlight - Collective Mind
 
     public void Initialize()
     {
@@ -27,6 +28,11 @@ internal sealed class ChatManager : IChatManager
     }
 
     public void SendAdminAlert(EntityUid player, string message)
+    {
+        // See server-side manager. This just exists for shared code.
+    }
+
+    public void SendAdminAlertNoFormatOrEscape(string message)
     {
         // See server-side manager. This just exists for shared code.
     }
@@ -77,8 +83,21 @@ internal sealed class ChatManager : IChatManager
                 _consoleHost.ExecuteCommand($"whisper \"{CommandParsing.Escape(str)}\"");
                 break;
 
+            // Starlight - Start - Collective Mind
+            case ChatSelectChannel.CollectiveMind:
+                _consoleHost.ExecuteCommand($"cmsay \"{CommandParsing.Escape(str)}\"");
+                break;
+            // Starlight - End
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(channel), channel, null);
         }
     }
+
+    // Starlight - Start - Collective Mind
+    public void UpdatePermissions()
+    {
+        PermissionsUpdated?.Invoke();
+    }
+    // Starlight - End
 }

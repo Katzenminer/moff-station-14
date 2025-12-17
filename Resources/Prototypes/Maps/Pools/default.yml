@@ -1,20 +1,24 @@
 - type: gameMapPool
   id: DefaultMapPool
   maps:
-  - Amber
   - Bagel
   - Box
-  - Convex
-  #- Core
   - Elkridge
   - Fland
-  #- Gate
-  - Loop
   - Marathon
-  - Meta
   - Oasis
-  - Omega
   - Packed
   - Plasma
   - Reach
-  #- Train
+  - Exo
+  - Snowball
+  # Moffstation - Start - Our Maps
+  - Amber
+  - Omega
+  - Meta
+  - Frezon
+ # - Waterjug
+  - Prime
+  - Barratry
+  - Scylla
+  # Moffstation - End

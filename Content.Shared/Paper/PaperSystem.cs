@@ -1,20 +1,30 @@
 using System.Linq;
+using Content.Shared._Moffstation.Paper.Components; // Moffstation
+using Content.Shared._Starlight.Paper; // Moffstation
 using Content.Shared.Administration.Logs;
 using Content.Shared.UserInterface;
 using Content.Shared.Database;
 using Content.Shared.Examine;
 using Content.Shared.Interaction;
+using Content.Shared.Random.Helpers;
 using Content.Shared.Popups;
 using Content.Shared.Tag;
+using Content.Shared.Verbs; // Moffstation
 using Robust.Shared.Player;
 using Robust.Shared.Audio.Systems;
 using static Content.Shared.Paper.PaperComponent;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
 
 namespace Content.Shared.Paper;
 
 public sealed class PaperSystem : EntitySystem
 {
+    private static readonly Color SignatureColor = Color.FromHex("#333333");    // Moffstation - Signature color
+
     [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;
+    [Dependency] private readonly IPrototypeManager _protoMan = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedInteractionSystem _interaction = default!;
     [Dependency] private readonly SharedPopupSystem _popupSystem = default!;
@@ -22,6 +32,11 @@ public sealed class PaperSystem : EntitySystem
     [Dependency] private readonly SharedUserInterfaceSystem _uiSystem = default!;
     [Dependency] private readonly MetaDataSystem _metaSystem = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
+
+    private static readonly ProtoId<TagPrototype> WriteIgnoreStampsTag = "WriteIgnoreStamps";
+    private static readonly ProtoId<TagPrototype> WriteTag = "Write";
+
+    private EntityQuery<PaperComponent> _paperQuery;
 
     public override void Initialize()
     {
@@ -34,7 +49,13 @@ public sealed class PaperSystem : EntitySystem
         SubscribeLocalEvent<PaperComponent, InteractUsingEvent>(OnInteractUsing);
         SubscribeLocalEvent<PaperComponent, PaperInputTextMessage>(OnInputTextMessage);
 
+        SubscribeLocalEvent<RandomPaperContentComponent, MapInitEvent>(OnRandomPaperContentMapInit);
+
         SubscribeLocalEvent<ActivateOnPaperOpenedComponent, PaperWriteEvent>(OnPaperWrite);
+
+        SubscribeLocalEvent<PaperComponent, GetVerbsEvent<AlternativeVerb>>(AddSignVerb); // Umbra - Signing alt verb event listener.
+
+        _paperQuery = GetEntityQuery<PaperComponent>();
     }
 
     private void OnMapInit(Entity<PaperComponent> entity, ref MapInitEvent args)
@@ -100,15 +121,15 @@ public sealed class PaperSystem : EntitySystem
     private void OnInteractUsing(Entity<PaperComponent> entity, ref InteractUsingEvent args)
     {
         // only allow editing if there are no stamps or when using a cyberpen
-        var editable = entity.Comp.StampedBy.Count == 0 || _tagSystem.HasTag(args.Used, "WriteIgnoreStamps");
-        if (_tagSystem.HasTag(args.Used, "Write"))
+        var editable = entity.Comp.StampedBy.Count == 0 || _tagSystem.HasTag(args.Used, WriteIgnoreStampsTag);
+        if (_tagSystem.HasTag(args.Used, WriteTag))
         {
             if (editable)
             {
                 if (entity.Comp.EditingDisabled)
                 {
                     var paperEditingDisabledMessage = Loc.GetString("paper-tamper-proof-modified-message");
-                    _popupSystem.PopupEntity(paperEditingDisabledMessage, entity, args.User);
+                    _popupSystem.PopupClient(paperEditingDisabledMessage, entity, args.User);
 
                     args.Handled = true;
                     return;
@@ -199,6 +220,30 @@ public sealed class PaperSystem : EntitySystem
         UpdateUserInterface(entity);
     }
 
+    private void OnRandomPaperContentMapInit(Entity<RandomPaperContentComponent> ent, ref MapInitEvent args)
+    {
+        if (!_paperQuery.TryComp(ent, out var paperComp))
+        {
+            Log.Warning($"{ToPrettyString(ent)} has a {nameof(RandomPaperContentComponent)} but no {nameof(PaperComponent)}!");
+            RemCompDeferred(ent, ent.Comp);
+            return;
+        }
+        var dataset = _protoMan.Index(ent.Comp.Dataset);
+        // Intentionally not using the Pick overload that directly takes a LocalizedDataset,
+        // because we want to get multiple attributes from the same pick.
+        var pick = _random.Pick(dataset.Values);
+
+        // Name
+        _metaSystem.SetEntityName(ent, Loc.GetString(pick));
+        // Description
+        _metaSystem.SetEntityDescription(ent, Loc.GetString($"{pick}.desc"));
+        // Content
+        SetContent((ent, paperComp), Loc.GetString($"{pick}.content"));
+
+        // Our work here is done
+        RemCompDeferred(ent, ent.Comp);
+    }
+
     private void OnPaperWrite(Entity<ActivateOnPaperOpenedComponent> entity, ref PaperWriteEvent args)
     {
         _interaction.UseInHandInteraction(args.User, entity);
@@ -209,6 +254,9 @@ public sealed class PaperSystem : EntitySystem
     /// </summary>
     public bool TryStamp(Entity<PaperComponent> entity, StampDisplayInfo stampInfo, string spriteStampState)
     {
+        if (!entity.Comp.StampingEnabled) // Moffstation
+            return false;
+
         if (!entity.Comp.StampedBy.Contains(stampInfo))
         {
             entity.Comp.StampedBy.Add(stampInfo);
@@ -223,6 +271,82 @@ public sealed class PaperSystem : EntitySystem
         }
         return true;
     }
+
+    // Umbra - Begin - Paper signing
+    // Send paper signing alt verb to the client if applicable.
+    // Based on LockSystem.cs for alt-click behavior.
+    private void AddSignVerb(Entity<PaperComponent> ent, ref GetVerbsEvent<AlternativeVerb> args)
+    {
+        if (!args.CanAccess || !args.CanInteract)
+            return;
+
+        // Sanity check
+        if (ent.Owner != args.Target)
+            return;
+
+        // Pens have a `Write` tag.
+        if (args.Using is not { } item|| !_tagSystem.HasTag(item, WriteTag))
+            return;
+
+        // If theres a fake signature available, get it
+        TryComp<ForgeSignatureComponent>(item, out var fakeSignatureComp);
+
+        var user = args.User;
+
+        AlternativeVerb verb = new()
+        {
+            Act = () => TrySign(ent, user, fakeSignatureComp),
+            Text = Loc.GetString("paper-component-verb-sign"),
+            // Icon = Don't have an icon yet. Todo for later.
+        };
+        args.Verbs.Add(verb);
+    }
+
+    // Umbra: Actual signature code.
+    private bool TrySign(Entity<PaperComponent> ent, EntityUid signer, ForgeSignatureComponent? signatureComp)
+    {
+        var signature = signatureComp?.Signature ?? Name(signer);
+
+        // Generate display information.
+        var info = new StampDisplayInfo
+        {
+            StampedName = signature,
+            StampedColor = SignatureColor,
+            Type = StampType.Signature,
+        };
+
+        // Try stamp with the info, return false if failed.
+        if (!TryStamp(ent, info, "paper_stamp-generic"))
+            return false;
+
+        // Signing successful, popup time.
+
+        _popupSystem.PopupPredicted(
+            Loc.GetString(
+                "paper-component-action-signed-self",
+                ("target", ent)
+            ),
+            Loc.GetString(
+                "paper-component-action-signed-other",
+                ("user", signer),
+                ("target", ent)
+            ),
+            signer,
+            signer
+        );
+
+        _audio.PlayPvs(ent.Comp.Sound, ent);
+
+        _adminLogger.Add(LogType.Verb, LogImpact.Low, $"{ToPrettyString(signer):player} has signed {ToPrettyString(ent):paper}.");
+
+        UpdateUserInterface(ent);
+        // Starlight - Start - Gamerule signing
+        var eve = new PaperSignedEvent(signer);
+        RaiseLocalEvent(ent, ref eve);
+        // Starlight - End
+        return true;
+    }
+    // Umbra - End
 
     /// <summary>
     ///     Copy any stamp information from one piece of paper to another.
@@ -243,6 +367,12 @@ public sealed class PaperSystem : EntitySystem
         }
     }
 
+    public void SetContent(EntityUid entity, string content)
+    {
+        if (!TryComp<PaperComponent>(entity, out var paper))
+            return;
+        SetContent((entity, paper), content);
+    }
 
     public void SetContent(Entity<PaperComponent> entity, string content)
     {

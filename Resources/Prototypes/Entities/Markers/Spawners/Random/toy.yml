@@ -6,8 +6,8 @@
     - type: Sprite
       layers:
         - state: red
-        - sprite: Objects/Fun/toys.rsi
-          state: plushie_h
+        - sprite: Objects/Fun/Plushies/bee.rsi
+          state: icon
     - type: RandomSpawner
       rarePrototypes:
         - FoamBlade
@@ -34,6 +34,7 @@
         - ToyMouse
         - PlushieDiona
         - PlushieArachind
+        - PlushieBorg # MOFFSTATION - adds borg plushie
       chance: 0.5
       offset: 0.2
 
@@ -52,14 +53,14 @@
         - ToyAi
         - ToyNuke
         - ToyFigurinePassenger
-        - ToyGriffin
+        - ToyFigurineGriffin
         - ToyHonk
         - ToyIan
         - ToyMarauder
         - ToyMauler
         - ToyGygax
         - ToyOdysseus
-        - ToyOwlman
+        - ToyFigurineOwlman
         - ToyDeathRipley
         - ToyPhazon
         - ToyFireRipley
@@ -67,8 +68,9 @@
         - ToyRipley
         - ToySeraph
         - ToyDurand
-        - ToySkeleton
+        - ToyFigurineSkeleton
         - MysteryFigureBox
+        - MysteryFigureBoxMoff # Moffstation - Adds moffstation themed figurines
       chance: 0.5
       offset: 0.2
 
@@ -86,6 +88,7 @@
       rarePrototypes:
       - ToyFigurineNukieElite
       - ToyFigurineNukieCommander
+      - MoffstationFigureSpawner # Moffstation - Saving us the hassle of keeping multiple lists up to date, we'll now just spawn the figurine spawner, and let it do the work
       rareChance: 0.05
       prototypes:
       - ToyFigurinePassenger
@@ -101,7 +104,7 @@
       - ToyFigurineLawyer
       - ToyFigurineCargoTech
       - ToyFigurineSalvage
-      - ToyFigurineQuartermaster   
+      - ToyFigurineQuartermaster
       - ToyFigurineChiefEngineer
       - ToyFigurineAtmosTech
       - ToyFigurineEngineer
@@ -124,9 +127,9 @@
       - ToyFigurineSlime
       - ToyFigurineGreytider
       - ToyFigurineWizard
-      - ToyGriffin
-      - ToyOwlman
-      - ToySkeleton
+      - ToyFigurineGriffin
+      - ToyFigurineOwlman
+      - ToyFigurineSkeleton
       - ToyFigurineQueen
       - ToyFigurineSpaceDragon
       - ToyFigurineRatKing

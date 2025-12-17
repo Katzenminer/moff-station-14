@@ -3,10 +3,12 @@
   name: job-name-chemist
   description: job-description-chemist
   playTimeTracker: JobChemist
-  requirements:
-    - !type:DepartmentTimeRequirement
-      department: Medical
-      time: 14400 #4 hrs
+  # Moffstation - Start - Change role timers
+  #requirements:
+  #  - !type:DepartmentTimeRequirement
+  #    department: Medical
+  #    time: 5h
+  # Moffstation - End
   startingGear: ChemistGear
   icon: "JobIconChemist"
   supervisors: job-supervisors-cmo
@@ -18,11 +20,21 @@
 - type: startingGear
   id: ChemistGear
   equipment:
-    id: ChemistryPDA
+  # id: ChemistryPDA # Moffstation - PDA loadouts
     ears: ClothingHeadsetMedical
     belt: ChemBag
     pocket1: HandLabeler
-    eyes: ClothingEyesGlassesChemical
+  # eyes: ClothingEyesGlassesChemical # Moffstation - Eyepatches!
   #storage:
     #back:
     #- Stuff
+
+- type: chameleonOutfit
+  id: ChemistChameleonOutfit
+  job: Chemist
+  equipment:
+    head: ClothingHeadHatBeretMedic
+    mask: ClothingMaskSterile
+    neck: ClothingNeckStethoscope
+    outerClothing: ClothingOuterCoatLabChem
+    gloves: ClothingHandsGlovesLatex

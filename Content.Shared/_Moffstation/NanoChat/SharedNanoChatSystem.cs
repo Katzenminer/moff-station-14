@@ -57,28 +57,6 @@ public abstract class SharedNanoChatSystem : EntitySystem
     }
 
     /// <summary>
-    ///     Gets the recipients dictionary from a card.
-    /// </summary>
-    public IReadOnlyDictionary<uint, NanoChatRecipient> GetRecipients(Entity<NanoChatCardComponent?> card)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return new Dictionary<uint, NanoChatRecipient>();
-
-        return card.Comp.Recipients;
-    }
-
-    /// <summary>
-    ///     Gets the messages dictionary from a card.
-    /// </summary>
-    public IReadOnlyDictionary<uint, List<NanoChatMessage>> GetMessages(Entity<NanoChatCardComponent?> card)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return new Dictionary<uint, List<NanoChatMessage>>();
-
-        return card.Comp.Messages;
-    }
-
-    /// <summary>
     ///     Sets a specific recipient in the card.
     /// </summary>
     public void SetRecipient(Entity<NanoChatCardComponent?> card, uint number, NanoChatRecipient recipient)
@@ -87,47 +65,6 @@ public abstract class SharedNanoChatSystem : EntitySystem
             return;
 
         card.Comp.Recipients[number] = recipient;
-        Dirty(card);
-    }
-
-    /// <summary>
-    ///     Gets a specific recipient from the card.
-    /// </summary>
-    public NanoChatRecipient? GetRecipient(Entity<NanoChatCardComponent?> card, uint number)
-    {
-        if (!Resolve(card, ref card.Comp) || !card.Comp.Recipients.TryGetValue(number, out var recipient))
-            return null;
-
-        return recipient;
-    }
-
-    /// <summary>
-    ///     Gets all messages for a specific recipient.
-    /// </summary>
-    public List<NanoChatMessage>? GetMessagesForRecipient(Entity<NanoChatCardComponent?> card, uint recipientNumber)
-    {
-        if (!Resolve(card, ref card.Comp) || !card.Comp.Messages.TryGetValue(recipientNumber, out var messages))
-            return null;
-
-        return new List<NanoChatMessage>(messages);
-    }
-
-    /// <summary>
-    ///     Adds a message to a recipient's conversation.
-    /// </summary>
-    public void AddMessage(Entity<NanoChatCardComponent?> card, uint recipientNumber, NanoChatMessage message)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return;
-
-        if (!card.Comp.Messages.TryGetValue(recipientNumber, out var messages))
-        {
-            messages = new List<NanoChatMessage>();
-            card.Comp.Messages[recipientNumber] = messages;
-        }
-
-        messages.Add(message);
-        card.Comp.LastMessageTime = _timing.CurTime;
         Dirty(card);
     }
 
@@ -201,17 +138,6 @@ public abstract class SharedNanoChatSystem : EntitySystem
     }
 
     /// <summary>
-    ///     Gets the time of the last message.
-    /// </summary>
-    public TimeSpan? GetLastMessageTime(Entity<NanoChatCardComponent?> card)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return null;
-
-        return card.Comp.LastMessageTime;
-    }
-
-    /// <summary>
     ///     Gets the time of the last notification.
     /// </summary>
     public TimeSpan? GetLastNotificationTime(Entity<NanoChatCardComponent?> card)
@@ -243,76 +169,6 @@ public abstract class SharedNanoChatSystem : EntitySystem
             return false;
 
         return recipient.HasUnread;
-    }
-
-    /// <summary>
-    ///     Clears all messages and recipients from the card.
-    /// </summary>
-    public void Clear(Entity<NanoChatCardComponent?> card)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return;
-
-        card.Comp.Messages.Clear();
-        card.Comp.Recipients.Clear();
-        card.Comp.CurrentChat = null;
-        Dirty(card);
-    }
-
-    /// <summary>
-    ///     Deletes a chat conversation with a recipient from the card.
-    ///     Optionally keeps message history while removing from active chats.
-    /// </summary>
-    /// <returns>True if the chat was deleted successfully</returns>
-    public bool TryDeleteChat(Entity<NanoChatCardComponent?> card, uint recipientNumber, bool keepMessages = false)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return false;
-
-        // Remove from recipients list
-        var removed = card.Comp.Recipients.Remove(recipientNumber);
-
-        // Clear messages if requested
-        if (!keepMessages)
-            card.Comp.Messages.Remove(recipientNumber);
-
-        // Clear current chat if we just deleted it
-        if (card.Comp.CurrentChat == recipientNumber)
-            card.Comp.CurrentChat = null;
-
-        if (removed)
-            Dirty(card);
-
-        return removed;
-    }
-
-    /// <summary>
-    ///     Ensures a recipient exists in the card's contacts and message lists.
-    ///     If the recipient doesn't exist, they will be added with the provided info.
-    /// </summary>
-    /// <returns>True if the recipient was added or already existed</returns>
-    public bool EnsureRecipientExists(Entity<NanoChatCardComponent?> card,
-        uint recipientNumber,
-        NanoChatRecipient? recipientInfo = null)
-    {
-        if (!Resolve(card, ref card.Comp))
-            return false;
-
-        if (!card.Comp.Recipients.ContainsKey(recipientNumber))
-        {
-            // Only add if we have recipient info
-            if (recipientInfo == null)
-                return false;
-
-            card.Comp.Recipients[recipientNumber] = recipientInfo.Value;
-        }
-
-        // Ensure message list exists for this recipient
-        if (!card.Comp.Messages.ContainsKey(recipientNumber))
-            card.Comp.Messages[recipientNumber] = new List<NanoChatMessage>();
-
-        Dirty(card);
-        return true;
     }
 
     #endregion

@@ -11,6 +11,7 @@ using Content.Shared.Roles;
 using System.Diagnostics.CodeAnalysis;
 using Content.Server.Clothing.Systems;
 using Content.Server.Implants;
+using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 using Content.Shared.Implants;
 using Content.Shared.Inventory;
 using Content.Shared.Lock;
@@ -110,24 +111,67 @@ namespace Content.Server.Access.Systems
                 TryComp<NanoChatCardComponent>(uid, out var agentNanoChat))
             {
                 // First clear existing data
-                _nanoChat.Clear((uid, agentNanoChat));
+                Entity<NanoChatCardComponent?> card3 = (uid, agentNanoChat);
+                if (!_nanoChat.Resolve(card3, ref card3.Comp))
+                {
+                }
+                else
+                {
+                    card3.Comp.Messages.Clear();
+                    card3.Comp.Recipients.Clear();
+                    card3.Comp.CurrentChat = null;
+                    _nanoChat.Dirty(card3);
+                }
 
                 // Copy the number
                 if (_nanoChat.GetNumber((args.Target.Value, targetNanoChat)) is { } number)
                     _nanoChat.SetNumber((uid, agentNanoChat), number);
 
                 // Copy all recipients and their messages
-                foreach (var (recipientNumber, recipient) in _nanoChat.GetRecipients((args.Target.Value, targetNanoChat)))
+                Entity<NanoChatCardComponent?> card2 = (args.Target.Value, targetNanoChat);
+                IReadOnlyDictionary<uint, NanoChatRecipient> ret1;
+                if (!_nanoChat.Resolve(card2, ref card2.Comp))
+                    ret1 = new Dictionary<uint, NanoChatRecipient>();
+                else
+                {
+                    ret1 = card2.Comp.Recipients;
+                }
+
+                foreach (var (recipientNumber, recipient) in ret1)
                 {
                     _nanoChat.SetRecipient((uid, agentNanoChat), recipientNumber, recipient);
 
-                    if (_nanoChat.GetMessagesForRecipient((args.Target.Value, targetNanoChat), recipientNumber) is not
+                    Entity<NanoChatCardComponent?> card = (args.Target.Value, targetNanoChat);
+                    List<NanoChatMessage>? ret;
+                    if (!_nanoChat.Resolve(card, ref card.Comp) || !card.Comp.Messages.TryGetValue(recipientNumber, out var messages1))
+                        ret = null;
+                    else
+                    {
+                        ret = new List<NanoChatMessage>(messages1);
+                    }
+
+                    if (ret is not
                         { } messages)
                         continue;
 
                     foreach (var message in messages)
                     {
-                        _nanoChat.AddMessage((uid, agentNanoChat), recipientNumber, message);
+                        Entity<NanoChatCardComponent?> card1 = (uid, agentNanoChat);
+                        if (!_nanoChat.Resolve(card1, ref card1.Comp))
+                        {
+                        }
+                        else
+                        {
+                            if (!card1.Comp.Messages.TryGetValue(recipientNumber, out var messages2))
+                            {
+                                messages2 = new List<NanoChatMessage>();
+                                card1.Comp.Messages[recipientNumber] = messages2;
+                            }
+
+                            messages2.Add(message);
+                            card1.Comp.LastMessageTime = _nanoChat._timing.CurTime;
+                            _nanoChat.Dirty(card1);
+                        }
                     }
                 }
             }

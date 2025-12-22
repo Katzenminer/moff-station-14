@@ -6,16 +6,20 @@ using Content.Shared.Database;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Labels.EntitySystems;
 using Content.Shared.Paper;
-using Content.Shared._CD.NanoChat; // CD
+using Content.Shared._Moffstation.NanoChat; // CD
 using Content.Shared.Popups;
+using Content.Shared.Audio;
+using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
 using System.Text;
+using Robust.Shared.Random;
 
 namespace Content.Server.CartridgeLoader.Cartridges;
 
-public sealed partial class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
+public sealed class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
 {
+    [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly CartridgeLoaderSystem _cartridge = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;
@@ -30,10 +34,13 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem // CD - Made 
     {
         base.Initialize();
 
-        InitializeNanoChat(); // CD
+        SubscribeLocalEvent<NanoChatRecipientUpdatedEvent>(OnRecipientUpdated); // Moff Nanochat Rewrite
+        SubscribeLocalEvent<NanoChatMessageReceivedEvent>(OnMessageReceived); // Moff Nanochat Rewrite
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeUiReadyEvent>(OnUiReady);
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeAfterInteractEvent>(AfterInteract);
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeMessageEvent>(OnMessage);
+        SubscribeLocalEvent<NanoChatRecipientUpdatedEvent>(OnRecipientUpdated);
+        SubscribeLocalEvent<NanoChatMessageReceivedEvent>(OnMessageReceived);
     }
 
     /// <summary>
@@ -135,5 +142,73 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem // CD - Made 
     {
         var state = new LogProbeUiState(ent.Comp.EntityName, ent.Comp.PulledAccessLogs, ent.Comp.ScannedNanoChatData); // CD - NanoChat support
         _cartridge.UpdateCartridgeUiState(loaderUid, state);
+    }
+
+
+    private void OnRecipientUpdated(ref NanoChatRecipientUpdatedEvent args)
+    {
+        var query = EntityQueryEnumerator<LogProbeCartridgeComponent, CartridgeComponent>();
+        while (query.MoveNext(out var uid, out var probe, out var cartridge))
+        {
+            if (probe.ScannedNanoChatData == null || GetEntity(probe.ScannedNanoChatData.Value.Card) != args.CardUid)
+                continue;
+
+            if (!TryComp<NanoChatCardComponent>(args.CardUid, out var card))
+                continue;
+
+            probe.ScannedNanoChatData = new NanoChatData(
+                new Dictionary<uint, NanoChatRecipient>(card.Recipients),
+                probe.ScannedNanoChatData.Value.Messages,
+                card.Number,
+                GetNetEntity(args.CardUid));
+
+            if (cartridge.LoaderUid != null)
+                UpdateUiState((uid, probe), cartridge.LoaderUid.Value);
+        }
+    }
+
+    private void OnMessageReceived(ref NanoChatMessageReceivedEvent args)
+    {
+        var query = EntityQueryEnumerator<LogProbeCartridgeComponent, CartridgeComponent>();
+        while (query.MoveNext(out var uid, out var probe, out var cartridge))
+        {
+            if (probe.ScannedNanoChatData == null || GetEntity(probe.ScannedNanoChatData.Value.Card) != args.CardUid)
+                continue;
+
+            if (!TryComp<NanoChatCardComponent>(args.CardUid, out var card))
+                continue;
+
+            probe.ScannedNanoChatData = new NanoChatData(
+                probe.ScannedNanoChatData.Value.Recipients,
+                new Dictionary<uint, List<NanoChatMessage>>(card.Messages),
+                card.Number,
+                GetNetEntity(args.CardUid));
+
+            if (cartridge.LoaderUid != null)
+                UpdateUiState((uid, probe), cartridge.LoaderUid.Value);
+        }
+    }
+
+    private void ScanNanoChatCard(Entity<LogProbeCartridgeComponent> ent,
+        CartridgeAfterInteractEvent args,
+        EntityUid target,
+        NanoChatCardComponent card)
+    {
+        _audio.PlayEntity(ent.Comp.SoundScan,
+            args.InteractEvent.User,
+            target,
+            AudioHelpers.WithVariation(0.25f, _random));
+        _popup.PopupCursor(Loc.GetString("log-probe-scan-nanochat", ("card", target)), args.InteractEvent.User);
+
+        ent.Comp.PulledAccessLogs.Clear();
+
+        ent.Comp.ScannedNanoChatData = new NanoChatData(
+            new Dictionary<uint, NanoChatRecipient>(card.Recipients),
+            new Dictionary<uint, List<NanoChatMessage>>(card.Messages),
+            card.Number,
+            GetNetEntity(target)
+        );
+
+        UpdateUiState(ent, args.Loader);
     }
 }

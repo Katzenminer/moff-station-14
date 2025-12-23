@@ -21,7 +21,7 @@ public sealed class NanoChatSystem : SharedNanoChatSystem
     [Dependency] private readonly IAdminLogManager _adminLogger = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly NameIdentifierSystem _name = default!;
-
+    [Dependency] private readonly SharedNanoChatServerSystem _nanoChatServer = default!;
     private readonly ProtoId<NameIdentifierGroupPrototype> _nameIdentifierGroup = "NanoChat";
 
     public override void Initialize()
@@ -45,7 +45,7 @@ public sealed class NanoChatSystem : SharedNanoChatSystem
         // Super lucky - erase all messages (10% chance)
         if (randomPick <= 0.10f)
         {
-            ent.Comp.Messages.Clear();
+            _nanoChatServer.ClearCardFromServer(ent.AsNullable());
             // TODO: these shouldn't be shown at the same time as the popups from IdCardSystem
             // _popup.PopupEntity(Loc.GetString("nanochat-card-microwave-erased", ("card", ent)),
             //     ent,
@@ -71,33 +71,37 @@ public sealed class NanoChatSystem : SharedNanoChatSystem
         Dirty(ent);
     }
 
-    private void ScrambleMessages(NanoChatCardComponent component)
+    private void ScrambleMessages(Entity<NanoChatCardComponent> component)
     {
-        foreach (var (recipientNumber, messages) in component.Messages)
+        var messageDict = _nanoChatServer.TryGetMessages(component.AsNullable());
+        if (messageDict != null)
         {
-            for (var i = 0; i < messages.Count; i++)
+            foreach (var (recipientNumber, messages) in messageDict)
             {
-                // 50% chance to scramble each message
-                if (!_random.Prob(0.5f))
-                    continue;
+                for (var i = 0; i < messages.Count; i++)
+                {
+                    // 50% chance to scramble each message
+                    if (!_random.Prob(0.5f))
+                        continue;
 
-                var message = messages[i];
-                message.Content = ScrambleText(message.Content);
-                messages[i] = message;
-            }
+                    var message = messages[i];
+                    message.Content = ScrambleText(message.Content);
+                    messages[i] = message;
+                }
 
-            // 25% chance to reassign the conversation to a random recipient
-            if (_random.Prob(0.25f) && component.Recipients.Count > 0)
-            {
-                var newRecipient = _random.Pick(component.Recipients.Keys.ToList());
-                if (newRecipient == recipientNumber)
-                    continue;
+                // 25% chance to reassign the conversation to a random recipient
+                if (_random.Prob(0.25f) && messageDict.Count > 0)
+                {
+                    var newRecipient = _random.Pick(messageDict.Keys.ToList());
+                    if (newRecipient == recipientNumber)
+                        continue;
 
-                if (!component.Messages.ContainsKey(newRecipient))
-                    component.Messages[newRecipient] = new List<NanoChatMessage>();
+                    if (!messageDict.ContainsKey(newRecipient))
+                        messageDict[newRecipient] = new List<NanoChatMessage>();
 
-                component.Messages[newRecipient].AddRange(messages);
-                component.Messages[recipientNumber].Clear();
+                    messageDict[newRecipient].AddRange(messages);
+                    messageDict[recipientNumber].Clear();
+                }
             }
         }
     }

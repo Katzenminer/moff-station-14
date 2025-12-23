@@ -10,7 +10,7 @@ namespace Content.Shared._Moffstation.NanoChat;
 public abstract class SharedNanoChatSystem : EntitySystem
 {
     [Dependency] private readonly IGameTiming _timing = default!;
-
+    [Dependency] private readonly SharedNanoChatServerSystem _nanoChatServer = default!;
     public override void Initialize()
     {
         base.Initialize();
@@ -61,10 +61,9 @@ public abstract class SharedNanoChatSystem : EntitySystem
     /// </summary>
     public void SetRecipient(Entity<NanoChatCardComponent?> card, uint number, NanoChatRecipient recipient)
     {
-        if (!Resolve(card, ref card.Comp))
+        var recipients = _nanoChatServer.TryGetRecipients(card);
+        if (!Resolve(card, ref card.Comp) && recipients != null && recipients.TryGetValue(number, out recipient))
             return;
-
-        card.Comp.Recipients[number] = recipient;
         Dirty(card);
     }
 
@@ -159,17 +158,28 @@ public abstract class SharedNanoChatSystem : EntitySystem
         card.Comp.LastNotificationTime = time;
         Dirty(card);
     }
-
+    /// <summary>
+    ///  Sets the time of the last message
+    /// </summary>
+    /// <param name="card"></param>
+    /// <param name="time"></param>
+    public void SetLastMessageTime(Entity<NanoChatCardComponent?> card, TimeSpan time)
+    {
+        if (!Resolve(card, ref card.Comp))
+            return;
+             card.Comp.LastMessageTime = time;
+             Dirty(card);
+         }
     /// <summary>
     ///     Gets if there are unread messages from a recipient.
     /// </summary>
     public bool HasUnreadMessages(Entity<NanoChatCardComponent?> card, uint recipientNumber)
     {
-        if (!Resolve(card, ref card.Comp) || !card.Comp.Recipients.TryGetValue(recipientNumber, out var recipient))
+        var recipients = _nanoChatServer.TryGetRecipients(card);
+        if (!Resolve(card, ref card.Comp) || recipients == null || !recipients.TryGetValue(recipientNumber, out var recipient))
             return false;
 
         return recipient.HasUnread;
     }
-
     #endregion
 }

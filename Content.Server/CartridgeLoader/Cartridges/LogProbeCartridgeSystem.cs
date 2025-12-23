@@ -13,6 +13,7 @@ using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
 using System.Text;
+using Robust.Shared.Audio;
 using Robust.Shared.Random;
 
 namespace Content.Server.CartridgeLoader.Cartridges;
@@ -29,6 +30,7 @@ public sealed class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly PaperSystem _paper = default!;
+    [Dependency] private readonly SharedNanoChatServerSystem _nanoChatServer = default!;
 
     public override void Initialize()
     {
@@ -157,7 +159,7 @@ public sealed class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
                 continue;
 
             probe.ScannedNanoChatData = new NanoChatData(
-                new Dictionary<uint, NanoChatRecipient>(card.Recipients),
+                new Dictionary<uint, NanoChatRecipient>(),
                 probe.ScannedNanoChatData.Value.Messages,
                 card.Number,
                 GetNetEntity(args.CardUid));
@@ -177,10 +179,16 @@ public sealed class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
 
             if (!TryComp<NanoChatCardComponent>(args.CardUid, out var card))
                 continue;
-
+            var wrappedCard = new Entity<NanoChatCardComponent?>(args.CardUid, card);
+            var messagesNullable = _nanoChatServer.TryGetMessages(wrappedCard);
+            var messages = new Dictionary<uint, List<NanoChatMessage>>();
+            if (messagesNullable != null)
+            {
+                messages = messagesNullable;
+            }
             probe.ScannedNanoChatData = new NanoChatData(
                 probe.ScannedNanoChatData.Value.Recipients,
-                new Dictionary<uint, List<NanoChatMessage>>(card.Messages),
+                messages,
                 card.Number,
                 GetNetEntity(args.CardUid));
 
@@ -197,14 +205,19 @@ public sealed class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
         _audio.PlayEntity(ent.Comp.SoundScan,
             args.InteractEvent.User,
             target,
-            AudioHelpers.WithVariation(0.25f, _random));
+             AudioParams.Default.WithVariation(0.25f));
         _popup.PopupCursor(Loc.GetString("log-probe-scan-nanochat", ("card", target)), args.InteractEvent.User);
-
+        var wrappedCard = new Entity<NanoChatCardComponent?>(target, card);
         ent.Comp.PulledAccessLogs.Clear();
-
+        var recipients = _nanoChatServer.TryGetRecipients(wrappedCard);
+        var messages = _nanoChatServer.TryGetMessages(wrappedCard);
+        if (recipients == null)
+            recipients = new Dictionary<uint, NanoChatRecipient>();
+        if (messages == null)
+            messages = new Dictionary<uint, List<NanoChatMessage>>();
         ent.Comp.ScannedNanoChatData = new NanoChatData(
-            new Dictionary<uint, NanoChatRecipient>(card.Recipients),
-            new Dictionary<uint, List<NanoChatMessage>>(card.Messages),
+            recipients,
+            messages,
             card.Number,
             GetNetEntity(target)
         );

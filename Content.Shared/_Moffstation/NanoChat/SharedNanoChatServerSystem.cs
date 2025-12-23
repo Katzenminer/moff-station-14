@@ -23,7 +23,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
         return null;
     }
 
-    public IReadOnlyDictionary<uint, List<NanoChatMessage>>? TryGetMessages(Entity<NanoChatCardComponent?> card)
+    public Dictionary<uint, List<NanoChatMessage>>? TryGetMessages(Entity<NanoChatCardComponent?> card)
     {
         var server = TryGetServer();
         return card.Comp != null && server != null && card.Comp.Number.HasValue
@@ -34,7 +34,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// <summary>
     ///     Gets the recipients dictionary for a card.
     /// </summary>
-    public IReadOnlyDictionary<uint, NanoChatRecipient>? TryGetRecipients(Entity<NanoChatCardComponent?> card)
+    public Dictionary<uint, NanoChatRecipient>? TryGetRecipients(Entity<NanoChatCardComponent?> card)
     {
         var server = TryGetServer();
         return server != null && card.Comp is { Number: not null }
@@ -49,7 +49,6 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     {
         return card.Comp?.LastMessageTime;
     }
-
     /// <summary>
     ///     Gets a specific recipient for a card.
     /// </summary>
@@ -118,7 +117,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
         {
             server.Value.Comp.AllMessages[card.Comp.Number.Value][recipientNumber].Clear();
         }
-
+        Dirty(server.Value);
         return true;
     }
 

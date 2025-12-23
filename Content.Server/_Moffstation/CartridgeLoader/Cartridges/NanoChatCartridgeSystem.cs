@@ -26,6 +26,7 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
     [Dependency] private readonly SharedNanoChatSystem _nanoChat = default!;
     [Dependency] private readonly StationSystem _station = default!;
     [Dependency] private readonly UserInterfaceSystem _ui = default!;
+    [Dependency] private readonly SharedNanoChatServerSystem _nanoChatServer = default!;
 
     // Messages in notifications get cut off after this point
     // no point in storing it on the comp
@@ -165,13 +166,14 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
         _nanoChat.SetCurrentChat((card, card.Comp), msg.RecipientNumber);
 
         // Clear unread flag when selecting chat
-        Entity<NanoChatCardComponent?> card1 = (card, card.Comp);
+        Entity<NanoChatCardComponent?> wrappedCard = (card, card.Comp);
         NanoChatRecipient? ret;
-        if (!_nanoChat.Resolve(card1, ref card1.Comp) || !card1.Comp.Recipients.TryGetValue(msg.RecipientNumber.Value, out var recipient1))
+
+        if (!Resolve(wrappedCard, ref wrappedCard.Comp) || !_nanoChatServer.GetRecipient(wrappedCard, msg.RecipientNumber.Value).HasValue)
             ret = null;
         else
         {
-            ret = recipient1;
+            ret = _nanoChatServer.GetRecipient(wrappedCard, msg.RecipientNumber.Value);
         }
 
         if (ret is { } recipient)
@@ -199,31 +201,9 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
             return;
 
         // Delete chat but keep the messages
-        Entity<NanoChatCardComponent?> card1 = (card, card.Comp);
-        bool deleted;
-        if (!_nanoChat.Resolve(card1, ref card1.Comp))
-            deleted = false;
-        else
-        {
-            var removed = card1.Comp.Recipients.Remove(msg.RecipientNumber.Value);
+        Entity<NanoChatCardComponent?> wrappedCard = (card, card.Comp);
 
-            // Clear messages if requested
-            if (!true)
-                card1.Comp.Messages.Remove(msg.RecipientNumber.Value);
-
-            // Clear current chat if we just deleted it
-            if (card1.Comp.CurrentChat == msg.RecipientNumber.Value)
-                card1.Comp.CurrentChat = null;
-
-            if (removed) _nanoChat.Dirty(card1);
-
-            deleted = removed;
-        }
-
-        // Remove from recipients list
-
-        if (!deleted)
-            return;
+        _nanoChatServer.TryDeleteChat(wrappedCard, msg.RecipientNumber.Value, true);
 
         _adminLogger.Add(LogType.Action,
             LogImpact.Low,
@@ -258,9 +238,11 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
         if (msg.RecipientNumber == null || msg.Content == null || card.Comp.Number == null)
             return;
 
-        if (!EnsureRecipientExists(card, msg.RecipientNumber.Value))
-            return;
-
+        bool ret;
+        Entity<NanoChatCardComponent?> wrappedCardRecipient = (card, card.Comp);
+        NanoChatRecipient? recipientInfo = GetCardInfo(msg.RecipientNumber.Value);
+        _nanoChatServer.EnsureRecipientExists(wrappedCardRecipient, msg.RecipientNumber.Value, recipientInfo);
+        // Ensure message list exists for this recipient
         // Create and store message for sender
         var message = new NanoChatMessage(
             _timing.CurTime,
@@ -275,21 +257,15 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
         message = message with { DeliveryFailed = deliveryFailed };
 
         // Store message in sender's outbox under recipient's number
-        Entity<NanoChatCardComponent?> card1 = (card, card.Comp);
-        if (!_nanoChat.Resolve(card1, ref card1.Comp))
+        Entity<NanoChatCardComponent?> wrappedCardSender = (card, card.Comp);
+        if (!Resolve(wrappedCardSender, ref wrappedCardSender.Comp))
         {
         }
         else
         {
-            if (!card1.Comp.Messages.TryGetValue(msg.RecipientNumber.Value, out var messages))
-            {
-                messages = new List<NanoChatMessage>();
-                card1.Comp.Messages[msg.RecipientNumber.Value] = messages;
-            }
-
-            messages.Add(message);
-            card1.Comp.LastMessageTime = _nanoChat._timing.CurTime;
-            _nanoChat.Dirty(card1);
+            _nanoChatServer.AddMessageToServer(wrappedCardSender, msg.RecipientNumber.Value, message);
+            _nanoChat.SetLastNotificationTime(wrappedCardSender, _timing.CurTime);
+            Dirty(wrappedCardSender);
         }
 
         // Log message attempt
@@ -311,36 +287,6 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
         {
             DeliverMessageToRecipient(card, recipient, message);
         }
-    }
-
-    /// <summary>
-    ///     Ensures a recipient exists in the sender's contacts.
-    /// </summary>
-    /// <param name="card">The card to check contacts for</param>
-    /// <param name="recipientNumber">The recipient's number to check</param>
-    /// <returns>True if the recipient exists or was created successfully</returns>
-    private bool EnsureRecipientExists(Entity<NanoChatCardComponent> card, uint recipientNumber)
-    {
-        Entity<NanoChatCardComponent?> card1 = (card, card.Comp);
-        NanoChatRecipient? recipientInfo = GetCardInfo(recipientNumber);
-        if (!_nanoChat.Resolve(card1, ref card1.Comp))
-            return false;
-
-        if (!card1.Comp.Recipients.ContainsKey(recipientNumber))
-        {
-            // Only add if we have recipient info
-            if (recipientInfo == null)
-                return false;
-
-            card1.Comp.Recipients[recipientNumber] = recipientInfo.Value;
-        }
-
-        // Ensure message list exists for this recipient
-        if (!card1.Comp.Messages.ContainsKey(recipientNumber))
-            card1.Comp.Messages[recipientNumber] = new List<NanoChatMessage>();
-
-        _nanoChat.Dirty(card1);
-        return true;
     }
 
     /// <summary>
@@ -450,25 +396,29 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
             return;
 
         // Always try to get and add sender info to recipient's contacts
-        if (!EnsureRecipientExists(recipient, senderNumber.Value))
-            return;
+        bool ret;
+        Entity<NanoChatCardComponent?> wrappedCard = (recipient, recipient.Comp);
+        NanoChatRecipient? recipientInfo = GetCardInfo(senderNumber.Value);
+        if (!Resolve(wrappedCard, ref wrappedCard.Comp))
+            ret = false;
+        else
+        {
+            if (recipient.Comp.Number.HasValue)
+            {
+                _nanoChatServer.EnsureRecipientExists(wrappedCard, recipient.Comp.Number.Value, recipientInfo);
+            }
+        }
 
         Entity<NanoChatCardComponent?> card = (recipient, recipient.Comp);
         NanoChatMessage message1 = message with { DeliveryFailed = false };
-        if (!_nanoChat.Resolve(card, ref card.Comp))
+        if (!Resolve(card, ref card.Comp))
         {
         }
         else
         {
-            if (!card.Comp.Messages.TryGetValue(senderNumber.Value, out var messages))
-            {
-                messages = new List<NanoChatMessage>();
-                card.Comp.Messages[senderNumber.Value] = messages;
-            }
+            _nanoChatServer.AddMessageToServer(card, message1.SenderId, message1);
 
-            messages.Add(message1);
-            card.Comp.LastMessageTime = _nanoChat._timing.CurTime;
-            _nanoChat.Dirty(card);
+            Dirty(card);
         }
 
         var msgEv = new NanoChatMessageReceivedEvent(recipient, message);
@@ -487,11 +437,12 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
 
             // Get the stuff needed to determine whether the notification should go through
             if (TryComp<CartridgeComponent>(uid, out var cartridge) &&
-                cartridge.LoaderUid is {} pda &&
+                cartridge.LoaderUid is { } pda &&
                 TryComp<CartridgeLoaderComponent>(pda, out var loader) &&
                 GetCardEntity(pda, out var recipient))
             {
-                if (recipient.Comp.CurrentChat != args.Message.SenderId && loader.ActiveProgram != uid || !_ui.IsUiOpen(pda, PdaUiKey.Key))
+                if (recipient.Comp.CurrentChat != args.Message.SenderId && loader.ActiveProgram != uid ||
+                    !_ui.IsUiOpen(pda, PdaUiKey.Key))
                 {
                     HandleUnreadNotification(recipient, args.Message, pda);
                 }
@@ -502,16 +453,26 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
     /// <summary>
     ///     Handles message notifications and updates unread status.
     /// </summary>
-    private void HandleUnreadNotification(Entity<NanoChatCardComponent> recipient, NanoChatMessage message, EntityUid pda)
+    private void HandleUnreadNotification(Entity<NanoChatCardComponent> recipient,
+        NanoChatMessage message,
+        EntityUid pda)
     {
         // Get sender name from contacts or fall back to number
         Entity<NanoChatCardComponent?> card = (recipient, recipient.Comp);
         IReadOnlyDictionary<uint, NanoChatRecipient> recipients;
-        if (!_nanoChat.Resolve(card, ref card.Comp))
+        if (!Resolve(card, ref card.Comp))
             recipients = new Dictionary<uint, NanoChatRecipient>();
         else
         {
-            recipients = card.Comp.Recipients;
+            var recipientsNullable = _nanoChatServer.TryGetRecipients(card);
+            if (recipientsNullable != null)
+            {
+                recipients = recipientsNullable;
+            }
+            else
+            {
+                recipients = new Dictionary<uint, NanoChatRecipient>();
+            }
         }
 
         var senderName = recipients.TryGetValue(message.SenderId, out var existingRecipient)
@@ -519,7 +480,8 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
             : $"#{message.SenderId:D4}";
 
         // Checks if the cooldown since the last notification has been meet or if notifs are muted
-        if (_timing.CurTime > recipient.Comp.LastNotificationTime + TimeSpan.FromSeconds(recipient.Comp.NotificationCooldownTime) && !recipient.Comp.NotificationsMuted)
+        if (_timing.CurTime > recipient.Comp.LastNotificationTime +
+            TimeSpan.FromSeconds(recipient.Comp.NotificationCooldownTime) && !recipient.Comp.NotificationsMuted)
         {
             _nanoChat.SetLastNotificationTime(recipient.Owner, _timing.CurTime);
             _cartridge.SendNotification(pda,
@@ -618,11 +580,13 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
             var query = EntityQueryEnumerator<NanoChatCardComponent, IdCardComponent>();
             while (query.MoveNext(out var entityId, out var nanoChatCard, out var idCardComponent))
             {
-                if (nanoChatCard is { ListNumber: true, Number: { } nanoChatNumber } && idCardComponent.FullName is { } fullName && _station.GetOwningStation(entityId) == station)
+                if (nanoChatCard is { ListNumber: true, Number: { } nanoChatNumber } &&
+                    idCardComponent.FullName is { } fullName && _station.GetOwningStation(entityId) == station)
                 {
                     contacts.Add(new NanoChatRecipient(nanoChatNumber, fullName, idCardComponent.LocalizedJobTitle));
                 }
             }
+
             contacts.Sort((contactA, contactB) => string.CompareOrdinal(contactA.Name, contactB.Name));
         }
         else
@@ -640,13 +604,24 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
 
         if (ent.Comp.Card != null && TryComp<NanoChatCardComponent>(ent.Comp.Card, out var card))
         {
-            recipients = card.Recipients;
-            messages = card.Messages;
+            var wrappedCard = new Entity<NanoChatCardComponent?>(ent.Owner, card);
+            recipients = _nanoChatServer.TryGetRecipients(wrappedCard);
+            messages = _nanoChatServer.TryGetMessages(wrappedCard);
             currentChat = card.CurrentChat;
             ownNumber = card.Number ?? 0;
             maxRecipients = card.MaxRecipients;
             notificationsMuted = card.NotificationsMuted;
             listNumber = card.ListNumber;
+        }
+
+        if (recipients == null)
+        {
+            recipients = new Dictionary<uint, NanoChatRecipient>();
+        }
+
+        if (messages == null)
+        {
+            messages = new Dictionary<uint, List<NanoChatMessage>>();
         }
 
         var state = new NanoChatUiState(recipients,

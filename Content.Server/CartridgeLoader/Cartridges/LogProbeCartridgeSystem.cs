@@ -6,21 +6,18 @@ using Content.Shared.Database;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Labels.EntitySystems;
 using Content.Shared.Paper;
-using Content.Shared._Moffstation.NanoChat; // CD
+using Content.Shared._Moffstation.NanoChat;
 using Content.Shared.Popups;
-using Content.Shared.Audio;
 using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
 using System.Text;
 using Robust.Shared.Audio;
-using Robust.Shared.Random;
 
 namespace Content.Server.CartridgeLoader.Cartridges;
 
-public sealed class LogProbeCartridgeSystem : EntitySystem // CD - Made partial
+public sealed class LogProbeCartridgeSystem : EntitySystem
 {
-    [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly CartridgeLoaderSystem _cartridge = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;

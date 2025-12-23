@@ -1,31 +1,32 @@
 ﻿using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
+using Content.Shared.Station;
 
 namespace Content.Shared._Moffstation.NanoChat;
 
 public sealed class SharedNanoChatServerSystem : EntitySystem
 {
+    [Dependency] private readonly SharedStationSystem _station = default!;
     /// <summary>
-    /// Attemts to get the Main Server
+    /// Attempts to get the Main Server for the specified Card
     /// </summary>
     /// <returns>Returns Null if no server is declared as the main server or no servers exist</returns>
-    private Entity<NanoChatServerComponent>? TryGetServer()
+    private Entity<NanoChatServerComponent>? TryGetServer(EntityUid map)
     {
-        var servers = EntityQuery<NanoChatServerComponent>();
-        var test = EntityQueryEnumerator<NanoChatServerComponent>();
-        while (test.MoveNext(out var uid, out var comp))
+        // gets the main server for each map
+        var servers = EntityQueryEnumerator<NanoChatServerComponent>();
+        while (servers.MoveNext(out var serverUid, out var server))
         {
-            if (comp.IsMainServer)
+            if (server.IsMainServer && _station.GetOwningStation(serverUid) == _station.GetOwningStation(map))
             {
-                return new Entity<NanoChatServerComponent>(uid, comp);
+                return new Entity<NanoChatServerComponent>(serverUid, server);
             }
         }
-
         return null;
     }
 
     public Dictionary<uint, List<NanoChatMessage>>? TryGetMessages(Entity<NanoChatCardComponent?> card)
     {
-        var server = TryGetServer();
+        var server = TryGetServer(card);
         return card.Comp != null && server != null && card.Comp.Number.HasValue
             ? server.Value.Comp.AllMessages[card.Comp.Number.Value]
             : null;
@@ -36,7 +37,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// </summary>
     public Dictionary<uint, NanoChatRecipient>? TryGetRecipients(Entity<NanoChatCardComponent?> card)
     {
-        var server = TryGetServer();
+        var server = TryGetServer(card);
         return server != null && card.Comp is { Number: not null }
             ? server.Value.Comp.AllRecipients[card.Comp.Number.Value]
             : null;
@@ -54,7 +55,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// </summary>
     public NanoChatRecipient? GetRecipient(Entity<NanoChatCardComponent?> card, uint recipientNumber)
     {
-        var server = TryGetServer();
+        var server = TryGetServer(card);
         return server != null && card.Comp is { Number: not null }
             ? server.Value.Comp.AllRecipients[card.Comp.Number.Value][recipientNumber]
             : null;
@@ -65,7 +66,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// </summary>
     public List<NanoChatMessage>? TryGetMessagesForRecipient(Entity<NanoChatCardComponent?> card, uint recipientNumber)
     {
-        var server = TryGetServer();
+        var server = TryGetServer(card);
         return server != null && card.Comp is { Number: not null }
             ? server.Value.Comp.AllMessages[card.Comp.Number.Value][recipientNumber]
             : null;
@@ -76,7 +77,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// </summary>
     public void AddMessageToServer(Entity<NanoChatCardComponent?> card, uint recipientNumber, NanoChatMessage message)
     {
-        var server = TryGetServer();
+        var server = TryGetServer(card);
         if (server == null || card.Comp == null || !card.Comp.Number.HasValue)
             return;
         // If recpient doesnt have an entry in messages for this card add it
@@ -94,7 +95,7 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// </summary>
     public void ClearCardFromServer(Entity<NanoChatCardComponent?> card)
     {
-        var server = TryGetServer();
+        var server = TryGetServer(card);
         if (server == null || card.Comp == null || !card.Comp.Number.HasValue)
             return;
         server.Value.Comp.AllMessages[card.Comp.Number.Value].Clear();
@@ -109,8 +110,8 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
     /// <returns>True if the chat was deleted successfully</returns>
     public bool TryDeleteChat(Entity<NanoChatCardComponent?> card, uint recipientNumber, bool keepMessages = false)
     {
-        var server = TryGetServer();
-        if (server == null || card.Comp == null || !card.Comp.Number.HasValue)
+        var server = TryGetServer(card);
+        if (server == null || card.Comp is not { Number: not null })
             return false;
         server.Value.Comp.AllRecipients[card.Comp.Number.Value].Remove(recipientNumber);
         if (!keepMessages)
@@ -130,8 +131,8 @@ public sealed class SharedNanoChatServerSystem : EntitySystem
         uint recipientNumber,
         NanoChatRecipient? recipientInfo = null)
     {
-        var server = TryGetServer();
-        if (server.HasValue && recipientInfo.HasValue && card.Comp != null && card.Comp.Number.HasValue)
+        var server = TryGetServer(card);
+        if (server.HasValue && recipientInfo.HasValue && card.Comp is { Number: not null })
         {
             if (!server.Value.Comp.AllRecipients[card.Comp.Number.Value].ContainsKey(recipientNumber))
             {

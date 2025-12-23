@@ -32,9 +32,6 @@ public sealed class LogProbeCartridgeSystem : EntitySystem
     public override void Initialize()
     {
         base.Initialize();
-
-        SubscribeLocalEvent<NanoChatRecipientUpdatedEvent>(OnRecipientUpdated); // Moff Nanochat Rewrite
-        SubscribeLocalEvent<NanoChatMessageReceivedEvent>(OnMessageReceived); // Moff Nanochat Rewrite
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeUiReadyEvent>(OnUiReady);
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeAfterInteractEvent>(AfterInteract);
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeMessageEvent>(OnMessage);

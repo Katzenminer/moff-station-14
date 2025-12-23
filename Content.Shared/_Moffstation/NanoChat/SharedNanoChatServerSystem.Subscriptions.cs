@@ -4,9 +4,8 @@ using Content.Shared.Station;
 
 namespace Content.Shared._Moffstation.NanoChat;
 
-public sealed class SharedNanoChatServerSystemSubscriptions : EntitySystem
+public sealed partial class SharedNanoChatServerSystem
 {
-    [Dependency] private readonly SharedStationSystem _station = default!;
     public override void Initialize()
     {
         base.Initialize();

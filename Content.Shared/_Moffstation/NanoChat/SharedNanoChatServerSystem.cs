@@ -3,7 +3,7 @@ using Content.Shared.Station;
 
 namespace Content.Shared._Moffstation.NanoChat;
 
-public sealed class SharedNanoChatServerSystem : EntitySystem
+public partial  class SharedNanoChatServerSystem : EntitySystem
 {
     [Dependency] private readonly SharedStationSystem _station = default!;
     /// <summary>

@@ -1,7 +1,8 @@
 ﻿using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
+using Robust.Shared.GameStates;
 
 namespace Content.Shared._Moffstation.NanoChat;
-
+[RegisterComponent, NetworkedComponent, Access(typeof(SharedNanoChatServerSystem))]
 public sealed partial class NanoChatServerComponent : Component
 {
     /// <summary>
@@ -25,5 +26,6 @@ public sealed partial class NanoChatServerComponent : Component
     ///Wether this server is the main server, The main Server holds all masseges and such,
     /// and passes these to another if its destroyed
     /// </summary>
-    [DataField] public bool IsMainServer;
+    [DataField]
+    public bool IsMainServer;
 }

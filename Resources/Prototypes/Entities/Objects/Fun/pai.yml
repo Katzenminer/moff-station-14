@@ -2,10 +2,10 @@
 
 - type: entity
   # Moffstation - Start - Abstract base pAI
-# parent: BaseItem
+  # parent: BaseItem
   id: PersonalAIGhostRoleBase
   abstract: true
-#  name: personal ai device
+  #  name: personal ai device
   # Moffstation - End
   description: Your electronic pal who's fun to be with!
   components:
@@ -29,15 +29,15 @@
       enum.StationMapUiKey.Key:
         type: StationMapBoundUserInterface
         requireInputValidation: false
-#Moffstation - Begin - Captains Sabre Declutter
-#  - type: Sprite
-#    sprite: Objects/Fun/pai.rsi
-#    layers:
-#    - state: pai-base
-#    - state: pai-off-overlay
-#      shader: unshaded
-#      map: ["screen"]
-#Moffstation - End
+  #Moffstation - Begin - Captains Sabre Declutter
+  #  - type: Sprite
+  #    sprite: Objects/Fun/pai.rsi
+  #    layers:
+  #    - state: pai-base
+  #    - state: pai-off-overlay
+  #      shader: unshaded
+  #      map: ["screen"]
+  #Moffstation - End
   - type: Input
     context: "human"
   - type: PAI
@@ -86,23 +86,23 @@
     # Note that the personal AI never "dies".
   - type: MobState
     allowedStates:
-      - Alive
-#Moffstation - Begin - Captains Sabre Declutter
-#  - type: Appearance
-#  - type: GenericVisualizer
-#    visuals:
-#      enum.ToggleableGhostRoleVisuals.Status:
-#        screen:
-#          Off: { state: pai-off-overlay }
-#          Searching: { state: pai-searching-overlay }
-#          On: { state: pai-on-overlay }
-#Moffstation - End
+    - Alive
+  #Moffstation - Begin - Captains Sabre Declutter
+  #  - type: Appearance
+  #  - type: GenericVisualizer
+  #    visuals:
+  #      enum.ToggleableGhostRoleVisuals.Status:
+  #        screen:
+  #          Off: { state: pai-off-overlay }
+  #          Searching: { state: pai-searching-overlay }
+  #          On: { state: pai-on-overlay }
+  #Moffstation - End
   - type: StationMap
   - type: ChangeVoiceInContainer
     whitelist:
       components:
-        - SecretStash
-        - WrappedParcel
+      - SecretStash
+      - WrappedParcel
   - type: Vocal
     sounds:
       Unsexed: UnisexSilicon
@@ -163,6 +163,8 @@
       shader: unshaded
       map: ["screen"]
   - type: Appearance
+  - type: StaticPrice
+    price: 5000
 
 - type: entity
   parent: PersonalAI

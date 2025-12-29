@@ -9,5 +9,4 @@
     - state: ert_mailcarrier
   - type: PresetIdCard
     job: ERTMailCarrier
-  - type: NanoChatCard # CD
-    listNumber: false
+

@@ -1,3 +1,8 @@
 - type: nameIdentifierGroup
   id: Tarbold
   format: name-identifier-format-tarbold
+
+# NanoChat Card number Format
+- type: nameIdentifierGroup
+  id: NanoChat
+  maxValue: 9999

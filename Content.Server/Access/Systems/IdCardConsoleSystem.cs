@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Content.Server._Moffstation.Access.Systems;
 using Content.Server.Chat.Systems;
 using Content.Server.Containers;
 using Content.Server.StationRecords.Systems;
@@ -152,7 +153,7 @@ public sealed class IdCardConsoleSystem : SharedIdCardConsoleSystem
             _idCard.TryChangeJobIcon(targetId, jobIcon, player: player);
             _idCard.TryChangeJobDepartment(targetId, job);
         }
-
+        RaiseLocalEvent(uid,new IdCardChangedEvent(newFullName, newJobTitle)); // Moffstation - NanoChatRewrite
         UpdateStationRecord(uid, targetId, newFullName, newJobTitle, job);
         if ((!TryComp<StationRecordKeyStorageComponent>(targetId, out var keyStorage)
             || keyStorage.Key is not { } key

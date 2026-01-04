@@ -1,6 +1,6 @@
 ﻿namespace Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 
-[RegisterComponent, Access(typeof(SharedNanoChatServerSystem))]
+[RegisterComponent, Access(typeof(SharedNanoChatCardSystem))]
 public sealed partial class NanoChatCardComponent : Component
 {
     /// <summary>
@@ -22,6 +22,18 @@ public sealed partial class NanoChatCardComponent : Component
     public NanoChatUser User;
 }
 
-public readonly record struct NanoChatNumber(int Value);
+public readonly record struct NanoChatNumber(int Value)
+{
+    //implicit conversion for ease of use
+    public static implicit operator NanoChatNumber(int value)
+    {
+        return new NanoChatNumber(value);
+    }
+
+    public static implicit operator int(NanoChatNumber number)
+    {
+        return number.Value;
+    }
+};
 
 public readonly record struct NanoChatUser(NanoChatNumber Number, string JobTitel, string Name);

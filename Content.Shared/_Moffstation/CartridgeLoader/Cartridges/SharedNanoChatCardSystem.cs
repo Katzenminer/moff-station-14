@@ -6,7 +6,6 @@ public abstract class SharedNanoChatCardSystem : EntitySystem
     public override void Initialize()
     {
         base.Initialize();
-        SubscribeLocalEvent<NanoChatCardComponent,
     }
 
 

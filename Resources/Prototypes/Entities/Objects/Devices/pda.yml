@@ -11,7 +11,7 @@
        !type:String
        pda
   - type: Sprite
-    sprite: Objects/Devices/pda.rsi
+    sprite: _Moffstation/Objects/Devices/pda.rsi #Moffstation - New PDAs
     layers:
     - map: [ "enum.PdaVisualLayers.Base" ]
       state: "pda"
@@ -24,7 +24,7 @@
       shader: "unshaded"
       visible: false
   - type: Icon
-    sprite: Objects/Devices/pda.rsi
+    sprite: _Moffstation/Objects/Devices/pda.rsi #Moffstation - New PDAs
     state: pda
   - type: Pda
     paiSlot:
@@ -132,7 +132,7 @@
   abstract: true
   components:
   - type: Sprite
-    sprite: Objects/Devices/pda.rsi
+    sprite: _Moffstation/Objects/Devices/pda.rsi #Moffstation - New PDAs
     layers:
     - map: [ "enum.PdaVisualLayers.Base" ]
       state: "pda"
@@ -675,7 +675,8 @@
        !type:String
        pda-captain
   - type: PdaBorderColor
-    borderColor: "#7C5D00"
+    borderColor: "#101947" #Moffstation - New PDAs
+    accentVColor: "#7C5D00" #Moffstation - New PDAs
   - type: Icon
     state: pda-captain
 
@@ -913,8 +914,9 @@
        !type:String
        pda-warden
   - type: PdaBorderColor
-    borderColor: "#A32D26"
-    accentVColor: "#949137"
+    borderColor: "#5261a0" #Moffstation - Start - New PDAs
+    accentVColor: "#cc4242"
+    accentHColor: "#23acc4" #Moffstation - End - New PDAs
   - type: Icon
     state: pda-warden
 
@@ -980,6 +982,11 @@
   components:
   - type: Pda
     id: UniversalIDCard
+  - type: Appearance #Moffstation - Start -New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-admin #Moffstation - End - New PDAs
   - type: HealthAnalyzer
     maxScanRange: null
     scanDelay: 0
@@ -1007,6 +1014,11 @@
   components:
   - type: Pda
     id: CentcomIDCardDeathsquad
+  - type: Appearance
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-deathsquad #Moffstation - New PDAs
   - type: Tag #  Ignore Chameleon tags
     tags:
     - DoorBumpOpener
@@ -1184,13 +1196,13 @@
     appearanceDataInit:
      enum.PdaVisuals.PdaType:
        !type:String
-       pda-ert
+       pda-ert-leader #Moffstation - New PDAs
   - type: PdaBorderColor
     borderColor: "#A32D26"
     accentHColor: "#447987"
     accentVColor: "#447987"
   - type: Icon
-    state: pda-ert
+    state: pda-ert-leader #Moffstation - New PDAs
   - type: CartridgeLoader
     uiKey: enum.PdaUiKey.Key
     preinstalled:
@@ -1212,6 +1224,11 @@
   components:
   - type: Pda
     id: ERTChaplainIDCard
+  - type: Appearance #Moffstation - Start - New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-ert-chaplain #Moffstation - End - New PDAs
 
 - type: entity
   parent: ERTLeaderPDA
@@ -1222,6 +1239,11 @@
   components:
   - type: Pda
     id: ERTEngineerIDCard
+  - type: Appearance #Moffstation - Start - New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-ert-engineer #Moffstation - End - New PDAs
 
 - type: entity
   parent: ERTLeaderPDA
@@ -1232,6 +1254,11 @@
   components:
   - type: Pda
     id: ERTJanitorIDCard
+  - type: Appearance #Moffstation - Start - New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-ert-janitor #Moffstation - End -New PDAs
 
 - type: entity
   parent: ERTLeaderPDA
@@ -1242,6 +1269,11 @@
   components:
   - type: Pda
     id: ERTMedicIDCard
+  - type: Appearance #Moffstation - Start - New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-ert-medic #Moffstation - End - New PDAs
 
 - type: entity
   parent: ERTLeaderPDA
@@ -1252,6 +1284,11 @@
   components:
   - type: Pda
     id: ERTSecurityIDCard
+  - type: Appearance #Moffstation - Start - New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-ert-security #Moffstation - End - New PDAs
 
 - type: entity
   parent: ERTLeaderPDA
@@ -1261,6 +1298,11 @@
   components:
   - type: Pda
     id: CBURNIDcard
+  - type: Appearance #Moffstation - Start -New PDAs
+    appearanceDataInit:
+      enum.PdaVisuals.PdaType:
+        !type:String
+        pda-cburn #Moffstation - End - New PDAs
   - type: PdaBorderColor
     borderColor: "#A32D26"
     accentHColor: "#447987"
@@ -1278,7 +1320,7 @@
     appearanceDataInit:
      enum.PdaVisuals.PdaType:
        !type:String
-       pda-medical
+       pda-psychologist #Moffstation - New PDAs
   - type: PdaBorderColor
     borderColor: "#d7d7d0"
     accentVColor: "#447987"

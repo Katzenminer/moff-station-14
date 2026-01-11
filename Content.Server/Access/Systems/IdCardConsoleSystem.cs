@@ -153,7 +153,8 @@ public sealed class IdCardConsoleSystem : SharedIdCardConsoleSystem
             _idCard.TryChangeJobIcon(targetId, jobIcon, player: player);
             _idCard.TryChangeJobDepartment(targetId, job);
         }
-        RaiseLocalEvent(uid,new IdCardChangedEvent(newFullName, newJobTitle)); // Moffstation - NanoChatRewrite
+        var ev = new IdCardChangedEvent(newFullName, newJobTitle); // Moffstation - NanoChatRewrite
+        RaiseLocalEvent(uid,ref ev); // Moffstation - NanoChatRewrite
         UpdateStationRecord(uid, targetId, newFullName, newJobTitle, job);
         if ((!TryComp<StationRecordKeyStorageComponent>(targetId, out var keyStorage)
             || keyStorage.Key is not { } key

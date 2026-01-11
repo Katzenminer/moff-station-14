@@ -1,6 +1,8 @@
-﻿namespace Content.Shared._Moffstation.CartridgeLoader.Cartridges;
+﻿using Robust.Shared.GameStates;
 
-[RegisterComponent, Access(typeof(SharedNanoChatCardSystem))]
+namespace Content.Shared._Moffstation.CartridgeLoader.Cartridges;
+
+[RegisterComponent, Access(typeof(SharedNanoChatCardSystem))][NetworkedComponent]
 public sealed partial class NanoChatCardComponent : Component
 {
     /// <summary>

@@ -134,3 +134,18 @@
   fireStates: 3
   fireStacks: 2
   temperature: 1500
+# Moffstation - Start - Aditional Spawn Effects
+- type: explosion
+  id: AdminEffectExplosion
+  damagePerIntensity:
+    types:
+      Heat: 0
+      Blunt: 0
+      Piercing: 0
+  lightColor: Orange
+  texturePath: /Textures/Effects/fire.rsi
+  fireStates: 3
+  fireStacks: 0
+  temperature: 20
+# Moffstation - End
+

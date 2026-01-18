@@ -1,0 +1,36 @@
+﻿- type: entity
+  id: AdminInstantEffectVoidBlink
+  suffix: Blink
+  parent: AdminInstantEffectBase
+  components:
+  - type: SpawnOnTrigger
+    proto: EffectVoidBlink
+
+- type: entity
+  id: AdminInstantEffectTeslaSparks
+  suffix: Sparks
+  parent: AdminInstantEffectBase
+  components:
+  - type: SpawnOnTrigger
+    proto: EffectTeslaSparks
+
+- type: entity
+  id: AdminInstantEffectTest
+  suffix: Explosion
+  parent: AdminInstantEffectBase
+  components:
+  - type: ExplodeOnTrigger
+  - type: Explosive
+    explosionType: AdminEffectExplosion
+    totalIntensity: 0.001
+    intensitySlope: 1
+    maxIntensity: 0.001
+    canCreateVacuum: false
+
+- type: entity
+  id: AdminInstantEffectDesynchronizer
+  suffix: TimeBubble
+  parent: AdminInstantEffectBase
+  components:
+  - type: SpawnOnTrigger
+    proto: EffectDesynchronizer

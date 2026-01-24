@@ -13,7 +13,7 @@ public sealed class SpawnEffectSystem : EntitySystem
     [Dependency] private readonly ISharedPlayerManager _playerManager = default!;
     [Dependency] private readonly IPrototypeManager _proto = default!;
 
-    private readonly Dictionary<NetUserId, EntProtoId> _activeEffectsByUser = new();
+    private readonly Dictionary<NetUserId, (EntProtoId, bool)> _activeEffectsByUser = new();
 
     public override void Initialize()
     {
@@ -32,15 +32,15 @@ public sealed class SpawnEffectSystem : EntitySystem
 
     public bool TrySetEffect(NetUserId user, string? effectId)
     {
-        if (effectId is null) {
+        if (effectId is null)
+        {
             ClearEffect(user);
             return true;
         }
 
-        if (!_proto.HasIndex<EntityPrototype>(effectId))
-            return false;
-
-        SetEffect(user, effectId);
+        if (!_proto.HasIndex<EntityPrototype>(effectId))// If its not an Instant Effect
+            SetEffect(user, (effectId, true));
+        SetEffect(user, (effectId, false));
         return true;
     }
 
@@ -49,14 +49,10 @@ public sealed class SpawnEffectSystem : EntitySystem
         _activeEffectsByUser.Remove(user);
     }
 
-    public void SetEffect(NetUserId user, [ForbidLiteral] EntProtoId effectId)
+    public void SetEffect(NetUserId user, [ForbidLiteral] (EntProtoId,bool) effectAndTarget)
     {
-        if (!_activeEffectsByUser.ContainsKey(user))
-        {
-            _activeEffectsByUser.Add(user, effectId);
-        }
-        _activeEffectsByUser[user] = effectId;
-
+        _activeEffectsByUser.TryAdd(user, effectAndTarget);
+        _activeEffectsByUser[user] = effectAndTarget;
     }
 
     public IEnumerable<CompletionOption> GetEffects()
@@ -73,9 +69,13 @@ public sealed class SpawnEffectSystem : EntitySystem
         if (args.PlacementEventAction != PlacementEventAction.Create || args.PlacerNetUserId == null)
             return;
 
-        if (_activeEffectsByUser.TryGetValue(args.PlacerNetUserId.Value, out var effect))
+        if (_activeEffectsByUser.TryGetValue(args.PlacerNetUserId.Value, out var effectAndTarget))
         {
-            Spawn(effect, args.Coordinates);
+            if (!effectAndTarget.Item2) // If it is an instant effect
+            {
+               Spawn(effectAndTarget.Item1, args.Coordinates);
+            }
+
         }
     }
 

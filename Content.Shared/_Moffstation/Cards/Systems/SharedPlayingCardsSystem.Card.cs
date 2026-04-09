@@ -306,15 +306,13 @@ public abstract partial class SharedPlayingCardsSystem
         comp.ReverseLayers = deck.CommonReverseLayers.WithUnlessAlreadySpecified(rsiPath: deck.RsiPath.ToString());
         comp.FaceDown = data.Card.FaceDown;
 
-        var idAndCard = new List<(string, object)>
-        {
-        ("id", data.Card.Id.ToLowerInvariant()),
-        ("card", Loc.GetString(deck.CardValueLoc, ("card", data.Card.Id.ToLowerInvariant()))),
-        };
-        var idCardAndSuit = suit is null
-        ? idAndCard
-        : idAndCard.Concat([("suit", Loc.GetString(deck.SuitLoc, ("suit", suit.ID.ToLowerInvariant())))]);
-        var locArgs = idCardAndSuit.ToArray();
+        (string, object)[] locArgs = suit is null
+            ? [("card", Loc.GetString(deck.CardValueLoc, ("card", data.Card.Id.ToLowerInvariant())))]
+            :
+            [
+                ("suit", Loc.GetString(deck.SuitLoc, ("suit", suit.ID.ToLowerInvariant()))),
+                ("card", Loc.GetString(deck.CardValueLoc, ("card", data.Card.Id.ToLowerInvariant()))),
+            ];
 
         comp.ObverseName = Loc.GetString(data.Card.NameLoc ?? deck.CardNameLoc, locArgs);
         comp.Description = Loc.GetString(deck.CardDescLoc, locArgs);

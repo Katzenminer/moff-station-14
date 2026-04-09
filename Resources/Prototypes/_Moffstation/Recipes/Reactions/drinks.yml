@@ -234,7 +234,7 @@
     Coffee:
       amount: 1
   products:
-    Uprooting: 3
+    Fertilizer: 3
 
 - type: reaction
   id: Singulo

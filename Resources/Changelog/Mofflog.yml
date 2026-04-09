@@ -4415,5 +4415,100 @@ Entries:
   id: 1184
   time: '2026-03-31T17:53:30.000'
   url: https://github.com/moff-station/moff-station-14/pull/1184
+- author: Jona-K
+  changes:
+  - message: Hos Carapace Nolonger has any internal storage
+    type: tweak
+  id: 1185
+  time: '2026-04-01T05:14:57.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1185
+- author: Centronias
+  changes:
+  - message: Modular HUDs will no longer partially render when in non-eye slots (ie.
+      pockets)
+    type: fix
+  id: 1188
+  time: '2026-04-02T03:12:23.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1188
+- author: Centronias
+  changes:
+  - message: Beer HUD variants can once again be used to examine the contents of liquids.
+    type: fix
+  id: 1190
+  time: '2026-04-02T18:01:46.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1190
+- author: MissKay1994
+  changes:
+  - message: Added Kethendachuaks jumpskirt!
+    type: add
+  id: 1193
+  time: '2026-04-04T20:11:23.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1193
+- author: CastleKeeper325
+  changes: []
+  id: 1195
+  time: '2026-04-04T19:04:06.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1195
+- author: Dave
+  changes:
+  - message: Kazo & Buck Figurines
+    type: add
+  id: 1196
+  time: '2026-04-04T18:37:45.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1196
+- author: Sable
+  changes:
+  - message: the Uprooting drink can now be made.
+    type: fix
+  id: 1200
+  time: '2026-04-04T19:36:08.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1200
+- author: Nyxilath
+  changes:
+  - message: Syndicate high command will now only send dead drops after 25 minutes
+      into shift.
+    type: tweak
+  id: 1205
+  time: '2026-04-05T23:14:13.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1205
+- author: MissKay1994
+  changes:
+  - message: Added more timer screens to CC
+    type: tweak
+  - message: Fixed vox box not working
+    type: fix
+  id: 1206
+  time: '2026-04-08T06:29:43.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1206
+- author: murphyneko
+  changes:
+  - message: Improved set examine action dialog text.
+    type: fix
+  - message: Set examine action drag icon is no longer a human torso.
+    type: fix
+  id: 1207
+  time: '2026-04-06T19:33:45.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1207
+- author: DuckManZach
+  changes:
+  - message: Flashlights now have smooth movement (and so do barstools)
+    type: tweak
+  id: 1214
+  time: '2026-04-09T15:55:21.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1214
+- author: DuckManZach
+  changes:
+  - message: Bring back colored departments in the job picker
+    type: fix
+  id: 1217
+  time: '2026-04-08T21:54:41.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1217
+- author: DuckManZach
+  changes:
+  - message: Selected markings appear at the top of the list
+    type: tweak
+  id: 1218
+  time: '2026-04-09T15:48:11.000'
+  url: https://github.com/moff-station/moff-station-14/pull/1218
 Name: Mofflog
 Order: -2

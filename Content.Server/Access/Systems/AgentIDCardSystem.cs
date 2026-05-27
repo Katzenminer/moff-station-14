@@ -15,9 +15,9 @@ using Content.Shared.Roles;
 using Content.Shared.StatusIcon;
 using Content.Shared.UserInterface;
 using Content.Shared.VoiceMask;
+using Content.Shared._Moffstation.Chitter;
 using Robust.Server.GameObjects;
 using Robust.Shared.Prototypes;
-using Content.Shared._CD.NanoChat; // CD
 
 namespace Content.Server.Access.Systems
 {
@@ -29,7 +29,6 @@ namespace Content.Server.Access.Systems
         [Dependency] private IPrototypeManager _prototypeManager = default!;
         [Dependency] private ChameleonClothingSystem _chameleon = default!;
         [Dependency] private ChameleonControllerSystem _chamController = default!;
-        [Dependency] private SharedNanoChatSystem _nanoChat = default!; // CD
         [Dependency] private LockSystem _lock = default!;
         [Dependency] private SharedJobStatusSystem _jobStatus = default!;
 
@@ -37,13 +36,22 @@ namespace Content.Server.Access.Systems
         {
             base.Initialize();
             SubscribeLocalEvent<AgentIDCardComponent, AfterInteractEvent>(OnAfterInteract);
-            // BUI
             SubscribeLocalEvent<AgentIDCardComponent, AfterActivatableUIOpenEvent>(AfterUIOpen);
             SubscribeLocalEvent<AgentIDCardComponent, AgentIDCardNameChangedMessage>(OnNameChanged);
             SubscribeLocalEvent<AgentIDCardComponent, AgentIDCardJobChangedMessage>(OnJobChanged);
             SubscribeLocalEvent<AgentIDCardComponent, AgentIDCardJobIconChangedMessage>(OnJobIconChanged);
+            SubscribeLocalEvent<AgentIDCardComponent, AgentIDCardNumberChangedMessage>(OnNumberChanged);
             SubscribeLocalEvent<AgentIDCardComponent, InventoryRelayedEvent<ChameleonControllerOutfitSelectedEvent>>(OnChameleonControllerOutfitChangedItem);
             SubscribeLocalEvent<AgentIDCardComponent, InventoryRelayedEvent<VoiceMaskNameUpdatedEvent>>(OnVoiceMaskNameChanged);
+        }
+
+        private void OnNumberChanged(Entity<AgentIDCardComponent> ent, ref AgentIDCardNumberChangedMessage args)
+        {
+            if (!TryComp<ChitterAccountComponent>(ent, out var comp))
+                return;
+
+            comp.AccountId = args.Number;
+            Dirty(ent, comp);
         }
 
         private void OnChameleonControllerOutfitChangedItem(Entity<AgentIDCardComponent> ent, ref InventoryRelayedEvent<ChameleonControllerOutfitSelectedEvent> args)
@@ -62,17 +70,10 @@ namespace Content.Server.Access.Systems
             if (jobName != "")
                 _cardSystem.TryChangeJobTitle(ent, Loc.GetString(jobName), idCardComp);
 
-            // If you have forced departments use those over the jobs actual departments.
             if (args.Args.ChameleonOutfit?.Departments?.Count > 0)
                 _cardSystem.TryChangeJobDepartment(ent, args.Args.ChameleonOutfit.Departments, idCardComp);
             else if (jobProto != null)
                 _cardSystem.TryChangeJobDepartment(ent, jobProto, idCardComp);
-
-            // Ensure that you chameleon IDs in PDAs correctly. Yes this is sus...
-
-            // There is one weird interaction: If the job / icon don't match the PDAs job the chameleon will be updated
-            // to the PDAs IDs sprite but the icon and job title will not match. There isn't a way to get around this
-            // really as there is no tie between job -> pda or pda -> job.
 
             var idSlotGear = _chamController.GetGearForSlot(args, "id");
             if (idSlotGear == null)
@@ -84,17 +85,6 @@ namespace Content.Server.Access.Systems
 
             if (TryComp<ChameleonClothingComponent>(ent, out var chameleonComp) && chameleonComp.CanBeSetByController)
                 _chameleon.SetSelectedPrototype(ent, comp.IdCard, component: chameleonComp);
-            SubscribeLocalEvent<AgentIDCardComponent, AgentIDCardNumberChangedMessage>(OnNumberChanged); // CD
-        }
-
-        // CD - Add number change handler
-        private void OnNumberChanged(Entity<AgentIDCardComponent> ent, ref AgentIDCardNumberChangedMessage args)
-        {
-            if (!TryComp<NanoChatCardComponent>(ent, out var comp))
-                return;
-
-            _nanoChat.SetNumber((ent, comp), args.Number);
-            Dirty(ent, comp);
         }
 
         private void OnVoiceMaskNameChanged(Entity<AgentIDCardComponent> ent, ref InventoryRelayedEvent<VoiceMaskNameUpdatedEvent> args)
@@ -120,34 +110,6 @@ namespace Content.Server.Access.Systems
             var beforeLength = access.Tags.Count;
             access.Tags.UnionWith(targetAccess.Tags);
             var addedLength = access.Tags.Count - beforeLength;
-
-            // CD - Copy NanoChat data if available
-            if (TryComp<NanoChatCardComponent>(args.Target, out var targetNanoChat) &&
-                TryComp<NanoChatCardComponent>(uid, out var agentNanoChat))
-            {
-                // First clear existing data
-                _nanoChat.Clear((uid, agentNanoChat));
-
-                // Copy the number
-                if (_nanoChat.GetNumber((args.Target.Value, targetNanoChat)) is { } number)
-                    _nanoChat.SetNumber((uid, agentNanoChat), number);
-
-                // Copy all recipients and their messages
-                foreach (var (recipientNumber, recipient) in _nanoChat.GetRecipients((args.Target.Value, targetNanoChat)))
-                {
-                    _nanoChat.SetRecipient((uid, agentNanoChat), recipientNumber, recipient);
-
-                    if (_nanoChat.GetMessagesForRecipient((args.Target.Value, targetNanoChat), recipientNumber) is not
-                        { } messages)
-                        continue;
-
-                    foreach (var message in messages)
-                    {
-                        _nanoChat.AddMessage((uid, agentNanoChat), recipientNumber, message);
-                    }
-                }
-            }
-            // End CD
 
             if (addedLength == 0)
             {
@@ -176,16 +138,15 @@ namespace Content.Server.Access.Systems
             if (!TryComp<IdCardComponent>(uid, out var idCard))
                 return;
 
-            // CD - Get current number if it exists
             uint? currentNumber = null;
-            if (TryComp<NanoChatCardComponent>(uid, out var comp))
-                currentNumber = comp.Number;
+            if (TryComp<ChitterAccountComponent>(uid, out var chitter))
+                currentNumber = chitter.AccountId;
 
             var state = new AgentIDCardBoundUserInterfaceState(
                 idCard.FullName ?? "",
                 idCard.LocalizedJobTitle ?? "",
                 idCard.JobIcon,
-                currentNumber); // CD - Pass current number
+                currentNumber);
 
             _uiSystem.SetUiState(uid, AgentIDCardUiKey.Key, state);
         }

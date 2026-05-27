@@ -1,0 +1,69 @@
+using Content.Client.UserInterface.Fragments;
+using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
+using Content.Shared.CartridgeLoader;
+using Robust.Client.UserInterface;
+
+namespace Content.Client._Moffstation.CartridgeLoader.Cartridges;
+
+public sealed partial class ChitterUi : UIFragment
+{
+    private ChitterUiFragment? _fragment;
+
+    public override Control GetUIFragmentRoot()
+    {
+        return _fragment!;
+    }
+
+    public override void Setup(BoundUserInterface userInterface, EntityUid? fragmentOwner)
+    {
+        _fragment = new ChitterUiFragment();
+
+        _fragment.OnUiMessage += (type, chatId, targetNumber, targetNumbers, content, jobTitle, profilePictureId) =>
+        {
+            var message = new ChitterUiMessageEvent
+            {
+                Type = type,
+                ChatId = chatId,
+                TargetNumber = targetNumber,
+                TargetNumbers = targetNumbers,
+                Content = content,
+                JobTitle = jobTitle,
+                ProfilePictureId = profilePictureId,
+            };
+
+            var wrapper = new CartridgeUiMessage(message);
+            userInterface.SendMessage(wrapper);
+        };
+    }
+
+    public override void UpdateState(BoundUserInterfaceState state)
+    {
+        if (state is ChitterUiState cast)
+            _fragment?.UpdateState(cast);
+    }
+
+    public static void SendChitterUiMessage(
+        ChitterUiMessageType type,
+        Guid? chatId,
+        uint? targetNumber,
+        List<uint>? targetNumbers,
+        string? content,
+        string? jobTitle,
+        string? profilePictureId,
+        BoundUserInterface userInterface)
+    {
+        var message = new ChitterUiMessageEvent
+        {
+            Type = type,
+            ChatId = chatId,
+            TargetNumber = targetNumber,
+            TargetNumbers = targetNumbers,
+            Content = content,
+            JobTitle = jobTitle,
+            ProfilePictureId = profilePictureId,
+        };
+
+        var wrapper = new CartridgeUiMessage(message);
+        userInterface.SendMessage(wrapper);
+    }
+}

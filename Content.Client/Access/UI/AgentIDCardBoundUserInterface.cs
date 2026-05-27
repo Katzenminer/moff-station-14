@@ -6,9 +6,6 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Client.Access.UI
 {
-    /// <summary>
-    /// Initializes a <see cref="AgentIDCardWindow"/> and updates it when new server messages are received.
-    /// </summary>
     public sealed class AgentIDCardBoundUserInterface : BoundUserInterface
     {
         private AgentIDCardWindow? _window;
@@ -26,10 +23,9 @@ namespace Content.Client.Access.UI
             _window.OnNameChanged += OnNameChanged;
             _window.OnJobChanged += OnJobChanged;
             _window.OnJobIconChanged += OnJobIconChanged;
-            _window.OnNumberChanged += OnNumberChanged; // CD
+            _window.OnNumberChanged += OnNumberChanged;
         }
 
-        // CD - Add number change handler
         private void OnNumberChanged(uint newNumber)
         {
             SendMessage(new AgentIDCardNumberChangedMessage(newNumber));
@@ -50,10 +46,6 @@ namespace Content.Client.Access.UI
             SendMessage(new AgentIDCardJobIconChangedMessage(newJobIconId));
         }
 
-        /// <summary>
-        /// Update the UI state based on server-sent info
-        /// </summary>
-        /// <param name="state"></param>
         protected override void UpdateState(BoundUserInterfaceState state)
         {
             base.UpdateState(state);
@@ -63,7 +55,7 @@ namespace Content.Client.Access.UI
             _window.SetCurrentName(cast.CurrentName);
             _window.SetCurrentJob(cast.CurrentJob);
             _window.SetAllowedIcons(cast.CurrentJobIconId);
-            _window.SetCurrentNumber(cast.CurrentNumber); // CD
+            _window.SetCurrentNumber(cast.CurrentNumber);
         }
     }
 }

@@ -1,0 +1,9 @@
+<cartridges:ChitterChatListEntry xmlns="https://spacestation14.io"
+             xmlns:cartridges="clr-namespace:Content.Client._Moffstation.CartridgeLoader.Cartridges"
+             Orientation="Horizontal"
+             MinHeight="32">
+    <BoxContainer Name="EntryContent" Orientation="Vertical" HorizontalExpand="True">
+        <Label Name="NameLabel" Text="" FontColorOverride="#00FF00" />
+        <Label Name="MessageLabel" Text="" />
+    </BoxContainer>
+</cartridges:ChitterChatListEntry>

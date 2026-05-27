@@ -86,7 +86,7 @@
       - NotekeeperCartridge
       - NanoTaskCartridge
       - NewsReaderCartridge
-      - NanoChatCartridge # CD
+      - ChitterCartridge
       - SOSCartridge # Imp
     cartridgeSlot:
       priority: -1
@@ -160,7 +160,6 @@
     - NanoTaskCartridge
     - NewsReaderCartridge
     - WantedListCartridge
-    - NanoChatCartridge # CD
     - SOSCartridge # Imp
 - type: entity
   parent: BasePDA
@@ -175,7 +174,6 @@
       - NanoTaskCartridge
       - NewsReaderCartridge
       - MedTekCartridge
-      - NanoChatCartridge # CD
       - SOSCartridge # Imp
 
 - type: entity
@@ -514,7 +512,6 @@
     - NanoTaskCartridge
     - NewsReaderCartridge
     - AstroNavCartridge
-    - NanoChatCartridge # CD
     - SOSCartridge # Imp
 
 - type: entity
@@ -561,7 +558,6 @@
       - NanoTaskCartridge
       - NewsReaderCartridge
       - AstroNavCartridge
-      - NanoChatCartridge # CD
       - SOSCartridge # Imp
 
 - type: entity
@@ -914,7 +910,6 @@
     - NewsReaderCartridge
     - WantedListCartridge
     - LogProbeCartridge
-    - NanoChatCartridge # CD
     - SOSCartridge # Imp
 
 - type: entity
@@ -989,7 +984,6 @@
       - WantedListCartridge
       - LogProbeCartridge
       - AstroNavCartridge
-      - NanoChatCartridge # CD
       - SOSCartridge # Imp
 
 - type: entity
@@ -1022,7 +1016,6 @@
       - WantedListCartridge
       - MedTekCartridge
       - AstroNavCartridge
-      - NanoChatCartridge # CD
       - SOSCartridge # Imp
   - type: Tag #  Ignore Chameleon tags
     tags:
@@ -1147,7 +1140,6 @@
     preinstalled:
       - NotekeeperCartridge
       - NanoTaskCartridge
-      - NanoChatCartridge # CD
 
 - type: entity
   parent: [ SyndiPDA, BaseSyndicateContraband ]
@@ -1186,7 +1178,6 @@
       - NotekeeperCartridge
       - NanoTaskCartridge
       - MedTekCartridge
-      - NanoChatCartridge # CD
 
 - type: entity
   parent: [ SyndiOperativePDA, BaseSyndicateContraband ]
@@ -1235,7 +1226,6 @@
       - WantedListCartridge
       - LogProbeCartridge
       - AstroNavCartridge
-      - NanoChatCartridge # CD
       - SOSCartridge # Imp
 
 - type: entity
@@ -1436,7 +1426,6 @@
     - NewsReaderCartridge
     - WantedListCartridge
     - LogProbeCartridge
-    - NanoChatCartridge # CD
     - SOSCartridge # Imp
 
 - type: entity
@@ -1466,7 +1455,6 @@
     - NewsReaderCartridge
     - WantedListCartridge
     - MedTekCartridge
-    - NanoChatCartridge # CD
     - SOSCartridge # Imp
 
 - type: entity

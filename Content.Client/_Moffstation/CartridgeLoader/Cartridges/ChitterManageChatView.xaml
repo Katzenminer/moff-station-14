@@ -1,0 +1,16 @@
+<cartridges:ChitterManageChatView xmlns="https://spacestation14.io"
+             xmlns:cartridges="clr-namespace:Content.Client._Moffstation.CartridgeLoader.Cartridges"
+             Orientation="Vertical"
+             VerticalExpand="True"
+             MinWidth="300">
+    <BoxContainer Orientation="Horizontal">
+        <Label Text="{Loc chitter-manage-chat}" HorizontalExpand="True" />
+        <Button Name="BackButton" Text="{Loc chitter-back}" />
+    </BoxContainer>
+    <ScrollContainer VerticalExpand="True">
+        <BoxContainer Name="ParticipantsList" Orientation="Vertical" SeparationOverride="2" />
+    </ScrollContainer>
+    <BoxContainer Name="ManageActions" Orientation="Vertical" SeparationOverride="4">
+        <Button Name="ArchiveChatButton" Text="{Loc chitter-archive-chat}" />
+    </BoxContainer>
+</cartridges:ChitterManageChatView>

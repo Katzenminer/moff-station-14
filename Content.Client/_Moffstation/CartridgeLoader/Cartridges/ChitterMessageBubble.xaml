@@ -1,0 +1,12 @@
+<cartridges:ChitterMessageBubble xmlns="https://spacestation14.io"
+             xmlns:cartridges="clr-namespace:Content.Client._Moffstation.CartridgeLoader.Cartridges"
+             Orientation="Vertical"
+             Margin="4">
+    <Label Name="SenderLabel" Text="" FontColorOverride="#888888" />
+    <PanelContainer Name="BubbleBackground" MinWidth="100">
+        <BoxContainer Orientation="Vertical">
+            <Label Name="MessageLabel" Text="" />
+            <Label Name="FailedLabel" Text="{Loc chitter-delivery-failed}" FontColorOverride="#FF4444" Visible="False" />
+        </BoxContainer>
+    </PanelContainer>
+</cartridges:ChitterMessageBubble>

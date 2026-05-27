@@ -1,0 +1,20 @@
+<cartridges:ChitterLookupView xmlns="https://spacestation14.io"
+             xmlns:cartridges="clr-namespace:Content.Client._Moffstation.CartridgeLoader.Cartridges"
+             Orientation="Vertical"
+             VerticalExpand="True"
+             MinWidth="250">
+    <BoxContainer Orientation="Horizontal">
+        <Label Text="{Loc chitter-lookup-title}" HorizontalExpand="True" />
+        <Button Name="CloseLookupButton" Text="{Loc chitter-close}" />
+    </BoxContainer>
+
+    <BoxContainer Orientation="Vertical" Margin="5" MinWidth="250" MaxWidth="250">
+        <LineEdit Name="SearchInput" PlaceHolder="{Loc chitter-search-placeholder}" />
+        <ScrollContainer VerticalExpand="True">
+            <ItemList Name="SearchResults" />
+        </ScrollContainer>
+    </BoxContainer>
+
+    <Button Name="CreateChatButton" Text="{Loc chitter-create-chat}" Disabled="True" />
+
+</cartridges:ChitterLookupView>

@@ -1,0 +1,35 @@
+<cartridges:ChitterUiFragment xmlns="https://spacestation14.io"
+            xmlns:cartridges="clr-namespace:Content.Client._Moffstation.CartridgeLoader.Cartridges"
+            Orientation="Vertical">
+    <BoxContainer Name="WarningBanner" Orientation="Horizontal" Visible="False">
+        <Label Name="WarningLabel" Text="" />
+    </BoxContainer>
+    <BoxContainer Name="MainContent" Orientation="Horizontal" VerticalExpand="True">
+        <BoxContainer Name="ChatListPanel" Orientation="Vertical" MinWidth="200">
+            <Button Name="NewChatButton" Text="{Loc chitter-new-chat}" />
+            <ScrollContainer VerticalExpand="True">
+                <BoxContainer Name="ChatList" Orientation="Vertical" SeparationOverride="2" />
+            </ScrollContainer>
+        </BoxContainer>
+        <PanelContainer Name="ChatViewPanel" VerticalExpand="True" HorizontalExpand="True">
+            <BoxContainer Name="ChatView" Orientation="Vertical" Visible="False">
+                <BoxContainer Name="ChatHeader" Orientation="Horizontal">
+                    <Label Name="ChatTitle" Text="" HorizontalExpand="True" />
+                    <Button Name="ManageChatButton" Text="{Loc chitter-manage}" />
+                </BoxContainer>
+                <ScrollContainer VerticalExpand="True">
+                    <BoxContainer Name="MessageContainer" Orientation="Vertical" SeparationOverride="4" />
+                </ScrollContainer>
+                <BoxContainer Name="InputBar" Orientation="Horizontal">
+                    <LineEdit Name="MessageInput" Text="" HorizontalExpand="True" PlaceHolder="{Loc chitter-message-placeholder}" />
+                    <Button Name="SendButton" Text="{Loc chitter-send}" />
+                </BoxContainer>
+            </BoxContainer>
+            <BoxContainer Name="NoChatPlaceholder" Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
+                <Label Text="{Loc chitter-select-chat}" />
+            </BoxContainer>
+        </PanelContainer>
+    </BoxContainer>
+    <BoxContainer Name="OverlayContainer" Orientation="Vertical" Visible="False" VerticalExpand="True" HorizontalExpand="True">
+    </BoxContainer>
+</cartridges:ChitterUiFragment>

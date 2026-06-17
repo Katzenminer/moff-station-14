@@ -6,7 +6,10 @@
     <PanelContainer Name="BubbleBackground" MinWidth="100">
         <BoxContainer Orientation="Vertical">
             <Label Name="MessageLabel" Text="" />
-            <Label Name="FailedLabel" Text="{Loc chitter-delivery-failed}" FontColorOverride="#FF4444" Visible="False" />
+            <BoxContainer Orientation="Horizontal">
+                <Label Name="TimestampLabel" Text="" FontColorOverride="#666666" />
+                <Label Name="FailedLabel" Text="{Loc chitter-delivery-failed}" FontColorOverride="#FF4444" Visible="False" />
+            </BoxContainer>
         </BoxContainer>
     </PanelContainer>
 </cartridges:ChitterMessageBubble>

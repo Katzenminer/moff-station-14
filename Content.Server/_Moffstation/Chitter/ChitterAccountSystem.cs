@@ -15,7 +15,6 @@ public sealed class ChitterAccountSystem : SharedChitterSystem
     [Dependency] private IPrototypeManager _prototypeManager = default!;
     [Dependency] private IRobustRandom _random = default!;
 
-    private const string AvatarGroup = "ChitterAvatars";
     private static readonly ProtoId<NameIdentifierGroupPrototype> ChitterGroup = "Chitter";
 
     public override void Initialize()

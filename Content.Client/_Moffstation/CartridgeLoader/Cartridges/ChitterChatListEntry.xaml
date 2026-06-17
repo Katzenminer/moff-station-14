@@ -3,7 +3,10 @@
              Orientation="Horizontal"
              MinHeight="32">
     <BoxContainer Name="EntryContent" Orientation="Vertical" HorizontalExpand="True">
-        <Label Name="NameLabel" Text="" FontColorOverride="#00FF00" />
+        <BoxContainer Orientation="Horizontal">
+            <Label Name="NameLabel" Text="" FontColorOverride="#00FF00" HorizontalExpand="True" />
+            <Label Name="UnreadCountLabel" Text="" FontColorOverride="#FFD700" Visible="False" MinWidth="20" />
+        </BoxContainer>
         <Label Name="MessageLabel" Text="" />
     </BoxContainer>
 </cartridges:ChitterChatListEntry>

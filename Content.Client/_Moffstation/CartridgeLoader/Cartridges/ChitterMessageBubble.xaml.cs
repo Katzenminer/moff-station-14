@@ -25,7 +25,7 @@ public sealed partial class ChitterMessageBubble : BoxContainer
 
     public TimeSpan Timestamp
     {
-        set { }
+        set => TimestampLabel.Text = TimeSpan.FromSeconds(Math.Truncate(value.TotalSeconds)).ToString();
     }
 
     public bool IsOwn

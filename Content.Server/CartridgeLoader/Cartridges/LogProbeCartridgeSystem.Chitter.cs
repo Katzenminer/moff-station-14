@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Text;
-using Content.Server._Moffstation.Chitter;
 using Content.Shared._Moffstation.BladeServer;
 using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 using Content.Shared._Moffstation.Chitter;
@@ -14,8 +13,6 @@ namespace Content.Server.CartridgeLoader.Cartridges;
 
 public sealed partial class LogProbeCartridgeSystem
 {
-    [Dependency] private ChitterServerSystem _chitterServer = default!;
-
     private const int ChitterPrintCharLimit = 10000;
 
     private void InitializeChitter()
@@ -23,11 +20,11 @@ public sealed partial class LogProbeCartridgeSystem
         SubscribeLocalEvent<LogProbeCartridgeComponent, ChitterArchivePrintMessage>(OnChitterPrintMessage);
     }
 
-    private bool HandleChitterScan(Entity<LogProbeCartridgeComponent> ent, CartridgeAfterInteractEvent args, EntityUid target)
+    private bool HandleChitterScan(Entity<LogProbeCartridgeComponent> ent, AfterInteractEvent args, EntityUid target, Action updateState)
     {
         if (TryComp<ChitterServerComponent>(target, out var chitter))
         {
-            DoChitterScan(ent, args, target, chitter);
+            DoChitterScan(ent, args, target, chitter, updateState);
             return true;
         }
 
@@ -37,7 +34,7 @@ public sealed partial class LogProbeCartridgeSystem
             {
                 if (slot.Item is { } blade && TryComp(blade, out chitter))
                 {
-                    DoChitterScan(ent, args, blade, chitter);
+                    DoChitterScan(ent, args, blade, chitter, updateState);
                     return true;
                 }
             }
@@ -46,10 +43,10 @@ public sealed partial class LogProbeCartridgeSystem
         return false;
     }
 
-    private void DoChitterScan(Entity<LogProbeCartridgeComponent> ent, CartridgeAfterInteractEvent args, EntityUid serverUid, ChitterServerComponent server)
+    private void DoChitterScan(Entity<LogProbeCartridgeComponent> ent, AfterInteractEvent args, EntityUid serverUid, ChitterServerComponent server, Action updateState)
     {
-        _audio.PlayEntity(ent.Comp.SoundScan, args.InteractEvent.User, serverUid);
-        _popup.PopupCursor(Loc.GetString("log-probe-scan", ("device", serverUid)), args.InteractEvent.User);
+        _audio.PlayEntity(ent.Comp.SoundScan, args.User, serverUid);
+        _popup.PopupCursor(Loc.GetString("log-probe-scan", ("device", serverUid)), args.User);
 
         ent.Comp.EntityName = Name(serverUid);
         ent.Comp.PulledAccessLogs.Clear();
@@ -78,7 +75,7 @@ public sealed partial class LogProbeCartridgeSystem
             });
         }
 
-        UpdateUiState(ent, args.Loader);
+        updateState();
     }
 
     private bool HandleChitterPrint(Entity<LogProbeCartridgeComponent> ent, CartridgeMessageEvent args)
@@ -87,11 +84,17 @@ public sealed partial class LogProbeCartridgeSystem
             return false;
 
         if (ent.Comp.ChitterData == null)
+        {
+            _popup.PopupCursor(Loc.GetString("chitter-logprobe-no-data"), args.User);
             return true;
+        }
 
         var chat = ent.Comp.ChitterData.ArchivedChats.FirstOrDefault(c => c.ChatId == printMsg.ChatId);
         if (chat == null)
+        {
+            _popup.PopupCursor(Loc.GetString("chitter-logprobe-no-archives"), args.User);
             return true;
+        }
 
         PrintChitterArchive(ent, printMsg.User, chat);
         return true;

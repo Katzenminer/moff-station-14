@@ -40,14 +40,14 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
         if (args.InteractEvent.Handled || !args.InteractEvent.CanReach || args.InteractEvent.Target is not { } target)
             return;
 
-        if (HandleChitterScan(ent, args, target))
+        if (HandleChitterScan(ent, args, target, updateState))
             return;
 
         if (!TryComp(target, out AccessReaderComponent? accessReaderComponent))
             return;
 
-        _audio.PlayEntity(ent.Comp.SoundScan, args.InteractEvent.User, target);
-        _popup.PopupCursor(Loc.GetString("log-probe-scan", ("device", target)), args.InteractEvent.User);
+        _audio.PlayEntity(ent.Comp.SoundScan, args.User, target);
+        _popup.PopupCursor(Loc.GetString("log-probe-scan", ("device", target)), args.User);
 
         ent.Comp.EntityName = Name(target);
         ent.Comp.PulledAccessLogs.Clear();

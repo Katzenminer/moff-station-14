@@ -6,7 +6,10 @@
     </BoxContainer>
     <BoxContainer Name="MainContent" Orientation="Horizontal" VerticalExpand="True">
         <BoxContainer Name="ChatListPanel" Orientation="Vertical" MinWidth="200">
-            <Button Name="NewChatButton" Text="{Loc chitter-new-chat}" />
+            <BoxContainer Orientation="Horizontal">
+                <Button Name="NewChatButton" Text="{Loc chitter-new-chat}" HorizontalExpand="True" />
+                <Button Name="ProfileButton" Text="{Loc chitter-profile-title}" MinWidth="60" />
+            </BoxContainer>
             <ScrollContainer VerticalExpand="True">
                 <BoxContainer Name="ChatList" Orientation="Vertical" SeparationOverride="2" />
             </ScrollContainer>

@@ -1,6 +1,5 @@
 ## Chitter UI
 chitter-program-name = Chitter
-chitter-title = Chitter
 chitter-new-chat = New Chat
 chitter-send = Send
 chitter-message-placeholder = Type a message...
@@ -19,13 +18,14 @@ chitter-add-participant = Add Participant
 chitter-remove = Remove
 chitter-archive-chat = Archive Chat
 chitter-delivery-failed = Failed to deliver
-chitter-start-chat = Chat
 chitter-create-chat = Create Chat
+chitter-leave-chat = Leave Chat
 
 ## Chitter Account examine
 chitter-account-examine = Chitter Account: {$number}
 
 ## Chitter LogProbe integration
+chitter-logprobe-no-data = No Chitter data scanned on this device.
 chitter-logprobe-header = Chitter Server Archive
 chitter-logprobe-label-chat = Archived Chats
 chitter-logprobe-no-archives = No archived chats found on this server.

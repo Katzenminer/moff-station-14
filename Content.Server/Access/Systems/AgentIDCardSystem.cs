@@ -51,7 +51,7 @@ namespace Content.Server.Access.Systems
                 return;
 
             comp.AccountId = args.Number;
-            Dirty(ent, comp);
+            Dirty(ent);
         }
 
         private void OnChameleonControllerOutfitChangedItem(Entity<AgentIDCardComponent> ent, ref InventoryRelayedEvent<ChameleonControllerOutfitSelectedEvent> args)

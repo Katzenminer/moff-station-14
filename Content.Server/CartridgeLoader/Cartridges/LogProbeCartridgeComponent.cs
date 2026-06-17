@@ -31,6 +31,17 @@ public sealed partial class LogProbeCartridgeComponent : Component
     [DataField]
     public TimeSpan PrintCooldown = TimeSpan.FromSeconds(5);
 
-    [DataField(customTypeSerializer: typeof(TimeOffsetSerializer)), AutoPausedField]
-    public TimeSpan NextPrintAllowed = TimeSpan.Zero;
+    // Moffstation - Begin - Split the component to be reusable
+
+    /// <summary>
+    /// When anyone is allowed to spawn another printout.
+    /// </summary>
+    /// <remarks>
+    /// This is abstract as it need to be implemented concretely on component
+    /// to put the auto pause attribute.
+    /// </remarks>
+    public abstract TimeSpan NextPrintAllowed { get; set; }
+
+    // Moffstation - End
+
 }

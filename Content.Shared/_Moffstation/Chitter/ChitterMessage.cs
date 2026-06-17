@@ -14,7 +14,7 @@ public sealed class ChitterAccount
 [Serializable, NetSerializable]
 public sealed class ChitterMessage
 {
-    public Guid MessageId = Guid.NewGuid();
+    public Guid MessageId;
     public uint SenderAccountId;
     public string SenderName = string.Empty;
     public TimeSpan Timestamp;
@@ -25,7 +25,7 @@ public sealed class ChitterMessage
 [Serializable, NetSerializable]
 public sealed class ChitterChat
 {
-    public Guid ChatId = Guid.NewGuid();
+    public Guid ChatId;
     public List<uint> ParticipantAccountIds = new();
     public List<ChitterMessage> Messages = new();
     public TimeSpan CreatedTime;

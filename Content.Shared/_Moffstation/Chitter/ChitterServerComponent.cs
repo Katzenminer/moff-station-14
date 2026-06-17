@@ -1,6 +1,6 @@
 namespace Content.Shared._Moffstation.Chitter;
 
-[RegisterComponent, Access(typeof(SharedChitterSystem))]
+[RegisterComponent]
 public sealed partial class ChitterServerComponent : Component
 {
     public readonly Dictionary<uint, ChitterAccount> Accounts = new();

@@ -16,6 +16,7 @@ public sealed partial class ChitterManageChatView : BoxContainer
     public event Action? OnBack;
     public event Action<uint>? OnAddParticipant;
     public event Action<uint>? OnRemoveParticipant;
+    public event Action? OnLeaveChat;
     public event Action? OnArchive;
 
     public ChitterManageChatView()
@@ -29,6 +30,11 @@ public sealed partial class ChitterManageChatView : BoxContainer
         _contacts = contacts;
 
         BackButton.OnPressed += _ => OnBack?.Invoke();
+        LeaveChatButton.OnPressed += _ =>
+        {
+            OnLeaveChat?.Invoke();
+            OnBack?.Invoke();
+        };
         ArchiveChatButton.OnPressed += _ => OnArchive?.Invoke();
 
         PopulateParticipants();

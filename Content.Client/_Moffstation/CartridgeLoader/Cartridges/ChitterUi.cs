@@ -42,28 +42,4 @@ public sealed partial class ChitterUi : UIFragment
             _fragment?.UpdateState(cast);
     }
 
-    public static void SendChitterUiMessage(
-        ChitterUiMessageType type,
-        Guid? chatId,
-        uint? targetNumber,
-        List<uint>? targetNumbers,
-        string? content,
-        string? jobTitle,
-        string? profilePictureId,
-        BoundUserInterface userInterface)
-    {
-        var message = new ChitterUiMessageEvent
-        {
-            Type = type,
-            ChatId = chatId,
-            TargetNumber = targetNumber,
-            TargetNumbers = targetNumbers,
-            Content = content,
-            JobTitle = jobTitle,
-            ProfilePictureId = profilePictureId,
-        };
-
-        var wrapper = new CartridgeUiMessage(message);
-        userInterface.SendMessage(wrapper);
-    }
 }

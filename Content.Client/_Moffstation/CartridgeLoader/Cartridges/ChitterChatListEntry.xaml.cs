@@ -26,6 +26,15 @@ public sealed partial class ChitterChatListEntry : BoxContainer
         set => NameLabel.FontColorOverride = value ? Color.Green : null;
     }
 
+    public int UnreadCount
+    {
+        set
+        {
+            UnreadCountLabel.Visible = value > 0;
+            UnreadCountLabel.Text = $"({value})";
+        }
+    }
+
     public event Action? OnPressed;
 
     public ChitterChatListEntry()

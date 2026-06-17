@@ -75,12 +75,10 @@ public sealed partial class LogProbeUiFragment : BoxContainer
         CardNumberLabel.Visible = false;
         PrintButton.Visible = true;
 
-        logs.Reverse();
-
         var count = 1;
-        foreach (var log in logs)
+        for (var i = logs.Count - 1; i >= 0; i--)
         {
-            AddAccessLog(log, count);
+            AddAccessLog(logs[i], count);
             count++;
         }
     }

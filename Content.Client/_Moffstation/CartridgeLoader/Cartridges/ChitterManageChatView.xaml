@@ -11,6 +11,7 @@
         <BoxContainer Name="ParticipantsList" Orientation="Vertical" SeparationOverride="2" />
     </ScrollContainer>
     <BoxContainer Name="ManageActions" Orientation="Vertical" SeparationOverride="4">
+        <Button Name="LeaveChatButton" Text="{Loc chitter-leave-chat}" />
         <Button Name="ArchiveChatButton" Text="{Loc chitter-archive-chat}" />
     </BoxContainer>
 </cartridges:ChitterManageChatView>

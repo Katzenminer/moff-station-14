@@ -26,7 +26,7 @@ public sealed class ChitterServerSystem : SharedChitterSystem
         if (!loaderGrid.HasValue)
             return false;
 
-        var query = EntityQueryEnumerator<ChitterServerComponent>();
+        using (var query = EntityQueryEnumerator<ChitterServerComponent>())
         while (query.MoveNext(out var uid, out var comp))
         {
             if (!IsServerPowered((uid, comp)))

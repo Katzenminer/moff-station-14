@@ -8,12 +8,10 @@
         <Button Name="CloseLookupButton" Text="{Loc chitter-close}" />
     </BoxContainer>
 
-    <BoxContainer Orientation="Vertical" Margin="5" MinWidth="250" MaxWidth="250">
-        <LineEdit Name="SearchInput" PlaceHolder="{Loc chitter-search-placeholder}" />
-        <ScrollContainer VerticalExpand="True">
-            <ItemList Name="SearchResults" />
-        </ScrollContainer>
-    </BoxContainer>
+    <LineEdit Name="SearchInput" PlaceHolder="{Loc chitter-search-placeholder}" />
+    <ScrollContainer VerticalExpand="True" MinSize="200 200">
+        <BoxContainer Name="SearchResults" Orientation="Vertical" />
+    </ScrollContainer>
 
     <Button Name="CreateChatButton" Text="{Loc chitter-create-chat}" Disabled="True" />
 

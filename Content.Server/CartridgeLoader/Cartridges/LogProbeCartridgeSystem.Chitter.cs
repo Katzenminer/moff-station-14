@@ -1,11 +1,11 @@
 using System.Linq;
 using System.Text;
 using Content.Shared._Moffstation.BladeServer;
-using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
 using Content.Shared._Moffstation.Chitter;
 using Content.Shared.CartridgeLoader;
 using Content.Shared.CartridgeLoader.Cartridges;
 using Content.Shared.Database;
+using Content.Shared.Interaction; //Moffstation
 using Content.Shared.Paper;
 using Robust.Shared.Timing;
 
@@ -14,11 +14,6 @@ namespace Content.Server.CartridgeLoader.Cartridges;
 public sealed partial class LogProbeCartridgeSystem
 {
     private const int ChitterPrintCharLimit = 10000;
-
-    private void InitializeChitter()
-    {
-        SubscribeLocalEvent<LogProbeCartridgeComponent, ChitterArchivePrintMessage>(OnChitterPrintMessage);
-    }
 
     private bool HandleChitterScan(Entity<LogProbeCartridgeComponent> ent, AfterInteractEvent args, EntityUid target, Action updateState)
     {
@@ -98,19 +93,6 @@ public sealed partial class LogProbeCartridgeSystem
 
         PrintChitterArchive(ent, printMsg.User, chat);
         return true;
-    }
-
-    private void OnChitterPrintMessage(Entity<LogProbeCartridgeComponent> ent, ref ChitterArchivePrintMessage args)
-    {
-        if (ent.Comp.ChitterData == null)
-            return;
-
-        var targetChatId = args.ChatId;
-        var chat = ent.Comp.ChitterData.ArchivedChats.FirstOrDefault(c => c.ChatId == targetChatId);
-        if (chat == null)
-            return;
-
-        PrintChitterArchive(ent, args.User, chat);
     }
 
     private void PrintChitterArchive(Entity<LogProbeCartridgeComponent> ent, EntityUid user, ArchivedChatEntry chat)

@@ -1,4 +1,3 @@
-using System.Linq;
 using Content.Server.Power.Components;
 using Content.Server._Moffstation.Power.Components;
 using Content.Shared._Moffstation.Chitter;
@@ -160,11 +159,4 @@ public sealed class ChitterServerSystem : SharedChitterSystem
         chat.Messages[^1].DeliveryFailed = true;
     }
 
-    public List<uint> GetRecipientIds(ChitterServerComponent server, Guid chatId, uint senderId)
-    {
-        if (!server.Chats.TryGetValue(chatId, out var chat))
-            return new();
-
-        return chat.ParticipantAccountIds.Where(id => id != senderId).ToList();
-    }
 }

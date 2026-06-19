@@ -10,8 +10,8 @@ namespace Content.Client._Moffstation.CartridgeLoader.Cartridges;
 [GenerateTypedNameReferences]
 public sealed partial class ChitterMessageBubble : BoxContainer
 {
-    private static readonly Color OwnBubbleColor = new(0.1f, 0.3f, 0.1f);
-    private static readonly Color OtherBubbleColor = new(0.15f, 0.15f, 0.15f);
+    private static readonly Color OwnBubbleColor = new(0f, 0.68f, 0.94f);
+    private static readonly Color OtherBubbleColor = new(0.13f, 0.69f, 0.29f);
 
     public string SenderName
     {

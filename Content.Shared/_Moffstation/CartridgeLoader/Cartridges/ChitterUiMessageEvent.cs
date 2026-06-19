@@ -25,6 +25,5 @@ public sealed class ChitterUiMessageEvent : CartridgeMessageEvent
     public uint? TargetNumber;
     public List<uint>? TargetNumbers;
     public string? Content;
-    public string? JobTitle;
     public string? ProfilePictureId;
 }

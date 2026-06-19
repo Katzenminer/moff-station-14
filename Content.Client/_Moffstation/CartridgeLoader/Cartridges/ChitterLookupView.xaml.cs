@@ -44,19 +44,27 @@ public sealed partial class ChitterLookupView : BoxContainer
     private void UpdateResults(string search)
     {
         SearchResults.RemoveAllChildren();
-        _selectedIds.Clear();
-        CreateChatButton.Disabled = true;
+        CreateChatButton.Disabled = _selectedIds.Count == 0;
+
+        if (_contacts == null)
+            return;
 
         foreach (var contact in _contacts)
         {
-            if (!string.IsNullOrEmpty(search) && !contact.Name.ToLower().Contains(search))
+            var name = contact.Name ?? "";
+            if (!string.IsNullOrEmpty(search) && !name.ToLower().Contains(search))
                 continue;
+
+            var displayName = string.IsNullOrEmpty(name)
+                ? $"#{contact.AccountId:D4}"
+                : $"{name} (#{contact.AccountId:D4})";
 
             var btn = new Button
             {
-                Text = $"{contact.Name} (#{contact.AccountId:D4})",
+                Text = displayName,
                 HorizontalExpand = true,
                 ToggleMode = true,
+                Pressed = _selectedIds.Contains(contact.AccountId),
             };
             var capturedId = contact.AccountId;
             btn.OnToggled += (args) =>

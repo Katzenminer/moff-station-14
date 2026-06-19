@@ -18,7 +18,7 @@ public sealed partial class ChitterUi : UIFragment
     {
         _fragment = new ChitterUiFragment();
 
-        _fragment.OnUiMessage += (type, chatId, targetNumber, targetNumbers, content, jobTitle, profilePictureId) =>
+        _fragment.OnUiMessage += (type, chatId, targetNumber, targetNumbers, content, profilePictureId) =>
         {
             var message = new ChitterUiMessageEvent
             {
@@ -27,7 +27,6 @@ public sealed partial class ChitterUi : UIFragment
                 TargetNumber = targetNumber,
                 TargetNumbers = targetNumbers,
                 Content = content,
-                JobTitle = jobTitle,
                 ProfilePictureId = profilePictureId,
             };
 

@@ -106,10 +106,18 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         if (!_server.TryGetPdaIdCard(loader, out var idCard))
             return false;
 
+        if (HasCentComAccess(idCard))
+            return false;
+
         if (!TryComp<ChitterAccountComponent>(idCard, out var foundCard))
             return false;
         card = foundCard;
         return true;
+    }
+
+    private bool HasCentComAccess(EntityUid uid)
+    {
+        return TryComp<AccessComponent>(uid, out var access) && access.Tags.Contains("CentralCommand");
     }
 
     private void HandleNewChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
@@ -198,13 +206,16 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         if (!_server.TryGetPdaIdCard(loader, out var idCard))
             return;
 
+        if (HasCentComAccess(idCard))
+            return;
+
         if (!TryComp<ChitterAccountComponent>(idCard, out var card))
             return;
 
         if (msg.ProfilePictureId != null)
         {
             card.ProfilePictureId = msg.ProfilePictureId;
-            Dirty(loader, card);
+            Dirty(idCard, card);
 
             var identity = Identity.Name(loader, EntityManager);
             var ownJobTitle = TryComp<IdCardComponent>(idCard, out var idCardComp)
@@ -224,6 +235,12 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             HasIdCard = hasIdCard,
             ServerOnline = serverOnline,
         };
+
+        if (hasIdCard && HasCentComAccess(idCard))
+        {
+            hasIdCard = false;
+            state.HasIdCard = false;
+        }
 
         if (hasIdCard && TryComp<ChitterAccountComponent>(idCard, out var account))
         {
@@ -334,6 +351,9 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                     continue;
                 }
             }
+
+            if (HasCentComAccess(uid))
+                continue;
 
             var jobTitle = TryComp<IdCardComponent>(uid, out var idCard)
                 ? idCard.LocalizedJobTitle ?? ""

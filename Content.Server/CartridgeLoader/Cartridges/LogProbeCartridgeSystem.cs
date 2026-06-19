@@ -10,6 +10,9 @@ using Content.Shared.Popups;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
 using System.Text;
+using Content.Shared.Interaction;
+using Content.Server._Moffstation.LogProbe;
+using Content.Shared._Moffstation.LogProbe;
 
 namespace Content.Server.CartridgeLoader.Cartridges;
 
@@ -29,7 +32,6 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
     {
         base.Initialize();
 
-        InitializeChitter();
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeUiReadyEvent>(OnUiReady);
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeAfterInteractEvent>(AfterInteract);
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeMessageEvent>(OnMessage);
@@ -37,10 +39,23 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
 
     private void AfterInteract(Entity<LogProbeCartridgeComponent> ent, ref CartridgeAfterInteractEvent args)
     {
-        if (args.InteractEvent.Handled || !args.InteractEvent.CanReach || args.InteractEvent.Target is not { } target)
+        // Moffstation - Begin - Split the component to be reusable
+        var loader = args.Loader;
+        var interact = args.InteractEvent;
+        if (interact.Handled || !interact.CanReach || interact.Target is not { } target)
             return;
 
-        if (HandleChitterScan(ent, args, target, updateState))
+        if (HandleChitterScan(ent, interact, target, () => UpdateUiState(ent, loader)))
+            return;
+
+        AfterInteract(ent, interact, () => UpdateUiState(ent, loader));
+        // Moffstation - End
+    }
+
+    private void AfterInteract<T>(Entity<T> ent, AfterInteractEvent args, Action updateState) // Moffstation - Split the component to be reusable
+        where T : BaseLogProbeComponent
+    {
+        if (args.Handled || !args.CanReach || args.Target is not { } target)
             return;
 
         if (!TryComp(target, out AccessReaderComponent? accessReaderComponent))
@@ -119,4 +134,5 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
         var state = new LogProbeUiState(ent.Comp.EntityName, ent.Comp.PulledAccessLogs, ent.Comp.ChitterData);
         _cartridge.UpdateCartridgeUiState(loaderUid, state);
     }
+
 }

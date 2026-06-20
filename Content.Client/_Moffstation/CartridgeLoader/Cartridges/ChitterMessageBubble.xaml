@@ -1,14 +1,18 @@
 <cartridges:ChitterMessageBubble xmlns="https://spacestation14.io"
              xmlns:cartridges="clr-namespace:Content.Client._Moffstation.CartridgeLoader.Cartridges"
+             xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
              Orientation="Vertical"
-             Margin="4">
-    <Label Name="SenderLabel" Text="" FontColorOverride="#888888" />
-    <PanelContainer Name="BubbleBackground" MinWidth="100">
-        <BoxContainer Orientation="Vertical">
-            <Label Name="MessageLabel" Text="" />
+             Margin="4 2">
+    <Label Name="SenderLabel" Text="" FontColorOverride="#aaaaaa" Margin="4 0 0 2" />
+    <PanelContainer Name="BubbleBackground" MinWidth="80">
+        <PanelContainer.PanelOverride>
+            <gfx:StyleBoxFlat BackgroundColor="#FFFFFF" />
+        </PanelContainer.PanelOverride>
+        <BoxContainer Orientation="Vertical" Margin="6 4">
+            <Label Name="MessageLabel" Text="" FontColorOverride="#FFFFFF" />
             <BoxContainer Orientation="Horizontal">
-                <Label Name="TimestampLabel" Text="" FontColorOverride="#666666" />
-                <Label Name="FailedLabel" Text="{Loc chitter-delivery-failed}" FontColorOverride="#FF4444" Visible="False" />
+                <Label Name="TimestampLabel" Text="" FontColorOverride="#888888" />
+                <Label Name="FailedLabel" Text="{Loc chitter-delivery-failed}" FontColorOverride="#FF4444" Visible="False" Margin="8 0 0 0" />
             </BoxContainer>
         </BoxContainer>
     </PanelContainer>

@@ -3,14 +3,13 @@ using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Maths;
+using Robust.Shared.Input;
 
 namespace Content.Client._Moffstation.CartridgeLoader.Cartridges;
 
 [GenerateTypedNameReferences]
 public sealed partial class ChitterChatListEntry : BoxContainer
 {
-    private Button? _button;
-
     public string DisplayName
     {
         set => NameLabel.Text = value;
@@ -41,17 +40,11 @@ public sealed partial class ChitterChatListEntry : BoxContainer
     {
         RobustXamlLoader.Load(this);
 
-        _button = new Button
+        MouseFilter = MouseFilterMode.Stop;
+        OnKeyBindDown += args =>
         {
-            HorizontalExpand = true,
-            VerticalExpand = true,
-            Visible = false,
+            if (args.Function == EngineKeyFunctions.UIClick || args.Function == EngineKeyFunctions.Use)
+                OnPressed?.Invoke();
         };
-        AddChild(_button);
-
-        OnMouseEntered += _ => _button.Visible = true;
-        OnMouseExited += _ => _button.Visible = false;
-
-        _button.OnPressed += _ => OnPressed?.Invoke();
     }
 }

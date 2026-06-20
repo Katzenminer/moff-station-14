@@ -7,8 +7,8 @@
   - type: Cartridge
     programName: chitter-program-name
     icon:
-      sprite: _Moffstation/Chitter/chitter.rsi
-      state: icon
+      sprite: _Moffstation/Chitter/Icons/program_icons.rsi
+      state: chitter
   - type: UIFragment
     ui: !type:ChitterUi
   - type: ChitterCartridge

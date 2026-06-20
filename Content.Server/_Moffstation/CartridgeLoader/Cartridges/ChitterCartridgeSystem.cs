@@ -120,10 +120,30 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         return TryComp<AccessComponent>(uid, out var access) && access.Tags.Contains("CentralCommand");
     }
 
+    private string GetCardName(EntityUid idCard, EntityUid loader)
+    {
+        return TryComp<IdCardComponent>(idCard, out var idComp) && !string.IsNullOrEmpty(idComp.FullName)
+            ? idComp.FullName
+            : Identity.Name(loader, EntityManager);
+    }
+
+    private string GetCardName(EntityUid loader)
+    {
+        return _server.TryGetPdaIdCard(loader, out var idCard)
+            ? GetCardName(idCard, loader)
+            : Identity.Name(loader, EntityManager);
+    }
+
     private void HandleNewChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
     {
         if (!TryGetServerAndCard(loader, out var serverEnt, out var card))
+        {
+            Log.Error($"[Chitter] HandleNewChat: TryGetServerAndCard failed for loader={loader}");
             return;
+        }
+
+        Log.Info(
+            $"[Chitter] HandleNewChat: card.AccountId={card.AccountId}, TargetNumbers count={msg.TargetNumbers?.Count ?? 0}, TargetNumber={msg.TargetNumber}");
 
         List<uint> participants;
         if (msg.TargetNumbers != null && msg.TargetNumbers.Count > 0)
@@ -134,17 +154,24 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                 if (target != card.AccountId && !participants.Contains(target))
                     participants.Add(target);
             }
+
+            Log.Info(
+                $"[Chitter] HandleNewChat: creating group chat with {participants.Count} participants: [{string.Join(",", participants)}]");
         }
         else if (msg.TargetNumber != null && msg.TargetNumber != card.AccountId)
         {
             participants = new List<uint> { card.AccountId, msg.TargetNumber.Value };
+            Log.Info($"[Chitter] HandleNewChat: creating 1-on-1 chat with {participants[1]}");
         }
         else
         {
+            Log.Warning($"[Chitter] HandleNewChat: no valid targets");
             return;
         }
 
-        _server.CreateChat(serverEnt.Comp, participants);
+        var chatId = _server.CreateChat(serverEnt.Comp, participants);
+        ent.Comp.CurrentChatId = chatId;
+        Log.Info($"[Chitter] HandleNewChat: created chat {chatId}, auto-selected");
     }
 
     private void HandleSendMessage(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
@@ -155,7 +182,7 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         if (msg.ChatId == null || string.IsNullOrWhiteSpace(msg.Content))
             return;
 
-        var senderName = Identity.Name(loader, EntityManager);
+        var senderName = GetCardName(loader);
         _server.AddMessage(serverEnt.Comp, msg.ChatId.Value, card.AccountId, senderName, msg.Content);
 
         if (!_server.IsServerPowered(serverEnt))
@@ -217,11 +244,11 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             card.ProfilePictureId = msg.ProfilePictureId;
             Dirty(idCard, card);
 
-            var identity = Identity.Name(loader, EntityManager);
+            var ownName = GetCardName(idCard, loader);
             var ownJobTitle = TryComp<IdCardComponent>(idCard, out var idCardComp)
                 ? idCardComp.LocalizedJobTitle ?? ""
                 : "";
-            _server.RegisterOrUpdateAccount(serverEnt.Comp, card.AccountId, identity, ownJobTitle, msg.ProfilePictureId);
+            _server.RegisterOrUpdateAccount(serverEnt.Comp, card.AccountId, ownName, ownJobTitle, msg.ProfilePictureId);
         }
     }
 
@@ -247,20 +274,20 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             state.OwnNumber = account.AccountId;
             state.OwnProfilePicture = account.ProfilePictureId;
 
-            var identity = Identity.Name(loader, EntityManager);
-            state.OwnName = identity;
+            var ownName = GetCardName(idCard, loader);
+            state.OwnName = ownName;
 
             var ownJobTitle = TryComp<IdCardComponent>(idCard, out var idCardComp)
                 ? idCardComp.LocalizedJobTitle ?? ""
                 : "";
             state.OwnJob = ownJobTitle;
 
-            Log.Info($"[Chitter] UpdateUi: hasIdCard=true, serverOnline={serverOnline}, ownAccountId={account.AccountId}, ownName={identity}, job={ownJobTitle}");
+            Log.Info($"[Chitter] UpdateUi: hasIdCard=true, serverOnline={serverOnline}, ownAccountId={account.AccountId}, ownName={ownName}, job={ownJobTitle}");
 
             if (serverOnline)
             {
                 var serverComp = serverEnt.Comp;
-                _server.RegisterOrUpdateAccount(serverComp, account.AccountId, identity, ownJobTitle, account.ProfilePictureId);
+                _server.RegisterOrUpdateAccount(serverComp, account.AccountId, ownName, ownJobTitle, account.ProfilePictureId);
 
                 var before = serverComp.Accounts.Count;
                 DiscoverAccountsOnGrid(loader, serverComp);
@@ -282,10 +309,16 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                     Log.Info($"[Chitter] UpdateUi: added contact accId={accId}, name={acc.Name}");
                 }
 
+                Log.Info($"[Chitter] UpdateUi: server has {serverComp.Chats.Count} chats total");
                 foreach (var (chatId, chat) in serverComp.Chats)
                 {
+                    Log.Info($"[Chitter] UpdateUi: checking chat {chatId}, participants=[{string.Join(",", chat.ParticipantAccountIds)}], user's account={account.AccountId}");
+
                     if (!chat.ParticipantAccountIds.Contains(account.AccountId))
+                    {
+                        Log.Info($"[Chitter] UpdateUi: skipping chat {chatId} (user not in participants)");
                         continue;
+                    }
 
                     var lastMsg = chat.Messages.Count > 0 ? chat.Messages[^1].Content : "";
                     var displayName = string.Join(", ",
@@ -306,6 +339,7 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                         HasUnread = unreadCount > 0,
                         UnreadCount = unreadCount,
                     });
+                    Log.Info($"[Chitter] UpdateUi: added chat {chatId} to state (displayName='{displayName}')");
 
                     if (chatId == GetCurrentChatId(ent))
                     {
@@ -358,10 +392,13 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             var jobTitle = TryComp<IdCardComponent>(uid, out var idCard)
                 ? idCard.LocalizedJobTitle ?? ""
                 : "";
+            var accountName = idCard != null && !string.IsNullOrEmpty(idCard.FullName)
+                ? idCard.FullName
+                : Identity.Name(uid, EntityManager);
             _server.RegisterOrUpdateAccount(server, comp.AccountId,
-                Identity.Name(uid, EntityManager), jobTitle, comp.ProfilePictureId);
+                accountName, jobTitle, comp.ProfilePictureId);
             found++;
-            Log.Info($"[Chitter] DiscoverAccountsOnGrid: registered accId={comp.AccountId}, name={Identity.Name(uid, EntityManager)}");
+            Log.Info($"[Chitter] DiscoverAccountsOnGrid: registered accId={comp.AccountId}, name={accountName}");
         }
 
         Log.Info($"[Chitter] DiscoverAccountsOnGrid: found={found}, skippedZeroId={skippedZero}, skippedDiffGrid={skippedGrid}");

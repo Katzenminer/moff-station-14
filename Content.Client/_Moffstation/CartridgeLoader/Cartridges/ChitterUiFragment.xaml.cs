@@ -65,11 +65,17 @@ public sealed partial class ChitterUiFragment : BoxContainer
         PlayerName.Text = state.OwnName;
         PlayerJob.Text = state.OwnJob;
         PlayerChitterId.Text = $"#{state.OwnNumber:D4}";
+        if (state.OwnProfilePicture != null)
+        {
+            var avatar = _prototypeManager.Index<ChitterAvatarPrototype>(state.OwnProfilePicture);
+            ProfileButton.TexturePath = "/" + avatar.SpritePath;
+        }
 
         PopulateChatList(state);
 
-        if (_selectedChatId != null && state.CurrentChat?.ChatId == _selectedChatId)
+        if (state.CurrentChat != null)
         {
+            _selectedChatId = state.CurrentChat.ChatId;
             ShowChatView(state.CurrentChat);
         }
         else if (_selectedChatId != null && state.Chats.Any(c => c.ChatId == _selectedChatId))

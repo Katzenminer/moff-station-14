@@ -97,11 +97,12 @@ public sealed class ChitterServerSystem : SharedChitterSystem
         return server.ArchivedChats.GetValueOrDefault(chatId);
     }
 
-    public Guid CreateChat(ChitterServerComponent server, List<uint> participants)
+    public Guid CreateChat(ChitterServerComponent server, List<uint> participants, string? chatName = null)
     {
         var chat = new ChitterChat
         {
             ChatId = Guid.NewGuid(),
+            ChatName = chatName ?? string.Empty,
             ParticipantAccountIds = participants,
             CreatedTime = _timing.CurTime,
         };

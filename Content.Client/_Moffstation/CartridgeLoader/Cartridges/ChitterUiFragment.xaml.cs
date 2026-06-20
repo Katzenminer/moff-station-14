@@ -18,7 +18,7 @@ public sealed partial class ChitterUiFragment : BoxContainer
     private Guid? _selectedChatId;
     private readonly IPrototypeManager _prototypeManager;
 
-    public Action<ChitterUiMessageType, Guid?, uint?, List<uint>?, string?, string?>? OnUiMessage;
+    public Action<ChitterUiMessageType, Guid?, uint?, List<uint>?, string?, string?, string?>? OnUiMessage;
 
     public ChitterUiFragment()
     {
@@ -73,6 +73,9 @@ public sealed partial class ChitterUiFragment : BoxContainer
 
         PopulateChatList(state);
 
+        if (OverlayContainer.Visible)
+            return;
+
         if (state.CurrentChat != null)
         {
             _selectedChatId = state.CurrentChat.ChatId;
@@ -80,7 +83,7 @@ public sealed partial class ChitterUiFragment : BoxContainer
         }
         else if (_selectedChatId != null && state.Chats.Any(c => c.ChatId == _selectedChatId))
         {
-            OnUiMessage?.Invoke(ChitterUiMessageType.SelectChat, _selectedChatId, null, null, null, null);
+            OnUiMessage?.Invoke(ChitterUiMessageType.SelectChat, _selectedChatId, null, null, null, null, null);
         }
         else
         {
@@ -123,7 +126,7 @@ public sealed partial class ChitterUiFragment : BoxContainer
             entry.OnPressed += () =>
             {
                 _selectedChatId = capturedId;
-                OnUiMessage?.Invoke(ChitterUiMessageType.SelectChat, capturedId, null, null, null, null);
+                OnUiMessage?.Invoke(ChitterUiMessageType.SelectChat, capturedId, null, null, null, null, null);
             };
 
             ChatListContainer.AddChild(entry);
@@ -179,19 +182,23 @@ public sealed partial class ChitterUiFragment : BoxContainer
 
         var view = new ChitterManageChatView(_currentState.CurrentChat, _currentState.Contacts);
         view.OnBack += HideOverlay;
-        view.OnAddParticipant += (id) => OnUiMessage?.Invoke(ChitterUiMessageType.AddParticipant, _currentState.CurrentChat.ChatId, id, null, null, null);
-        view.OnRemoveParticipant += (id) => OnUiMessage?.Invoke(ChitterUiMessageType.RemoveParticipant, _currentState.CurrentChat.ChatId, id, null, null, null);
+        view.OnAddParticipant += (id) => OnUiMessage?.Invoke(ChitterUiMessageType.AddParticipant, _currentState.CurrentChat.ChatId, id, null, null, null, null);
+        view.OnRemoveParticipant += (id) => OnUiMessage?.Invoke(ChitterUiMessageType.RemoveParticipant, _currentState.CurrentChat.ChatId, id, null, null, null, null);
         view.OnLeaveChat += () =>
         {
-            OnUiMessage?.Invoke(ChitterUiMessageType.LeaveChat, _currentState.CurrentChat.ChatId, null, null, null, null);
+            OnUiMessage?.Invoke(ChitterUiMessageType.LeaveChat, _currentState.CurrentChat.ChatId, null, null, null, null, null);
             HideOverlay();
             _selectedChatId = null;
         };
         view.OnArchive += () =>
         {
-            OnUiMessage?.Invoke(ChitterUiMessageType.ArchiveChat, _currentState.CurrentChat.ChatId, null, null, null, null);
+            OnUiMessage?.Invoke(ChitterUiMessageType.ArchiveChat, _currentState.CurrentChat.ChatId, null, null, null, null, null);
             HideOverlay();
             _selectedChatId = null;
+        };
+        view.OnRenameChat += (name) =>
+        {
+            OnUiMessage?.Invoke(ChitterUiMessageType.RenameChat, _currentState.CurrentChat.ChatId, null, null, name, null, null);
         };
         ShowOverlay(view);
     }
@@ -206,9 +213,9 @@ public sealed partial class ChitterUiFragment : BoxContainer
             return;
 
         var view = new ChitterLookupView(contacts);
-        view.OnChatCreated += (targetIds) =>
+        view.OnChatCreated += (chatName, targetIds) =>
         {
-            OnUiMessage?.Invoke(ChitterUiMessageType.NewChat, null, null, targetIds, null, null);
+            OnUiMessage?.Invoke(ChitterUiMessageType.NewChat, null, null, targetIds, null, null, chatName);
             HideOverlay();
         };
         view.OnClose += HideOverlay;
@@ -224,7 +231,7 @@ public sealed partial class ChitterUiFragment : BoxContainer
         var view = new ChitterProfileView(avatarIds, _currentState.OwnProfilePicture);
         view.OnProfilePictureSelected += (id) =>
         {
-            OnUiMessage?.Invoke(ChitterUiMessageType.SetProfilePicture, null, null, null, null, id);
+            OnUiMessage?.Invoke(ChitterUiMessageType.SetProfilePicture, null, null, null, null, id, null);
             HideOverlay();
         };
         view.OnClose += HideOverlay;
@@ -237,7 +244,7 @@ public sealed partial class ChitterUiFragment : BoxContainer
         if (string.IsNullOrEmpty(text) || _selectedChatId == null)
             return;
 
-        OnUiMessage?.Invoke(ChitterUiMessageType.SendMessage, _selectedChatId, null, null, text, null);
+        OnUiMessage?.Invoke(ChitterUiMessageType.SendMessage, _selectedChatId, null, null, text, null, null);
         MessageInput.Text = "";
     }
 }

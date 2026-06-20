@@ -24,7 +24,6 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         base.Initialize();
         SubscribeLocalEvent<ChitterCartridgeComponent, CartridgeUiReadyEvent>(OnUiReady);
         SubscribeLocalEvent<ChitterCartridgeComponent, CartridgeMessageEvent>(OnMessage);
-
     }
 
     public override void Update(float frameTime)
@@ -89,6 +88,9 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                 break;
             case ChitterUiMessageType.RefreshContacts:
                 // Triggers an immediate UI refresh via the UpdateUi at the end of OnMessage
+                break;
+            case ChitterUiMessageType.RenameChat:
+                HandleRenameChat(ent, loader, msg);
                 break;
         }
 
@@ -169,9 +171,9 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             return;
         }
 
-        var chatId = _server.CreateChat(serverEnt.Comp, participants);
+        var chatId = _server.CreateChat(serverEnt.Comp, participants, msg.ChatName);
         ent.Comp.CurrentChatId = chatId;
-        Log.Info($"[Chitter] HandleNewChat: created chat {chatId}, auto-selected");
+        Log.Info($"[Chitter] HandleNewChat: created chat {chatId} '{msg.ChatName}', auto-selected");
     }
 
     private void HandleSendMessage(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
@@ -225,6 +227,22 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             _server.ArchiveChat(serverEnt.Comp, msg.ChatId.Value);
     }
 
+    private void HandleRenameChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!_server.TryFindServer(loader, out var serverEnt))
+            return;
+
+        if (msg.ChatId == null)
+            return;
+
+        var serverComp = serverEnt.Comp;
+
+        if (!serverComp.Chats.TryGetValue(msg.ChatId.Value, out var chat))
+            return;
+
+        chat.ChatName = msg.ChatName ?? string.Empty;
+    }
+
     private void HandleSetProfilePicture(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
     {
         if (!_server.TryFindServer(loader, out var serverEnt))
@@ -243,12 +261,14 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         {
             card.ProfilePictureId = msg.ProfilePictureId;
             Dirty(idCard, card);
-
-            var ownName = GetCardName(idCard, loader);
-            var ownJobTitle = TryComp<IdCardComponent>(idCard, out var idCardComp)
-                ? idCardComp.LocalizedJobTitle ?? ""
-                : "";
-            _server.RegisterOrUpdateAccount(serverEnt.Comp, card.AccountId, ownName, ownJobTitle, msg.ProfilePictureId);
+            var ownerName = "Unknown";
+            var ownerJobTitle = "Unknown";
+            if (TryComp<IdCardComponent>(idCard, out var idCardComp))
+            {
+                ownerName = idCardComp.FullName ?? "Unknown";
+                ownerJobTitle = idCardComp.LocalizedJobTitle ?? "Unknown";
+            }
+            _server.RegisterOrUpdateAccount(serverEnt.Comp, card.AccountId, ownerName, ownerJobTitle, msg.ProfilePictureId);
         }
     }
 
@@ -274,20 +294,23 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             state.OwnNumber = account.AccountId;
             state.OwnProfilePicture = account.ProfilePictureId;
 
-            var ownName = GetCardName(idCard, loader);
-            state.OwnName = ownName;
+            var ownerName = "Unknown";
+            var ownerJobTitle = "Unknown";
+            if (TryComp<IdCardComponent>(idCard, out var idCardComp))
+            {
+                ownerName = idCardComp.FullName ?? "Unknown";
+                ownerJobTitle = idCardComp.LocalizedJobTitle ?? "Unknown";
+            }
 
-            var ownJobTitle = TryComp<IdCardComponent>(idCard, out var idCardComp)
-                ? idCardComp.LocalizedJobTitle ?? ""
-                : "";
-            state.OwnJob = ownJobTitle;
+            state.OwnName = ownerName;
+            state.OwnJob = ownerJobTitle;
 
-            Log.Info($"[Chitter] UpdateUi: hasIdCard=true, serverOnline={serverOnline}, ownAccountId={account.AccountId}, ownName={ownName}, job={ownJobTitle}");
+            Log.Info($"[Chitter] UpdateUi: hasIdCard=true, serverOnline={serverOnline}, ownAccountId={account.AccountId}, ownName={ownerName}, job={ownerJobTitle}");
 
             if (serverOnline)
             {
                 var serverComp = serverEnt.Comp;
-                _server.RegisterOrUpdateAccount(serverComp, account.AccountId, ownName, ownJobTitle, account.ProfilePictureId);
+                _server.RegisterOrUpdateAccount(serverComp, account.AccountId, ownerName, ownerJobTitle, account.ProfilePictureId);
 
                 var before = serverComp.Accounts.Count;
                 DiscoverAccountsOnGrid(loader, serverComp);
@@ -321,10 +344,12 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                     }
 
                     var lastMsg = chat.Messages.Count > 0 ? chat.Messages[^1].Content : "";
-                    var displayName = string.Join(", ",
-                        chat.ParticipantAccountIds
-                            .Where(id => id != account.AccountId)
-                            .Select(id => serverComp.Accounts.GetValueOrDefault(id)?.Name ?? $"#{id:D4}"));
+                    var displayName = !string.IsNullOrWhiteSpace(chat.ChatName)
+                        ? chat.ChatName
+                        : string.Join(", ",
+                            chat.ParticipantAccountIds
+                                .Where(id => id != account.AccountId)
+                                .Select(id => serverComp.Accounts.GetValueOrDefault(id)?.Name ?? $"#{id:D4}"));
 
                     var lastSeen = ent.Comp.LastSeenMessageCount.GetValueOrDefault(chatId);
                     var unreadCount = chat.Messages.Count - lastSeen;
@@ -422,6 +447,7 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         var detail = new ChatDetail
         {
             ChatId = chat.ChatId,
+            ChatName = chat.ChatName,
         };
 
         foreach (var msg in chat.Messages)

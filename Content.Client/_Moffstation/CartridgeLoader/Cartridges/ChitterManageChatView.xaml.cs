@@ -18,6 +18,7 @@ public sealed partial class ChitterManageChatView : BoxContainer
     public event Action<uint>? OnRemoveParticipant;
     public event Action? OnLeaveChat;
     public event Action? OnArchive;
+    public event Action<string?>? OnRenameChat;
 
     public ChitterManageChatView()
     {
@@ -36,6 +37,13 @@ public sealed partial class ChitterManageChatView : BoxContainer
             OnBack?.Invoke();
         };
         ArchiveChatButton.OnPressed += _ => OnArchive?.Invoke();
+
+        ChatNameInput.Text = chat.ChatName;
+        RenameButton.OnPressed += _ =>
+        {
+            var name = ChatNameInput.Text.Trim();
+            OnRenameChat?.Invoke(string.IsNullOrEmpty(name) ? null : name);
+        };
 
         PopulateParticipants();
     }

@@ -26,6 +26,7 @@ public sealed class ChitterMessage
 public sealed class ChitterChat
 {
     public Guid ChatId;
+    public string ChatName = string.Empty;
     public List<uint> ParticipantAccountIds = new();
     public List<ChitterMessage> Messages = new();
     public TimeSpan CreatedTime;

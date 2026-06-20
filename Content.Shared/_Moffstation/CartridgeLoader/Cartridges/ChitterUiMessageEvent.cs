@@ -15,6 +15,7 @@ public enum ChitterUiMessageType
     ArchiveChat,
     SetProfilePicture,
     RefreshContacts,
+    RenameChat,
 }
 
 [Serializable, NetSerializable]
@@ -26,4 +27,5 @@ public sealed class ChitterUiMessageEvent : CartridgeMessageEvent
     public List<uint>? TargetNumbers;
     public string? Content;
     public string? ProfilePictureId;
+    public string? ChatName;
 }

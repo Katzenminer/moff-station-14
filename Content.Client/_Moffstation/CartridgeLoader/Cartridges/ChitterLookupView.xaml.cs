@@ -13,7 +13,7 @@ public sealed partial class ChitterLookupView : BoxContainer
     private List<AccountEntry> _contacts = null!;
     private HashSet<uint> _selectedIds = new();
 
-    public event Action<List<uint>>? OnChatCreated;
+    public event Action<string?, List<uint>>? OnChatCreated;
     public event Action? OnClose;
 
     public ChitterLookupView()
@@ -29,7 +29,10 @@ public sealed partial class ChitterLookupView : BoxContainer
         CreateChatButton.OnPressed += _ =>
         {
             if (_selectedIds.Count > 0)
-                OnChatCreated?.Invoke(_selectedIds.ToList());
+            {
+                var chatName = ChatNameInput.Text.Trim();
+                OnChatCreated?.Invoke(string.IsNullOrEmpty(chatName) ? null : chatName, _selectedIds.ToList());
+            }
         };
 
         SearchInput.OnTextChanged += _ =>

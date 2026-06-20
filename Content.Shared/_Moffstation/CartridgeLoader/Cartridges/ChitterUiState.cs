@@ -30,6 +30,7 @@ public sealed class ChatEntry
 public sealed class ChatDetail
 {
     public Guid ChatId;
+    public string ChatName = string.Empty;
     public List<MessageEntry> Messages = new();
     public List<ParticipantEntry> Participants = new();
 }

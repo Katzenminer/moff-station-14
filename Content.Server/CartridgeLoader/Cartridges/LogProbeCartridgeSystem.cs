@@ -48,12 +48,11 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
         if (HandleChitterScan(ent, interact, target, () => UpdateUiState(ent, loader)))
             return;
 
-        AfterInteract(ent, interact, () => UpdateUiState(ent, loader));
+        AfterInteract((ent.Owner, (BaseLogProbeComponent)ent.Comp), interact, loader, () => UpdateUiState(ent, loader));
         // Moffstation - End
     }
 
-    private void AfterInteract<T>(Entity<T> ent, AfterInteractEvent args, Action updateState) // Moffstation - Split the component to be reusable
-        where T : BaseLogProbeComponent
+    private void AfterInteract(Entity<BaseLogProbeComponent> ent, AfterInteractEvent args, EntityUid loader, Action updateState) // Moffstation - Split the component to be reusable
     {
         if (args.Handled || !args.CanReach || args.Target is not { } target)
             return;
@@ -79,7 +78,7 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
 
         ent.Comp.PulledAccessLogs.Reverse();
 
-        UpdateUiState(ent, args.Loader);
+        updateState();
     }
 
     private void OnUiReady(Entity<LogProbeCartridgeComponent> ent, ref CartridgeUiReadyEvent args)

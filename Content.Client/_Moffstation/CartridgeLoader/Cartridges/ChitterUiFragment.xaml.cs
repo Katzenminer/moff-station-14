@@ -116,6 +116,7 @@ public sealed partial class ChitterUiFragment : BoxContainer
                 LastMessage = chat.LastMessage,
                 HasUnread = chat.HasUnread,
                 UnreadCount = chat.UnreadCount,
+                Selected = chat.ChatId == _selectedChatId,
             };
 
             var capturedId = chat.ChatId;

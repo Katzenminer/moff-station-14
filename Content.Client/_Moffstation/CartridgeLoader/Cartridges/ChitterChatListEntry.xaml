@@ -3,7 +3,7 @@
              xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
              Orientation="Horizontal"
              MinHeight="36">
-    <PanelContainer VerticalExpand="True" HorizontalExpand="True">
+    <PanelContainer Name="BackgroundPanel" VerticalExpand="True" HorizontalExpand="True">
         <PanelContainer.PanelOverride>
             <gfx:StyleBoxFlat />
         </PanelContainer.PanelOverride>

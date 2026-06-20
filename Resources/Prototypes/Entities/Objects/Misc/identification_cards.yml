@@ -38,7 +38,7 @@
     - state: default
     # Moffstation - Start - New ID Cards
     - state: stripe_top
-      color: &color-default-top "#e1e1e1"
+      color: &color-default-top "#e0dee5"
     # Moffstation - End - New ID Cards
     - sprite: &icon-rsi _Moffstation/Interface/Misc/job_icons.rsi # Moffstation - New job icons
       offset: &icon-offset -0.09375, 0.0625 #3 pixels left, 2 pixels up
@@ -58,7 +58,7 @@
     - state: gold
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: "#1b67a5"
+      color: &color-command-bottom "#2d62bc"
     - state: stripe_top
       color: "#7cb1d1"
     # Moffstation - End - New ID Cards
@@ -88,9 +88,9 @@
     - state: silver
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: &color-service-bottom "#639137"
+      color: &color-service-bottom "#7b9f2c"
     - state: stripe_top
-      color: &color-service-top "#95b477"
+      color: &color-service-top "#b3de64"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -110,9 +110,9 @@
     - state: silver
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: &color-engineering-bottom "#f37700"
+      color: &color-engineering-bottom "#e56c30"
     - state: stripe_top
-      color: &color-engineering-top "#f7c378"
+      color: &color-engineering-top "#e58b5e"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -132,9 +132,9 @@
     - state: silver
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: &color-medical-bottom "#3ba4ea"
+      color: &color-medical-bottom "#7daff8"
     - state: stripe_top
-      color: &color-medical-top "#9fd8f1"
+      color: &color-medical-top "#bed8ff"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -154,9 +154,9 @@
     - state: silver
     # Moffstation - Start- New ID Cards
     - state: stripe_bottom
-      color: &color-science-bottom "#a352ff"
+      color: &color-science-bottom "#6b57c8"
     - state: stripe_top
-      color: &color-science-top "#c593ff"
+      color: &color-science-top "#c2b5ff"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -177,9 +177,9 @@
     - state: stripe_top
     # Moffstation - Start- New ID Cards
     - state: stripe_bottom
-      color: &color-security-bottom "#cb0000"
+      color: &color-security-bottom "#c23031"
     - state: stripe_top
-      color: &color-security-top "#ee9191"
+      color: &color-security-top "#ed7566"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -199,9 +199,9 @@
     - state: silver
     # Moffstation - Start- New ID Cards
     - state: stripe_bottom
-      color: &color-supply-bottom "#e39e00"
+      color: &color-supply-bottom "#b47832"
     - state: stripe_top
-      color: &color-supply-top "#edc261"
+      color: &color-supply-top "#e4a357"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -282,7 +282,7 @@
     layers:
     - state: default
     # Moffstation - Start - New ID Cards
-    - state: stripe_bottom
+    - state: stripe_side
       color: *color-engineering-bottom
     - state: stripe_top
       color: *color-engineering-top
@@ -402,7 +402,7 @@
     layers:
     - state: default
     # Moffstation - Start - New ID Cards
-    - state: stripe_bottom
+    - state: stripe_side
       color: *color-medical-bottom
     - state: stripe_top
       color: *color-medical-top
@@ -462,7 +462,7 @@
     layers:
     - state: default
     # Moffstation - Start- New ID Cards
-    - state: stripe_bottom
+    - state: stripe_side
       color: *color-science-bottom
     - state: stripe_top
       color: *color-science-top
@@ -580,7 +580,7 @@
     layers:
     - state: default
     # Moffstation - Start- New ID Cards
-    - state: stripe_bottom
+    - state: stripe_side
       color: *color-security-bottom
     - state: stripe_top
       color: *color-security-top
@@ -637,7 +637,7 @@
     - state: default
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: "#2e2e2e"
+      color: "#3b334e"
     - state: stripe_top
       color: *color-default-top
     # Moffstation - End - New ID Cards
@@ -657,9 +657,8 @@
     - state: default
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: "#6f56b8"
+      color: "#4e4798"
     - state: stripe_top
-      color: *color-service-top
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -1157,9 +1156,9 @@
     - state: ninja
     # Moffstation - Start - New ID Cards
     - state: stripe_bottom
-      color: "#309000"
+      color: *color-service-bottom
     - state: stripe_top
-      color: "#99ff98"
+      color: *color-service-top
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -1183,9 +1182,9 @@
     # Moffstation - Start - New ID Cards
     - state: wood
     - state: stripe_bottom
-      color: "#00d6af"
+      color: "#4b7e6e"
     - state: stripe_top
-      color: "#83f7e2"
+      color: "#97c0b2"
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -1221,7 +1220,7 @@
     # Moffstation - Start - New ID Cards
     - state: wood
     - state: stripe_bottom
-      color: "#4a00d5"
+      color: *color-science-bottom
     # Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
@@ -1245,13 +1244,13 @@
   components:
   - type: Sprite
     layers:
-    # Moffstation - Start - New ID Cards
+# Moffstation - Start - New ID Cards
     - state: gold
     - state: stripe_bottom
-      color: &color-centcomm-bottom "#309000"
+      color: "#4cb04b"
     - state: stripe_top
-      color: &color-centcomm-top "#99ff98"
-    # Moffstation - End - New ID Cards
+      color: "#7ddb88"
+# Moffstation - End - New ID Cards
     - sprite: _Moffstation/Interface/Misc/job_icons.rsi # Moffstation
       offset: *icon-offset
       state: CentralCommandOfficial # Moffstation
@@ -1266,13 +1265,12 @@
   components:
   - type: Sprite
     layers:
-    # Moffstation - Start - New ID Cards
+# Moffstation - Start - New ID Cards
     - state: centcom
-    - state: stripe_bottom
-      color: "#1b67a5"
+    - state: stripe_side
+      color: *color-command-bottom
     - state: stripe_top
-      color: *color-centcomm-top
-    # Moffstation - End - New ID Cards
+# Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
       state: ERTLeader
@@ -1288,12 +1286,11 @@
   - type: Sprite
     layers:
     - state: centcom
-    # Moffstation - Start - New ID Cards
-    - state: stripe_bottom
+# Moffstation - Start - New ID Cards
+    - state: stripe_side
       color: *color-service-bottom
     - state: stripe_top
-      color: *color-centcomm-top
-    # Moffstation - End - New ID Cards
+# Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
       state: ERTChaplain
@@ -1309,12 +1306,11 @@
   - type: Sprite
     layers:
     - state: centcom
-    # Moffstation - Start- New ID Cards
-    - state: stripe_bottom
+# Moffstation - Start- New ID Cards
+    - state: stripe_side
       color: *color-engineering-bottom
     - state: stripe_top
-      color: *color-centcomm-top
-    # Moffstation - End - New ID Cards
+# Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
       state: ERTEngineer
@@ -1330,12 +1326,11 @@
   - type: Sprite
     layers:
     - state: centcom
-    # Moffstation - Start - New ID Cards
-    - state: stripe_bottom
-      color: *color-service-bottom
+# Moffstation - Start - New ID Cards
+    - state: stripe_side
+      color: *color-science-bottom
     - state: stripe_top
-      color: *color-centcomm-top
-    # Moffstation - End - New ID Cards
+# Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
       state: ERTJanitor
@@ -1351,12 +1346,11 @@
   - type: Sprite
     layers:
     - state: centcom
-    # Moffstation - Start - New ID Cards
-    - state: stripe_bottom
+# Moffstation - Start - New ID Cards
+    - state: stripe_side
       color: *color-medical-bottom
     - state: stripe_top
-      color: *color-centcomm-top
-    # Moffstation - End - New ID Cards
+# Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
       state: ERTMedical
@@ -1373,11 +1367,10 @@
     layers:
     - state: centcom
     # Moffstation - Start- New ID Cards
-    - state: stripe_bottom
+    - state: stripe_side
       color: *color-security-bottom
     - state: stripe_top
-      color: *color-centcomm-top
-    # Moffstation - End - New ID Cards
+# Moffstation - End - New ID Cards
     - sprite: *icon-rsi
       offset: *icon-offset
       state: ERTSecurity
@@ -1393,10 +1386,11 @@
   - type: Sprite
     layers:
     - state: centcom
-    - state: stripe_bottom
+# Moffstation - Start
+    - state: stripe_side
       color: *color-security-bottom
     - state: stripe_top
-      color: *color-centcomm-top
+# Moffstation - End
     - sprite: *icon-rsi
       offset: *icon-offset
       state: DeathSquad
@@ -1411,10 +1405,11 @@
   - type: Sprite
     layers:
     - state: centcom
-    - state: stripe_bottom
-      color: *color-centcomm-bottom
+# Moffstation - Start
+    - state: stripe_side
+      color: "#e23bbb"
     - state: stripe_top
-      color: *color-centcomm-top
+# Moffstation - End
     - sprite: *icon-rsi
       offset: *icon-offset
       state: CBURN
@@ -1454,6 +1449,7 @@
     - Wizard
     - Xenoborg
     - Pirate  # Moffstation - Pirate access
+    - Freelance # Moffstation - Freelancer access
   - type: Tag #  Ignore Chameleon tags
     tags:
     - DoorBumpOpener

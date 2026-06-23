@@ -1,0 +1,7 @@
+- type: chitterAvatar
+  id: chitter_avatar_1
+  spritePath: Textures/_Moffstation/Chitter/Avatars/avatar_1.png
+
+- type: chitterAvatar
+  id: chitter_avatar_2
+  spritePath: Textures/_Moffstation/Chitter/Avatars/avatar_2.png

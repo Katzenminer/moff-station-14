@@ -6,40 +6,31 @@ namespace Content.Shared.Access.Systems
 {
     public abstract class SharedAgentIdCardSystem : EntitySystem
     {
-        // Just for friending for now
     }
 
-    /// <summary>
-    /// Key representing which <see cref="PlayerBoundUserInterface"/> is currently open.
-    /// Useful when there are multiple UI for an object. Here it's future-proofing only.
-    /// </summary>
     [Serializable, NetSerializable]
     public enum AgentIDCardUiKey : byte
     {
         Key,
     }
 
-    /// <summary>
-    /// Represents an <see cref="AgentIDCardComponent"/> state that can be sent to the client
-    /// </summary>
     [Serializable, NetSerializable]
     public sealed class AgentIDCardBoundUserInterfaceState : BoundUserInterfaceState
     {
         public string CurrentName { get; }
         public string CurrentJob { get; }
         public string CurrentJobIconId { get; }
-        public uint? CurrentNumber { get; } // CD
+        public uint? CurrentNumber { get; }
 
-        public AgentIDCardBoundUserInterfaceState(string currentName, string currentJob, string currentJobIconId, uint? currentNumber = null) // CD - Added currentNumber
+        public AgentIDCardBoundUserInterfaceState(string currentName, string currentJob, string currentJobIconId, uint? currentNumber = null)
         {
             CurrentName = currentName;
             CurrentJob = currentJob;
             CurrentJobIconId = currentJobIconId;
-            CurrentNumber = currentNumber; // CD
+            CurrentNumber = currentNumber;
         }
     }
 
-    // CD - Add number change message
     [Serializable, NetSerializable]
     public sealed class AgentIDCardNumberChangedMessage : BoundUserInterfaceMessage
     {

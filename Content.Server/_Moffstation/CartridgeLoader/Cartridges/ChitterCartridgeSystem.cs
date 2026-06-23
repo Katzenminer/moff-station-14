@@ -1,0 +1,484 @@
+using System.Linq;
+using Content.Server._Moffstation.Chitter;
+using Content.Shared.Access.Components;
+using Content.Shared._Moffstation.CartridgeLoader.Cartridges;
+using Content.Shared._Moffstation.Chitter;
+using Content.Server.CartridgeLoader;
+using Content.Shared.CartridgeLoader;
+using Content.Shared.IdentityManagement;
+using Robust.Shared.Timing;
+
+namespace Content.Server._Moffstation.CartridgeLoader.Cartridges;
+
+public sealed class ChitterCartridgeSystem : EntitySystem
+{
+    [Dependency] private CartridgeLoaderSystem _cartridge = default!;
+    [Dependency] private ChitterServerSystem _server = default!;
+    [Dependency] private IGameTiming _timing = default!;
+
+    private TimeSpan _nextRefresh = TimeSpan.Zero;
+    private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(3);
+
+    public override void Initialize()
+    {
+        base.Initialize();
+        SubscribeLocalEvent<ChitterCartridgeComponent, CartridgeUiReadyEvent>(OnUiReady);
+        SubscribeLocalEvent<ChitterCartridgeComponent, CartridgeMessageEvent>(OnMessage);
+    }
+
+    public override void Update(float frameTime)
+    {
+        base.Update(frameTime);
+
+        if (_timing.CurTime < _nextRefresh)
+            return;
+
+        _nextRefresh = _timing.CurTime + RefreshInterval;
+
+        using (var query = EntityQueryEnumerator<CartridgeLoaderComponent>())
+        while (query.MoveNext(out var loaderUid, out var loader))
+        {
+            if (loader.ActiveProgram == null)
+                continue;
+
+            if (!TryComp<ChitterCartridgeComponent>(loader.ActiveProgram.Value, out var cartridge))
+                continue;
+
+            UpdateUi((loader.ActiveProgram.Value, cartridge), loaderUid);
+        }
+    }
+
+    private void OnUiReady(Entity<ChitterCartridgeComponent> ent, ref CartridgeUiReadyEvent args)
+    {
+        UpdateUi(ent, args.Loader);
+    }
+
+    private void OnMessage(Entity<ChitterCartridgeComponent> ent, ref CartridgeMessageEvent args)
+    {
+        if (args is not ChitterUiMessageEvent msg)
+            return;
+
+        var loader = GetEntity(args.LoaderUid);
+
+        switch (msg.Type)
+        {
+            case ChitterUiMessageType.NewChat:
+                HandleNewChat(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.SelectChat:
+                HandleSelectChat(ent, msg);
+                break;
+            case ChitterUiMessageType.SendMessage:
+                HandleSendMessage(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.LeaveChat:
+                HandleLeaveChat(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.AddParticipant:
+                HandleAddParticipant(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.RemoveParticipant:
+                HandleRemoveParticipant(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.ArchiveChat:
+                HandleArchiveChat(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.SetProfilePicture:
+                HandleSetProfilePicture(ent, loader, msg);
+                break;
+            case ChitterUiMessageType.RefreshContacts:
+                // Triggers an immediate UI refresh via the UpdateUi at the end of OnMessage
+                break;
+            case ChitterUiMessageType.RenameChat:
+                HandleRenameChat(ent, loader, msg);
+                break;
+        }
+
+        UpdateUi(ent, loader);
+    }
+
+    private bool TryGetServerAndCard(EntityUid loader, out Entity<ChitterServerComponent> serverEnt, out ChitterAccountComponent card)
+    {
+        serverEnt = default;
+        card = default!;
+
+        if (!_server.TryFindServer(loader, out serverEnt))
+            return false;
+
+        if (!_server.TryGetPdaIdCard(loader, out var idCard))
+            return false;
+
+        if (HasCentComAccess(idCard))
+            return false;
+
+        if (!TryComp<ChitterAccountComponent>(idCard, out var foundCard))
+            return false;
+        card = foundCard;
+        return true;
+    }
+
+    private bool HasCentComAccess(EntityUid uid)
+    {
+        return TryComp<AccessComponent>(uid, out var access) && access.Tags.Contains("CentralCommand");
+    }
+
+    private string GetCardName(EntityUid idCard, EntityUid loader)
+    {
+        return TryComp<IdCardComponent>(idCard, out var idComp) && !string.IsNullOrEmpty(idComp.FullName)
+            ? idComp.FullName
+            : "Unknown";
+    }
+
+    private string GetCardName(EntityUid loader)
+    {
+        return _server.TryGetPdaIdCard(loader, out var idCard)
+            ? GetCardName(idCard, loader)
+            : "Unknown";
+    }
+
+    private void HandleNewChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!TryGetServerAndCard(loader, out var serverEnt, out var card))
+        {
+            Log.Error($"[Chitter] HandleNewChat: TryGetServerAndCard failed for loader={loader}");
+            return;
+        }
+
+        Log.Info(
+            $"[Chitter] HandleNewChat: card.AccountId={card.AccountId}, TargetNumbers count={msg.TargetNumbers?.Count ?? 0}, TargetNumber={msg.TargetNumber}");
+
+        List<uint> participants;
+        if (msg.TargetNumbers != null && msg.TargetNumbers.Count > 0)
+        {
+            participants = new List<uint> { card.AccountId };
+            foreach (var target in msg.TargetNumbers)
+            {
+                if (target != card.AccountId && !participants.Contains(target))
+                    participants.Add(target);
+            }
+
+            Log.Info(
+                $"[Chitter] HandleNewChat: creating group chat with {participants.Count} participants: [{string.Join(",", participants)}]");
+        }
+        else if (msg.TargetNumber != null && msg.TargetNumber != card.AccountId)
+        {
+            participants = new List<uint> { card.AccountId, msg.TargetNumber.Value };
+            Log.Info($"[Chitter] HandleNewChat: creating 1-on-1 chat with {participants[1]}");
+        }
+        else
+        {
+            Log.Warning($"[Chitter] HandleNewChat: no valid targets");
+            return;
+        }
+
+        var chatId = _server.CreateChat(serverEnt.Comp, participants, msg.ChatName);
+        ent.Comp.CurrentChatId = chatId;
+        Log.Info($"[Chitter] HandleNewChat: created chat {chatId} '{msg.ChatName}', auto-selected");
+    }
+
+    private void HandleSendMessage(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!TryGetServerAndCard(loader, out var serverEnt, out var card))
+            return;
+
+        if (msg.ChatId == null || string.IsNullOrWhiteSpace(msg.Content))
+            return;
+
+        var senderName = GetCardName(loader);
+        _server.AddMessage(serverEnt.Comp, msg.ChatId.Value, card.AccountId, senderName, msg.Content);
+
+        if (!_server.IsServerPowered(serverEnt))
+            _server.MarkDeliveryFailed(serverEnt.Comp, msg.ChatId.Value);
+    }
+
+    private void HandleLeaveChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!TryGetServerAndCard(loader, out var serverEnt, out var card))
+            return;
+
+        if (msg.ChatId != null)
+            _server.RemoveParticipantFromChat(serverEnt.Comp, msg.ChatId.Value, card.AccountId);
+    }
+
+    private void HandleAddParticipant(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!TryGetServerAndCard(loader, out var serverEnt, out var card))
+            return;
+
+        if (msg.ChatId != null && msg.TargetNumber != null)
+            _server.AddParticipantToChat(serverEnt.Comp, msg.ChatId.Value, msg.TargetNumber.Value);
+    }
+
+    private void HandleRemoveParticipant(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!TryGetServerAndCard(loader, out var serverEnt, out var _))
+            return;
+
+        if (msg.ChatId != null && msg.TargetNumber != null)
+            _server.RemoveParticipantFromChat(serverEnt.Comp, msg.ChatId.Value, msg.TargetNumber.Value);
+    }
+
+    private void HandleArchiveChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!TryGetServerAndCard(loader, out var serverEnt, out var _))
+            return;
+
+        if (msg.ChatId != null)
+            _server.ArchiveChat(serverEnt.Comp, msg.ChatId.Value);
+    }
+
+    private void HandleRenameChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!_server.TryFindServer(loader, out var serverEnt))
+            return;
+
+        if (msg.ChatId == null)
+            return;
+
+        var serverComp = serverEnt.Comp;
+
+        if (!serverComp.Chats.TryGetValue(msg.ChatId.Value, out var chat))
+            return;
+
+        chat.ChatName = msg.ChatName ?? string.Empty;
+    }
+
+    private void HandleSetProfilePicture(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
+    {
+        if (!_server.TryFindServer(loader, out var serverEnt))
+            return;
+
+        if (!_server.TryGetPdaIdCard(loader, out var idCard))
+            return;
+
+        if (HasCentComAccess(idCard))
+            return;
+
+        if (!TryComp<ChitterAccountComponent>(idCard, out var card))
+            return;
+
+        if (msg.ProfilePictureId != null)
+        {
+            card.ProfilePictureId = msg.ProfilePictureId;
+            Dirty(idCard, card);
+            var ownerName = "Unknown";
+            var ownerJobTitle = "Unknown";
+            if (TryComp<IdCardComponent>(idCard, out var idCardComp))
+            {
+                ownerName = idCardComp.FullName ?? "Unknown";
+                ownerJobTitle = idCardComp.LocalizedJobTitle ?? "Unknown";
+            }
+            _server.RegisterOrUpdateAccount(serverEnt.Comp, card.AccountId, ownerName, ownerJobTitle, msg.ProfilePictureId);
+        }
+    }
+
+    private void UpdateUi(Entity<ChitterCartridgeComponent> ent, EntityUid loader)
+    {
+        var hasIdCard = _server.TryGetPdaIdCard(loader, out var idCard);
+        var serverOnline = _server.TryFindServer(loader, out var serverEnt);
+
+        var state = new ChitterUiState
+        {
+            HasIdCard = hasIdCard,
+            ServerOnline = serverOnline,
+        };
+
+        if (hasIdCard && HasCentComAccess(idCard))
+        {
+            hasIdCard = false;
+            state.HasIdCard = false;
+        }
+
+        if (hasIdCard && TryComp<ChitterAccountComponent>(idCard, out var account))
+        {
+            state.OwnNumber = account.AccountId;
+            state.OwnProfilePicture = account.ProfilePictureId;
+
+            var ownerName = "Unknown";
+            var ownerJobTitle = "Unknown";
+            if (TryComp<IdCardComponent>(idCard, out var idCardComp))
+            {
+                ownerName = idCardComp.FullName ?? "Unknown";
+                ownerJobTitle = idCardComp.LocalizedJobTitle ?? "Unknown";
+            }
+
+            state.OwnName = ownerName;
+            state.OwnJob = ownerJobTitle;
+
+            Log.Info($"[Chitter] UpdateUi: hasIdCard=true, serverOnline={serverOnline}, ownAccountId={account.AccountId}, ownName={ownerName}, job={ownerJobTitle}");
+
+            if (serverOnline)
+            {
+                var serverComp = serverEnt.Comp;
+                _server.RegisterOrUpdateAccount(serverComp, account.AccountId, ownerName, ownerJobTitle, account.ProfilePictureId);
+
+                var before = serverComp.Accounts.Count;
+                DiscoverAccountsOnGrid(loader, serverComp);
+                var after = serverComp.Accounts.Count;
+
+                Log.Info($"[Chitter] UpdateUi: accounts before discovery={before}, after={after}");
+
+                foreach (var (accId, acc) in serverComp.Accounts)
+                {
+                    if (accId == account.AccountId)
+                        continue;
+                    state.Contacts.Add(new AccountEntry
+                    {
+                        AccountId = accId,
+                        Name = acc.Name,
+                        JobTitle = acc.JobTitle,
+                        ProfilePictureId = acc.ProfilePictureId,
+                    });
+                    Log.Info($"[Chitter] UpdateUi: added contact accId={accId}, name={acc.Name}");
+                }
+
+                Log.Info($"[Chitter] UpdateUi: server has {serverComp.Chats.Count} chats total");
+                foreach (var (chatId, chat) in serverComp.Chats)
+                {
+                    Log.Info($"[Chitter] UpdateUi: checking chat {chatId}, participants=[{string.Join(",", chat.ParticipantAccountIds)}], user's account={account.AccountId}");
+
+                    if (!chat.ParticipantAccountIds.Contains(account.AccountId))
+                    {
+                        Log.Info($"[Chitter] UpdateUi: skipping chat {chatId} (user not in participants)");
+                        continue;
+                    }
+
+                    var lastMsg = chat.Messages.Count > 0 ? chat.Messages[^1].Content : "";
+                    var displayName = !string.IsNullOrWhiteSpace(chat.ChatName)
+                        ? chat.ChatName
+                        : string.Join(", ",
+                            chat.ParticipantAccountIds
+                                .Where(id => id != account.AccountId)
+                                .Select(id => serverComp.Accounts.GetValueOrDefault(id)?.Name ?? $"#{id:D4}"));
+
+                    var lastSeen = ent.Comp.LastSeenMessageCount.GetValueOrDefault(chatId);
+                    var unreadCount = chat.Messages.Count - lastSeen;
+                    if (unreadCount < 0)
+                        unreadCount = 0;
+
+                    state.Chats.Add(new ChatEntry
+                    {
+                        ChatId = chatId,
+                        DisplayName = displayName,
+                        LastMessage = lastMsg,
+                        HasUnread = unreadCount > 0,
+                        UnreadCount = unreadCount,
+                    });
+                    Log.Info($"[Chitter] UpdateUi: added chat {chatId} to state (displayName='{displayName}')");
+
+                    if (chatId == GetCurrentChatId(ent))
+                    {
+                        var previousLastSeen = ent.Comp.LastSeenMessageCount.GetValueOrDefault(chatId, chat.Messages.Count);
+                        state.CurrentChat = BuildChatDetail(chat, account.AccountId, serverComp, previousLastSeen);
+                        ent.Comp.LastSeenMessageCount[chatId] = chat.Messages.Count;
+                    }
+                }
+            }
+        }
+        else
+        {
+            Log.Info($"[Chitter] UpdateUi: hasIdCard={hasIdCard}, hasAccount={hasIdCard && TryComp<ChitterAccountComponent>(idCard, out _)}");
+        }
+
+        Log.Info($"[Chitter] UpdateUi: sending state with {state.Contacts.Count} contacts, {state.Chats.Count} chats");
+        _cartridge.UpdateCartridgeUiState(loader, state);
+    }
+
+    private void DiscoverAccountsOnGrid(EntityUid loader, ChitterServerComponent server)
+    {
+        var grid = Transform(loader).GridUid;
+        Log.Info($"[Chitter] DiscoverAccountsOnGrid: loader grid = {grid}");
+
+        var found = 0;
+        var skippedZero = 0;
+        var skippedGrid = 0;
+
+        using (var query = EntityQueryEnumerator<ChitterAccountComponent>())
+        while (query.MoveNext(out var uid, out var comp))
+        {
+            if (comp.AccountId == 0)
+            {
+                skippedZero++;
+                continue;
+            }
+
+            if (grid != null)
+            {
+                var entGrid = Transform(uid).GridUid;
+                if (entGrid != null && entGrid != grid)
+                {
+                    skippedGrid++;
+                    continue;
+                }
+            }
+
+            if (HasCentComAccess(uid))
+                continue;
+
+            var jobTitle = TryComp<IdCardComponent>(uid, out var idCard)
+                ? idCard.LocalizedJobTitle ?? ""
+                : "";
+            var accountName = idCard?.FullName ?? "Unknown";
+            _server.RegisterOrUpdateAccount(server, comp.AccountId,
+                accountName, jobTitle, comp.ProfilePictureId);
+            found++;
+            Log.Info($"[Chitter] DiscoverAccountsOnGrid: registered accId={comp.AccountId}, name={accountName}");
+        }
+
+        Log.Info($"[Chitter] DiscoverAccountsOnGrid: found={found}, skippedZeroId={skippedZero}, skippedDiffGrid={skippedGrid}");
+    }
+
+    private void HandleSelectChat(Entity<ChitterCartridgeComponent> ent, ChitterUiMessageEvent msg)
+    {
+        if (msg.ChatId == null)
+            return;
+
+        ent.Comp.CurrentChatId = msg.ChatId;
+    }
+
+    private Guid? GetCurrentChatId(Entity<ChitterCartridgeComponent> ent)
+    {
+        return ent.Comp.CurrentChatId;
+    }
+
+    private ChatDetail BuildChatDetail(ChitterChat chat, uint ownId, ChitterServerComponent server, int lastSeen = 0)
+    {
+        var detail = new ChatDetail
+        {
+            ChatId = chat.ChatId,
+            ChatName = chat.ChatName,
+        };
+
+        for (var i = 0; i < chat.Messages.Count; i++)
+        {
+            var msg = chat.Messages[i];
+            var senderAcc = server.Accounts.GetValueOrDefault(msg.SenderAccountId);
+            detail.Messages.Add(new MessageEntry
+            {
+                MessageId = msg.MessageId,
+                SenderId = msg.SenderAccountId,
+                SenderName = msg.SenderName,
+                SenderProfilePicture = senderAcc?.ProfilePictureId ?? "",
+                Timestamp = msg.Timestamp,
+                Content = msg.Content,
+                DeliveryFailed = msg.DeliveryFailed,
+                IsOwn = msg.SenderAccountId == ownId,
+                IsNew = i >= lastSeen,
+            });
+        }
+
+        foreach (var pid in chat.ParticipantAccountIds)
+        {
+            var acc = server.Accounts.GetValueOrDefault(pid);
+            detail.Participants.Add(new ParticipantEntry
+            {
+                AccountId = pid,
+                Name = acc?.Name ?? $"#{pid:D4}",
+                JobTitle = acc?.JobTitle ?? "",
+                ProfilePictureId = acc?.ProfilePictureId ?? "",
+            });
+        }
+
+        return detail;
+    }
+}

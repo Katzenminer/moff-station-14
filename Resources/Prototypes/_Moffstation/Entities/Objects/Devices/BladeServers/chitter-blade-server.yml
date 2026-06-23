@@ -1,0 +1,9 @@
+- type: entity
+  parent: ConstructibleBladeServer
+  id: ChitterBladeServer
+  name: chitter blade server
+  description: A blade server module running the Chitter instant messaging service.
+  components:
+  - type: ChitterServer
+  - type: BladeServer
+    stripeColor: "#88C040"

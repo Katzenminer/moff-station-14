@@ -1,0 +1,13 @@
+using Robust.Shared.Prototypes;
+
+namespace Content.Shared._Moffstation.Chitter;
+
+[Prototype("chitterAvatar")]
+public sealed partial class ChitterAvatarPrototype : IPrototype
+{
+    [IdDataField]
+    public string ID { get; private set; } = default!;
+
+    [DataField(required: true)]
+    public string SpritePath = string.Empty;
+}

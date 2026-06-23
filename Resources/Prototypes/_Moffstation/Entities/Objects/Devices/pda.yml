@@ -21,9 +21,9 @@
     preinstalled:
     - NotekeeperCartridge
     - NanoTaskCartridge
+    - ChitterCartridge
     - WantedListCartridge
     - AstroNavCartridge
-    - NanoChatCartridge # CD
 
 - type: entity
   parent: NTCFPilotPDA
@@ -34,4 +34,3 @@
   components:
   - type: Pda
     id: NTCFEngineerIDCard
-

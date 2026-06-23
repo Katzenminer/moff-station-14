@@ -19,25 +19,41 @@ public sealed partial class ChitterProfileView : BoxContainer
         RobustXamlLoader.Load(this);
     }
 
-    public ChitterProfileView(List<string> avatarIds, string currentAvatarId) : this()
+    public ChitterProfileView(List<(string Id, string SpritePath)> avatars, string currentAvatarId) : this()
     {
         CloseProfileButton.OnPressed += _ => OnClose?.Invoke();
 
-        foreach (var avatarId in avatarIds)
+        foreach (var (id, spritePath) in avatars)
         {
-            var btn = new Button
+            var btn = new TextureButton
             {
-                Text = avatarId,
-                MinSize = new Vector2(48, 48),
-                Pressed = avatarId == currentAvatarId,
+                TexturePath = "/" + spritePath,
+                MinSize = new Vector2(64, 64),
+                SetSize = new Vector2(64, 64),
             };
-            var capturedId = avatarId;
-            btn.OnPressed += _ =>
+
+            if (id == currentAvatarId)
             {
-                OnProfilePictureSelected?.Invoke(capturedId);
-                OnClose?.Invoke();
-            };
-            AvatarGrid.AddChild(btn);
+                var borderPanel = new PanelContainer
+                {
+                    MinSize = new Vector2(64, 64),
+                    Children =
+                    {
+                        btn,
+                    },
+                };
+                AvatarGrid.AddChild(borderPanel);
+            }
+            else
+            {
+                var capturedId = id;
+                btn.OnPressed += _ =>
+                {
+                    OnProfilePictureSelected?.Invoke(capturedId);
+                    OnClose?.Invoke();
+                };
+                AvatarGrid.AddChild(btn);
+            }
         }
     }
 }

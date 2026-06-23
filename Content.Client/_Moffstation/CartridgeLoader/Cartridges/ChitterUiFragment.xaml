@@ -79,7 +79,7 @@
             <!-- This expands, pushing the input area to the bottom -->
             <PanelContainer VerticalExpand="True">
                 <ScrollContainer Name="ChatView" VerticalExpand="True" HScrollEnabled="False">
-                    <BoxContainer Name="MessageContainer" Orientation="Vertical" SeparationOverride="4" Margin="4" />
+                    <BoxContainer Name="MessageContainer" Orientation="Vertical" SeparationOverride="5" Margin="4" />
                 </ScrollContainer>
             </PanelContainer>
 

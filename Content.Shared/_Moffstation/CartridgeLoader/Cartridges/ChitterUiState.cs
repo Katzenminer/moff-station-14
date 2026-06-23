@@ -41,10 +41,12 @@ public sealed class MessageEntry
     public Guid MessageId;
     public uint SenderId;
     public string SenderName = string.Empty;
+    public string SenderProfilePicture = string.Empty;
     public TimeSpan Timestamp;
     public string Content = string.Empty;
     public bool DeliveryFailed;
     public bool IsOwn;
+    public bool IsNew;
 }
 
 [Serializable, NetSerializable]
@@ -53,6 +55,7 @@ public sealed class ParticipantEntry
     public uint AccountId;
     public string Name = string.Empty;
     public string JobTitle = string.Empty;
+    public string ProfilePictureId = string.Empty;
 }
 
 [Serializable, NetSerializable]

@@ -5,15 +5,20 @@ namespace Content.Shared.CartridgeLoader.Cartridges;
 [Serializable, NetSerializable]
 public sealed class LogProbeUiState : BoundUserInterfaceState
 {
+    /// <summary>
+    /// The name of the scanned entity.
+    /// </summary>
     public string EntityName;
-    public List<PulledAccessLog> PulledLogs;
-    public ChitterServerScanData? ChitterData;
 
-    public LogProbeUiState(string entityName, List<PulledAccessLog> pulledLogs, ChitterServerScanData? chitterData = null)
+    /// <summary>
+    /// The list of probed network devices
+    /// </summary>
+    public List<PulledAccessLog> PulledLogs;
+
+    public LogProbeUiState(string entityName, List<PulledAccessLog> pulledLogs)
     {
         EntityName = entityName;
         PulledLogs = pulledLogs;
-        ChitterData = chitterData;
     }
 }
 
@@ -28,29 +33,4 @@ public sealed partial class PulledAccessLog
         Time = time;
         Accessor = accessor;
     }
-}
-
-[Serializable, NetSerializable]
-public sealed class ChitterServerScanData
-{
-    public bool IsServerScan;
-    public List<ArchivedChatEntry> ArchivedChats = new();
-}
-
-[Serializable, NetSerializable]
-public sealed class ArchivedChatEntry
-{
-    public Guid ChatId;
-    public string Participants = string.Empty;
-    public int MessageCount;
-    public string LastMessagePreview = string.Empty;
-    public List<ArchivedMessage> Messages = new();
-}
-
-[Serializable, NetSerializable]
-public sealed class ArchivedMessage
-{
-    public string SenderName = string.Empty;
-    public string Content = string.Empty;
-    public TimeSpan Timestamp;
 }

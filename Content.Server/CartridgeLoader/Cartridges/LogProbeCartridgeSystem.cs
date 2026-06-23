@@ -10,13 +10,10 @@ using Content.Shared.Popups;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Timing;
 using System.Text;
-using Content.Shared.Interaction;
-using Content.Server._Moffstation.LogProbe;
-using Content.Shared._Moffstation.LogProbe;
 
 namespace Content.Server.CartridgeLoader.Cartridges;
 
-public sealed partial class LogProbeCartridgeSystem : EntitySystem
+public sealed class LogProbeCartridgeSystem : EntitySystem
 {
     [Dependency] private CartridgeLoaderSystem _cartridge = default!;
     [Dependency] private IGameTiming _timing = default!;
@@ -37,31 +34,23 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
         SubscribeLocalEvent<LogProbeCartridgeComponent, CartridgeMessageEvent>(OnMessage);
     }
 
+    /// <summary>
+    /// The <see cref="CartridgeAfterInteractEvent" /> gets relayed to this system if the cartridge loader is running
+    /// the LogProbe program and someone clicks on something with it. <br/>
+    /// <br/>
+    /// Updates the program's list of logs with those from the device.
+    /// </summary>
     private void AfterInteract(Entity<LogProbeCartridgeComponent> ent, ref CartridgeAfterInteractEvent args)
     {
-        // Moffstation - Begin - Split the component to be reusable
-        var loader = args.Loader;
-        var interact = args.InteractEvent;
-        if (interact.Handled || !interact.CanReach || interact.Target is not { } target)
-            return;
-
-        if (HandleChitterScan(ent, interact, target, () => UpdateUiState(ent, loader)))
-            return;
-
-        AfterInteract((ent.Owner, (BaseLogProbeComponent)ent.Comp), interact, loader, () => UpdateUiState(ent, loader));
-        // Moffstation - End
-    }
-
-    private void AfterInteract(Entity<BaseLogProbeComponent> ent, AfterInteractEvent args, EntityUid loader, Action updateState) // Moffstation - Split the component to be reusable
-    {
-        if (args.Handled || !args.CanReach || args.Target is not { } target)
+        if (args.InteractEvent.Handled || !args.InteractEvent.CanReach || args.InteractEvent.Target is not { } target)
             return;
 
         if (!TryComp(target, out AccessReaderComponent? accessReaderComponent))
             return;
 
-        _audio.PlayEntity(ent.Comp.SoundScan, args.User, target);
-        _popup.PopupCursor(Loc.GetString("log-probe-scan", ("device", target)), args.User);
+        //Play scanning sound with slightly randomized pitch
+        _audio.PlayEntity(ent.Comp.SoundScan, args.InteractEvent.User, target);
+        _popup.PopupCursor(Loc.GetString("log-probe-scan", ("device", target)), args.InteractEvent.User);
 
         ent.Comp.EntityName = Name(target);
         ent.Comp.PulledAccessLogs.Clear();
@@ -76,11 +65,15 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
             ent.Comp.PulledAccessLogs.Add(log);
         }
 
+        // Reverse the list so the oldest is at the bottom
         ent.Comp.PulledAccessLogs.Reverse();
 
-        updateState();
+        UpdateUiState(ent, args.Loader);
     }
 
+    /// <summary>
+    /// This gets called when the ui fragment needs to be updated for the first time after activating
+    /// </summary>
     private void OnUiReady(Entity<LogProbeCartridgeComponent> ent, ref CartridgeUiReadyEvent args)
     {
         UpdateUiState(ent, args.Loader);
@@ -88,9 +81,6 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
 
     private void OnMessage(Entity<LogProbeCartridgeComponent> ent, ref CartridgeMessageEvent args)
     {
-        if (HandleChitterPrint(ent, args))
-            return;
-
         if (args is LogProbePrintMessage cast)
             PrintLogs(ent, cast.User);
     }
@@ -106,11 +96,12 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
         ent.Comp.NextPrintAllowed = _timing.CurTime + ent.Comp.PrintCooldown;
 
         var paper = Spawn(ent.Comp.PaperPrototype, _transform.GetMapCoordinates(user));
-        _label.Label(paper, ent.Comp.EntityName);
+        _label.Label(paper, ent.Comp.EntityName); // label it for easy identification
 
         _audio.PlayEntity(ent.Comp.PrintSound, user, paper);
         _hands.PickupOrDrop(user, paper, checkActionBlocker: false);
 
+        // generate the actual printout text
         var builder = new StringBuilder();
         builder.AppendLine(Loc.GetString("log-probe-printout-device", ("name", ent.Comp.EntityName)));
         builder.AppendLine(Loc.GetString("log-probe-printout-header"));
@@ -128,10 +119,9 @@ public sealed partial class LogProbeCartridgeSystem : EntitySystem
         _adminLogger.Add(LogType.EntitySpawn, LogImpact.Low, $"{ToPrettyString(user):user} printed out LogProbe logs ({paper}) of {ent.Comp.EntityName}");
     }
 
-    public void UpdateUiState(Entity<LogProbeCartridgeComponent> ent, EntityUid loaderUid)
+    private void UpdateUiState(Entity<LogProbeCartridgeComponent> ent, EntityUid loaderUid)
     {
-        var state = new LogProbeUiState(ent.Comp.EntityName, ent.Comp.PulledAccessLogs, ent.Comp.ChitterData);
+        var state = new LogProbeUiState(ent.Comp.EntityName, ent.Comp.PulledAccessLogs);
         _cartridge.UpdateCartridgeUiState(loaderUid, state);
     }
-
 }

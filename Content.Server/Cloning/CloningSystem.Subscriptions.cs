@@ -1,5 +1,6 @@
 using Content.Server.Forensics;
 using Content.Server.Speech.EntitySystems;
+using Content.Shared.Access.Components;
 using Content.Shared.Cloning.Events;
 using Content.Shared.Clothing.Components;
 using Content.Shared.Clothing.EntitySystems;
@@ -17,6 +18,7 @@ using Content.Shared.Stacks;
 using Content.Shared.Storage;
 using Content.Shared.Store;
 using Content.Shared.Store.Components;
+using Content.Shared._Moffstation.Chitter;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server.Cloning;
@@ -62,6 +64,10 @@ public sealed partial class CloningSystem
         SubscribeLocalEvent<InventoryComponent, CloningEvent>(OnCloneInventory);
         SubscribeLocalEvent<MovementSpeedModifierComponent, CloningEvent>(OnCloneMovementSpeedModifier);
         SubscribeLocalEvent<PullerComponent, CloningEvent>(OnClonePuller);
+        // Moffstation - Begin - Clone ID card and Chitter account data
+        SubscribeLocalEvent<IdCardComponent, CloningItemEvent>(OnCloneItemIdCard);
+        SubscribeLocalEvent<ChitterAccountComponent, CloningItemEvent>(OnCloneItemChitterAccount);
+        // Moffstation - End
     }
 
     private void OnCloneItemStack(Entity<StackComponent> ent, ref CloningItemEvent args)
@@ -109,7 +115,28 @@ public sealed partial class CloningSystem
         // copy the prototype the original is mimicing
         _chameleonClothing.SetSelectedPrototype(args.CloneUid, ent.Comp.Default);
     }
+    // Moffstation - Begin - Copy ID card and Chitter account data during paradox cloning
+    private void OnCloneItemIdCard(Entity<IdCardComponent> ent, ref CloningItemEvent args)
+    {
+        if (!TryComp<IdCardComponent>(args.CloneUid, out var cloneComp))
+            return;
 
+        cloneComp.FullName = ent.Comp.FullName;
+        cloneComp.LocalizedJobTitle = ent.Comp.LocalizedJobTitle;
+        cloneComp.JobTitle = ent.Comp.JobTitle;
+        Dirty(args.CloneUid, cloneComp);
+    }
+
+    private void OnCloneItemChitterAccount(Entity<ChitterAccountComponent> ent, ref CloningItemEvent args)
+    {
+        if (!TryComp<ChitterAccountComponent>(args.CloneUid, out var cloneComp))
+            return;
+
+        cloneComp.AccountId = ent.Comp.AccountId;
+        cloneComp.ProfilePictureId = ent.Comp.ProfilePictureId;
+        Dirty(args.CloneUid, cloneComp);
+    }
+    // Moffstation - End
     private void OnCloneVocal(Entity<VocalComponent> ent, ref CloningEvent args)
     {
         if (!args.Settings.EventComponents.Contains(Factory.GetRegistration(ent.Comp.GetType()).Name))

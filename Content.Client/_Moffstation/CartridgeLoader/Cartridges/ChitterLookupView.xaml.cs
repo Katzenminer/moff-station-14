@@ -60,7 +60,7 @@ public sealed partial class ChitterLookupView : BoxContainer
 
             var displayName = string.IsNullOrEmpty(name)
                 ? $"#{contact.AccountId:D4}"
-                : $"{name} (#{contact.AccountId:D4})";
+                : $"{name} ({contact.JobTitle})";
 
             var btn = new Button
             {

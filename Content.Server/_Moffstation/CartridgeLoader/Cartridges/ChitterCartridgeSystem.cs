@@ -126,14 +126,14 @@ public sealed class ChitterCartridgeSystem : EntitySystem
     {
         return TryComp<IdCardComponent>(idCard, out var idComp) && !string.IsNullOrEmpty(idComp.FullName)
             ? idComp.FullName
-            : Identity.Name(loader, EntityManager);
+            : "Unknown";
     }
 
     private string GetCardName(EntityUid loader)
     {
         return _server.TryGetPdaIdCard(loader, out var idCard)
             ? GetCardName(idCard, loader)
-            : Identity.Name(loader, EntityManager);
+            : "Unknown";
     }
 
     private void HandleNewChat(Entity<ChitterCartridgeComponent> ent, EntityUid loader, ChitterUiMessageEvent msg)
@@ -368,8 +368,9 @@ public sealed class ChitterCartridgeSystem : EntitySystem
 
                     if (chatId == GetCurrentChatId(ent))
                     {
+                        var previousLastSeen = ent.Comp.LastSeenMessageCount.GetValueOrDefault(chatId, chat.Messages.Count);
+                        state.CurrentChat = BuildChatDetail(chat, account.AccountId, serverComp, previousLastSeen);
                         ent.Comp.LastSeenMessageCount[chatId] = chat.Messages.Count;
-                        state.CurrentChat = BuildChatDetail(chat, account.AccountId, serverComp);
                     }
                 }
             }
@@ -417,9 +418,7 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             var jobTitle = TryComp<IdCardComponent>(uid, out var idCard)
                 ? idCard.LocalizedJobTitle ?? ""
                 : "";
-            var accountName = idCard != null && !string.IsNullOrEmpty(idCard.FullName)
-                ? idCard.FullName
-                : Identity.Name(uid, EntityManager);
+            var accountName = idCard?.FullName ?? "Unknown";
             _server.RegisterOrUpdateAccount(server, comp.AccountId,
                 accountName, jobTitle, comp.ProfilePictureId);
             found++;
@@ -442,7 +441,7 @@ public sealed class ChitterCartridgeSystem : EntitySystem
         return ent.Comp.CurrentChatId;
     }
 
-    private ChatDetail BuildChatDetail(ChitterChat chat, uint ownId, ChitterServerComponent server)
+    private ChatDetail BuildChatDetail(ChitterChat chat, uint ownId, ChitterServerComponent server, int lastSeen = 0)
     {
         var detail = new ChatDetail
         {
@@ -450,17 +449,21 @@ public sealed class ChitterCartridgeSystem : EntitySystem
             ChatName = chat.ChatName,
         };
 
-        foreach (var msg in chat.Messages)
+        for (var i = 0; i < chat.Messages.Count; i++)
         {
+            var msg = chat.Messages[i];
+            var senderAcc = server.Accounts.GetValueOrDefault(msg.SenderAccountId);
             detail.Messages.Add(new MessageEntry
             {
                 MessageId = msg.MessageId,
                 SenderId = msg.SenderAccountId,
                 SenderName = msg.SenderName,
+                SenderProfilePicture = senderAcc?.ProfilePictureId ?? "",
                 Timestamp = msg.Timestamp,
                 Content = msg.Content,
                 DeliveryFailed = msg.DeliveryFailed,
                 IsOwn = msg.SenderAccountId == ownId,
+                IsNew = i >= lastSeen,
             });
         }
 
@@ -472,6 +475,7 @@ public sealed class ChitterCartridgeSystem : EntitySystem
                 AccountId = pid,
                 Name = acc?.Name ?? $"#{pid:D4}",
                 JobTitle = acc?.JobTitle ?? "",
+                ProfilePictureId = acc?.ProfilePictureId ?? "",
             });
         }
 

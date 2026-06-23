@@ -27,17 +27,4 @@ chitter-leave-chat = Leave Chat
 ## Chitter Account examine
 chitter-account-examine = Chitter Account: {$number}
 
-## Chitter LogProbe integration
-chitter-logprobe-no-data = No Chitter data scanned on this device.
-chitter-logprobe-header = Chitter Server Archive
-chitter-logprobe-label-chat = Archived Chats
-chitter-logprobe-no-archives = No archived chats found on this server.
-chitter-logprobe-print = Print
-chitter-logprobe-message-count = {$count} messages
-
-## Chitter printout
-chitter-printout-header = Chitter Server Archive: {$server}
-chitter-printout-chat = Chat: {$participants}
-chitter-printout-message = [{$time}] {$sender}: {$content}
-chitter-printout-overheat = [SYSTEM WARNING: Bluespace Printer Overheated - Output Truncated]
 

@@ -48,6 +48,11 @@ public sealed partial class ChitterManageChatView : BoxContainer
         PopulateParticipants();
     }
 
+    public void RefreshState()
+    {
+        PopulateParticipants();
+    }
+
     private void PopulateParticipants()
     {
         ParticipantsList.RemoveAllChildren();

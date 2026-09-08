@@ -23,6 +23,13 @@ public partial struct StampDisplayInfo
     [DataField("stampedColor")]
     public Color StampedColor;
 
+    /// <summary>
+    ///     The sprite state of the stamp to display on the paper UI, from paper Sprite path.
+    ///     Only used for <see cref="StampType.RubberStamp"/> stamps.
+    /// </summary>
+    [DataField("stampState")]
+    public string StampState = "paper_stamp-generic";
+
     // Umbra - Begin - Stamp types
     [DataField]
     public StampType Type = StampType.RubberStamp;

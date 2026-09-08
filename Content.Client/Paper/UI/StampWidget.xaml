@@ -3,5 +3,6 @@
                    xmlns:paper="clr-namespace:Content.Client.Paper.UI"
                    HorizontalAlignment="Center"
                    Margin="6">
-    <paper:StampLabel Name="StampedByLabel" StyleClasses="LabelHeadingBigger" Margin="12 6 12 6" />
+    <paper:StampLabel Name="StampedByLabel" StyleClasses="LabelHeadingBigger" Margin="12 6 12 6" Visible="False" />
+    <paper:StampIcon Name="StampedByIcon" Margin="8" Visible="False" />
 </paper:StampWidget>

@@ -25,6 +25,8 @@ name: Integration Tests Experimental
 on:
   push:
     branches: [ Integration-Tests-Experimental ]
+    paths:
+      - '.github/workflows/integration-tests-experimental.yml'
   workflow_dispatch:
 
 jobs:

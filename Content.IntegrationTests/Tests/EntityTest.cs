@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.IntegrationTests.Utility;
 using Robust.Shared;
 using Robust.Shared.Audio.Components;
 using Robust.Shared.Configuration;
@@ -269,7 +270,14 @@ namespace Content.IntegrationTests.Tests
 
             Assert.That(server.CfgMan.GetCVar(CVars.NetPVS), Is.False);
 
-            var protoIds = server.ProtoMan
+            // This is the one method in this fixture whose cost actually scales with prototype count
+            // (every other method spawns everything up front and pays one fixed WaitRunTicks(450)
+            // regardless of how many entities that was) - it checks each prototype individually with
+            // several RunTicksSync(3) waits per item, to catch entities that leak on spawn/delete.
+            // Sharded for the same reason PostMapInitTest's map arrays are (see TestSharding): each
+            // check here is independent of the others, so a CI job only needing 1/N of them is exactly
+            // as thorough, just faster.
+            var protoIds = TestSharding.Shard(server.ProtoMan
                 .EnumeratePrototypes<EntityPrototype>()
                 .Where(p => !p.Abstract)
                 .Where(p => !pair.IsTestPrototype(p))
@@ -277,9 +285,8 @@ namespace Content.IntegrationTests.Tests
                 .Where(p => !excludedIds.Contains(p.ID)) // Moff
                 .Where(p => p.Categories.All(x => !IgnoredCategories.Contains(x.ID)))
                 .Select(p => p.ID)
-                .ToList();
-
-            protoIds.Sort();
+                .OrderBy(x => x) // Deterministic order so sharding partitions consistently.
+                .ToArray());
             var mapId = MapId.Nullspace;
 
             await server.WaitPost(() =>

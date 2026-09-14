@@ -22,6 +22,15 @@ name: Integration Tests Construction Root Split
 # artifact, so `dotnet test --list-tests` is deterministic across them - no data crosses a job
 # boundary except the tiny matrix itself.
 #
+# Second attempt exact-matched full test names (FullyQualifiedName=<escaped name>) OR'd together -
+# every leg failed fast with an MSBuild "invalid property" error, seemingly from dotnet test's own
+# internal MSBuild-property forwarding mangling the backslash-escaped parens once the filter got
+# long/complex. Sidestepped rather than chased further: since Construction/Root's fan-out is always
+# a single string argument (a prototype id or map path - see ConstructionPrototypeTest.cs / the
+# TestCaseSource methods in PostMapInitTest.cs), this now matches on just that inner argument via
+# `~` (contains) instead of the full name via `=` - plain identifiers and paths need none of
+# VSTest's 8 special characters escaped, so there's nothing left for the escaping to break.
+#
 # Scoped to just these two namespaces (not the full 97-bucket matrix) to get a fast, cheap answer
 # before deciding how to rebalance the whole thing.
 
@@ -110,12 +119,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # VSTest filter syntax needs these 8 characters backslash-escaped when they're part of a
-          # literal value rather than an operator - parameterized test names (e.g. Foo("SomeId"))
-          # are full of parentheses, so this matters a lot here.
-          escape_filter() {
-            sed -e 's/\\/\\\\/g' -e 's/(/\\(/g' -e 's/)/\\)/g' -e 's/&/\\\&/g' \
-                -e 's/|/\\|/g' -e 's/=/\\=/g' -e 's/!/\\!/g' -e 's/~/\\~/g'
+          # Pull out just the inner test-case argument - e.g. the prototype id or map path inside
+          # Foo("SomeId") - rather than matching the full qualified name. Plain identifiers and
+          # paths contain none of VSTest's special filter characters, so there's nothing to escape,
+          # which sidesteps the MSBuild property-forwarding breakage exact-name matching hit.
+          extract_arg() {
+            sed -E 's/^.*\(("?)(.*)\1\)$/\2/'
           }
 
           if [ "${{ matrix.group }}" = "Construction" ]; then
@@ -142,7 +151,12 @@ jobs:
           count=$(wc -l < "$chunkfile")
           echo "${{ matrix.group }}-${{ matrix.index }}: $count tests in this slice"
 
-          FILTER=$(cat "$chunkfile" | escape_filter | awk '{printf "FullyQualifiedName=%s|", $0}' | sed 's/|$//')
+          cat "$chunkfile" | extract_arg > /tmp/args.txt
+          echo "Sample extracted args:"
+          head -3 /tmp/args.txt
+
+          FILTER=$(awk '{printf "FullyQualifiedName~%s|", $0}' /tmp/args.txt | sed 's/|$//')
+          echo "Filter length: ${#FILTER} chars"
 
           dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
             --filter "$FILTER" -- NUnit.ConsoleOut=0 NUnit.MapWarningTo=Failed NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"

@@ -31,6 +31,16 @@ name: Integration Tests Construction Root Split
 # `~` (contains) instead of the full name via `=` - plain identifiers and paths need none of
 # VSTest's 8 special characters escaped, so there's nothing left for the escaping to break.
 #
+# Third attempt still failed, and the debug output revealed why: `--filter` is silently ignored by
+# `dotnet test --list-tests` in this dotnet-test/NUnit3TestAdapter combination - "Construction: 6443
+# tests total" was every test in the whole suite, not just Construction's ~700-odd, and the sample
+# extracted args were things like TestRoundEndTextMentionsReplicators, nothing to do with
+# Construction at all. That's what produced the 66KB garbage filter and the MSBuild parse error.
+# Fixed by not relying on --filter during listing at all: list every test once, unfiltered (which
+# does work correctly), then narrow to the target namespace with a plain grep. Root's case can't
+# grep on a folder prefix (it has none), so it matches "exactly two dot-separated segments after
+# Tests." (ClassName.MethodName, no subfolder) instead of the 96-way negation used elsewhere.
+#
 # Scoped to just these two namespaces (not the full 97-bucket matrix) to get a fast, cheap answer
 # before deciding how to rebalance the whole thing.
 
@@ -127,15 +137,24 @@ jobs:
             sed -E 's/^.*\(("?)(.*)\1\)$/\2/'
           }
 
-          if [ "${{ matrix.group }}" = "Construction" ]; then
-            NS_FILTER="FullyQualifiedName~Content.IntegrationTests.Tests.Construction."
-          else
-            NS_FILTER="FullyQualifiedName!~Content.IntegrationTests.Tests.Access.&FullyQualifiedName!~Content.IntegrationTests.Tests.Actions.&FullyQualifiedName!~Content.IntegrationTests.Tests.Administration.&FullyQualifiedName!~Content.IntegrationTests.Tests.Afk.&FullyQualifiedName!~Content.IntegrationTests.Tests.Atmos.&FullyQualifiedName!~Content.IntegrationTests.Tests.Audio.&FullyQualifiedName!~Content.IntegrationTests.Tests.Body.&FullyQualifiedName!~Content.IntegrationTests.Tests.Buckle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chameleon.&FullyQualifiedName!~Content.IntegrationTests.Tests.Changeling.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chasm.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chat.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chemistry.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cleanup.&FullyQualifiedName!~Content.IntegrationTests.Tests.Climbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cloning.&FullyQualifiedName!~Content.IntegrationTests.Tests.Commands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Construction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Damageable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Destructible.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceLinking.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceNetwork.&FullyQualifiedName!~Content.IntegrationTests.Tests.Disposal.&FullyQualifiedName!~Content.IntegrationTests.Tests.DoAfter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Doors.&FullyQualifiedName!~Content.IntegrationTests.Tests.Embedding.&FullyQualifiedName!~Content.IntegrationTests.Tests.EncryptionKeys.&FullyQualifiedName!~Content.IntegrationTests.Tests.Engineering.&FullyQualifiedName!~Content.IntegrationTests.Tests.Explosion.&FullyQualifiedName!~Content.IntegrationTests.Tests.Eye.&FullyQualifiedName!~Content.IntegrationTests.Tests.Fluids.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameObjects.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameRules.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameTestTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gibbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gravity.&FullyQualifiedName!~Content.IntegrationTests.Tests.Guidebook.&FullyQualifiedName!~Content.IntegrationTests.Tests.Hands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Helpers.&FullyQualifiedName!~Content.IntegrationTests.Tests.Holosign.&FullyQualifiedName!~Content.IntegrationTests.Tests.Humanoid.&FullyQualifiedName!~Content.IntegrationTests.Tests.Interaction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Internals.&FullyQualifiedName!~Content.IntegrationTests.Tests.Kitchen.&FullyQualifiedName!~Content.IntegrationTests.Tests.Labels.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lathe.&FullyQualifiedName!~Content.IntegrationTests.Tests.Linter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lobby.&FullyQualifiedName!~Content.IntegrationTests.Tests.Localization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mapping.&FullyQualifiedName!~Content.IntegrationTests.Tests.Markings.&FullyQualifiedName!~Content.IntegrationTests.Tests.Materials.&FullyQualifiedName!~Content.IntegrationTests.Tests.Medical.&FullyQualifiedName!~Content.IntegrationTests.Tests.Minds.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mousetrap.&FullyQualifiedName!~Content.IntegrationTests.Tests.Movement.&FullyQualifiedName!~Content.IntegrationTests.Tests.Networking.&FullyQualifiedName!~Content.IntegrationTests.Tests.NPC.&FullyQualifiedName!~Content.IntegrationTests.Tests.Nutrition.&FullyQualifiedName!~Content.IntegrationTests.Tests.Payload.&FullyQualifiedName!~Content.IntegrationTests.Tests.Physics.&FullyQualifiedName!~Content.IntegrationTests.Tests.Power.&FullyQualifiedName!~Content.IntegrationTests.Tests.Preferences.&FullyQualifiedName!~Content.IntegrationTests.Tests.Procedural.&FullyQualifiedName!~Content.IntegrationTests.Tests.PrototypeTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Puller.&FullyQualifiedName!~Content.IntegrationTests.Tests.Replays.&FullyQualifiedName!~Content.IntegrationTests.Tests.Respirator.&FullyQualifiedName!~Content.IntegrationTests.Tests.Roles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Round.&FullyQualifiedName!~Content.IntegrationTests.Tests.Security.&FullyQualifiedName!~Content.IntegrationTests.Tests.Serialization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Shuttle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Silicons.&FullyQualifiedName!~Content.IntegrationTests.Tests.SmartFridge.&FullyQualifiedName!~Content.IntegrationTests.Tests.Sprite.&FullyQualifiedName!~Content.IntegrationTests.Tests.Stacks.&FullyQualifiedName!~Content.IntegrationTests.Tests.Station.&FullyQualifiedName!~Content.IntegrationTests.Tests.Storage.&FullyQualifiedName!~Content.IntegrationTests.Tests.Strip.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tag.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tiles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tools.&FullyQualifiedName!~Content.IntegrationTests.Tests.Toolshed.&FullyQualifiedName!~Content.IntegrationTests.Tests.UserInterface.&FullyQualifiedName!~Content.IntegrationTests.Tests.Utility.&FullyQualifiedName!~Content.IntegrationTests.Tests.Vending.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weapons.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weldable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Wires.&FullyQualifiedName!~Content.IntegrationTests.Tests.WizdenContentFreeze.&FullyQualifiedName!~Content.IntegrationTests.Tests.Zombie.&FullyQualifiedName!~Content.IntegrationTests.Tests._DV.&FullyQualifiedName!~Content.IntegrationTests.Tests._Harmony.&FullyQualifiedName!~Content.IntegrationTests.Tests._MACRO.&FullyQualifiedName!~Content.IntegrationTests.Tests._Moffstation."
-          fi
-
+          # --filter is silently ignored during --list-tests here, so list everything once and
+          # narrow locally instead of trusting the filter to do it during discovery.
           dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
-            --filter "$NS_FILTER" --list-tests 2>/dev/null \
-            | grep '^    ' | sed 's/^[[:space:]]*//' | grep -v '^$' > /tmp/all_tests.txt
+            --list-tests 2>/dev/null \
+            | grep '^    ' | sed 's/^[[:space:]]*//' | grep -v '^$' > /tmp/all_tests_full.txt
+
+          echo "Full suite: $(wc -l < /tmp/all_tests_full.txt) tests discovered"
+
+          if [ "${{ matrix.group }}" = "Construction" ]; then
+            grep '^Content\.IntegrationTests\.Tests\.Construction\.' /tmp/all_tests_full.txt > /tmp/all_tests.txt
+          else
+            # Root = the loose files directly under Tests/, i.e. exactly two dot-separated segments
+            # after "Tests." (ClassName.MethodName) with no subfolder segment in between. The
+            # segment pair must be followed by either an opening paren (a parameterized case, e.g.
+            # ...MethodName("SomeId")) or the end of the line (a plain zero-arg [Test]) - requiring
+            # just "(" would silently drop plain tests like PrototypeSaveTest.UninitializedSaveTest.
+            grep -E '^Content\.IntegrationTests\.Tests\.[^.(]+\.[^.(]+(\(|$)' /tmp/all_tests_full.txt > /tmp/all_tests.txt
+          fi
 
           total=$(wc -l < /tmp/all_tests.txt)
           echo "${{ matrix.group }}: $total tests total"

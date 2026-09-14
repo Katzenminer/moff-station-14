@@ -1,28 +1,3 @@
-- type: entity
-  name : disabler bolt
-  id: BulletBigIronDisabler
-  parent: BulletDisabler
-  categories: [ HideSpawnMenu ]
-  components:
-  - type: StaminaDamageOnCollide
-    damage: 40
-  - type: Projectile
-    damage:
-      types:
-        Heat: 0
-
-- type: entity
-  name: laser bolt
-  id: BulletBigIronLethal
-  parent: BulletLaser
-  categories: [ HideSpawnMenu ]
-  components:
-  - type: Projectile
-    impactEffect: BulletImpactEffectOrangeDisabler
-    damage:
-      types:
-        Heat: 35
-
 # Hallelujah !
 - type: entity
   id: BaseBulletSilver
@@ -72,3 +47,17 @@
         mask:
         - Impassable
         - BulletImpassable
+
+- type: entity
+  parent: ChainSickle
+  id: MoffDemonicChainHook
+  categories: [ HideSpawnMenu ]
+  name: demonic chain hook
+  description: That looks painful.
+  components:
+  - type: Sprite
+    sprite: _Moffstation/Mobs/Demons/harvester.rsi
+  - type: Projectile
+    damage:
+      types:
+        Piercing: 10

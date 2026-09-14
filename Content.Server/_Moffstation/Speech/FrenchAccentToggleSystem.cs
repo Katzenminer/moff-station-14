@@ -1,12 +1,12 @@
-using Content.Server.Speech.Components;
 using Content.Shared._Moffstation.Speech;
 using Content.Shared.Alert;
+using Content.Shared.Speech.Components;
 
 namespace Content.Server._Moffstation.Speech;
 
-public sealed class FrenchAccentToggleSystem : EntitySystem
+public sealed partial class FrenchAccentToggleSystem : EntitySystem
 {
-    [Dependency] private readonly AlertsSystem _alertsSystem = default!;
+    [Dependency] private AlertsSystem _alertsSystem = default!;
 
     public override void Initialize()
     {

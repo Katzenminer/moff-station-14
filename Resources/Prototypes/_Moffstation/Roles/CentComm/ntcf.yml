@@ -10,7 +10,6 @@
   startingGear: NTCFPilotGear
   icon: "JobIconNanotrasen"
   supervisors: job-supervisors-centcom
-  canBeAntag: false
   access:
   - CentralCommand
   - Command
@@ -40,7 +39,6 @@
     back:
     - HandHeldMassScanner
     - ClothingShoesBootsMagSci
-    - WeaponDisabler
     belt:
     - CrowbarRed
     - PowerDrill
@@ -61,7 +59,6 @@
   startingGear: NTCFEngineerGear
   icon: "JobIconNanotrasen"
   supervisors: job-supervisors-centcom
-  canBeAntag: false
   access:
   - Atmospherics
   - CentralCommand
@@ -93,7 +90,6 @@
     - trayScanner
     - GasAnalyzer
     - ClothingShoesBootsMagSci
-    - WeaponDisabler
     belt:
     - CrowbarRed
     - PowerDrill

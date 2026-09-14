@@ -1,4 +1,4 @@
-﻿## Recipes
+## Recipes
 
 ## Captain
 
@@ -349,3 +349,35 @@
   parent: BaseCoatRecipe
   id: ClothingOuterHotDog
   result: ClothingOuterHotDog
+
+## Modular HUD Frames
+
+- type: latheRecipe
+  abstract: true
+  id: BaseModularHudFrameRecipe
+  categories:
+  - Clothing
+  completetime: 2
+  materials:
+    Steel: 300
+    Glass: 200
+
+- type: latheRecipe
+  parent: BaseModularHudFrameRecipe
+  id: ClothingEyesModularHudVisor
+  result: ClothingEyesModularHudVisor
+
+- type: latheRecipe
+  parent: BaseModularHudFrameRecipe
+  id: ClothingEyesModularHudGlasses
+  result: ClothingEyesModularHudGlasses
+
+- type: latheRecipe
+  parent: BaseModularHudFrameRecipe
+  id: ClothingEyesModularHudJamjars
+  result: ClothingEyesModularHudJamjars
+
+- type: latheRecipe
+  parent: BaseModularHudFrameRecipe
+  id: ClothingEyesModularHudPatch
+  result: ClothingEyesModularHudPatch

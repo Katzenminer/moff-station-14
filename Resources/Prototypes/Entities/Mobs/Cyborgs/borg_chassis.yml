@@ -234,6 +234,7 @@
     sprite: _Moffstation/Mobs/Silicon/Chassis/engineer_derelict.rsi # Moffstation - Early merge of Borg RSI fix
     layers:
     - state: borg # Moffstation - Early merge of Borg RSI fix
+      map: ["movement"] # Moff
     - state: borg_e_r # Moffstation - Early merge of Borg RSI fix
       map: ["enum.BorgVisualLayers.Light"]
       shader: unshaded
@@ -246,6 +247,15 @@
       shader: unshaded
       map: ["light"]
       visible: false
+  # Moff Start - New Engineering Derelict Borg
+  - type: SpriteMovement
+    movementLayers:
+      movement:
+        state: borg_moving
+    noMovementLayers:
+      movement:
+        state: borg
+  # Moff End - New Engineering Derelict Borg
   - type: BorgChassis
     maxModules: 5 # One less module slot than the regular module to reflect this being a "broken" cyborg.
     moduleWhitelist:
@@ -370,8 +380,44 @@
     noMindState: borg_e_r # Moffstation - Early merge of Borg RSI fix
   # Moffstation - Start - Salvage Borg Resprite
   - type: MovementSpeedModifier
-    baseWalkSpeed: 1.5
-    baseSprintSpeed: 3.5
+    baseWalkSpeed: 2.5
+    baseSprintSpeed: 3.5 # Slower because haha big stompy sounds
+  - type: MobThresholds
+    thresholds:
+      0: Alive
+      165: Critical # Just enough to not be oneshot by a mine
+      495: Dead # Same as destruction threshold. Borgs act exactly like crit when dead, except for ghosting on move
+    stateAlertDict:
+      Alive: BorgHealth
+      Critical: BorgCrit
+      Dead: BorgDead
+    showOverlays: false
+    allowRevives: true
+  - type: Destructible # Redefine all of this with the new thresholds!
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 125
+      behaviors:
+      - !type:PlaySoundBehavior
+        sound:
+          path: /Audio/Machines/warning_buzzer.ogg
+          params:
+            volume: 5
+    - trigger:
+        !type:DamageTrigger
+        damage: 495
+      behaviors:
+      - !type:PlaySoundBehavior
+        sound:
+          collection: MetalBreak
+      - !type:EmptyContainersBehaviour
+        containers:
+        - borg_brain
+        - borg_module
+        - cell_slot
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
   - type: FootstepModifier
     footstepSoundCollection:
       path: /Audio/Mecha/sound_mecha_powerloader_step.ogg

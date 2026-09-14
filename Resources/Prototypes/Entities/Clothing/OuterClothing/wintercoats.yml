@@ -1,6 +1,6 @@
 - type: entity
   # Moffstation - Begin - Split the existing base winter coat into an abstract base with all of the coat stats; the basic winter coat gets attachable suit storage now, which we don't want to inherit in some cases
-  parent: ClothingOuterStorageBase
+  parent: [ TemperatureProtection, ClothingOuterJacketBase ]
   id: ClothingOuterWinterCoatBase
 #  id: ClothingOuterWinterCoat # Moffstation - The upstream basic winter coat `ClothingOuterWinterCoat` was moved to our namespace
   abstract: true
@@ -10,11 +10,6 @@
     sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
   - type: Clothing
     sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
-  - type: TemperatureProtection
-    heatingCoefficient: 1.1
-    coolingCoefficient: 0.1
-  - type: Item
-    size: Normal
   - type: Armor
     modifiers:
       coefficients:
@@ -23,15 +18,6 @@
     priceMultiplier: 0
   - type: ZombificationResistance
     zombificationResistanceCoefficient: 0.55
-  - type: Edible
-    requiresSpecialDigestion: true
-  - type: SolutionContainerManager
-    solutions:
-      food:
-        maxVol: 30
-        reagents:
-        - ReagentId: Fiber
-          Quantity: 30
   - type: Tag
     tags:
     - ClothMade
@@ -49,6 +35,7 @@
   - type: ToggleableClothing
     clothingPrototype: ClothingHeadHatHoodWinterDefault
     slot: head
+    verbText: toggle-clothing-verb-hood
   - type: ContainerContainer
     containers:
       toggleable-clothing: !type:ContainerSlot {}
@@ -97,7 +84,7 @@
   name: bartender winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: BAR-icon
   - type: Item
@@ -107,7 +94,7 @@
       right:
       - state: BAR-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: BAR-equipped-OUTERCLOTHING
@@ -136,7 +123,7 @@
   name: cargo winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: CARGO-icon
   - type: Item
@@ -146,7 +133,7 @@
       right:
       - state: CARGO-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: CARGO-equipped-OUTERCLOTHING
@@ -227,7 +214,7 @@
   description: A coat specifically designed for work inside cold storage, sorely needed by cold-blooded lizard chefs.
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: CHEF-icon
   - type: Item
@@ -237,7 +224,7 @@
       right:
       - state: CHEF-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: CHEF-equipped-OUTERCLOTHING
@@ -249,7 +236,7 @@
 
 - type: entity
   parent: ClothingOuterWinterCoatToggleable
-  id: ClothingOuterWinterChem
+  id: ClothingOuterWinterChemUpstream # Moffstation
   name: chemistry winter coat
   components:
   - type: Sprite
@@ -284,7 +271,7 @@
 
 - type: entity
   parent: [ClothingOuterWinterCoatToggleable, BaseCommandContraband]
-  id: ClothingOuterWinterCMO
+  id: ClothingOuterWinterCMOUpstream # Moffstation
   name: chief medical officer's winter coat
   components:
   - type: Sprite
@@ -401,7 +388,8 @@
 
 - type: entity
   parent: [ClothingOuterWinterCoatToggleable, BaseCommandContraband]
-  id: ClothingOuterWinterHoP
+  id: ClothingOuterWinterHoPUpstream # Moffstation
+  abstract: true # Moffstation
   name: head of personnel's winter coat
   components:
   - type: Sprite
@@ -525,7 +513,7 @@
 
 - type: entity
   parent: ClothingOuterWinterCoatToggleable
-  id: ClothingOuterWinterMed
+  id: ClothingOuterWinterMedUpstream # Moffstation
   name: medical winter coat
   components:
   - type: Sprite
@@ -563,7 +551,7 @@
   name: mime winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: MIME-icon
   - type: Item
@@ -573,7 +561,7 @@
       right:
       - state: MIME-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: MIME-equipped-OUTERCLOTHING
@@ -590,17 +578,17 @@
   name: mining winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: MINER-icon
   - type: Item
     inhandVisuals:
       left:
-      - state: MINER-inhand-left
+      - state: CARGO-inhand-left
       right:
-      - state: MINER-inhand-right
+      - state: CARGO-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: MINER-equipped-OUTERCLOTHING
@@ -688,7 +676,7 @@
   name: research director's winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: RD-icon
   - type: Item
@@ -698,7 +686,7 @@
       right:
       - state: RD-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: RD-equipped-OUTERCLOTHING
@@ -715,7 +703,7 @@
         Caustic: 0.9
     priceMultiplier: 0.15
   - type: ToggleableClothing
-    clothingPrototype: ClothingHeadHatHoodWinterRD
+    clothingPrototype: ClothingHeadHatHoodWinterSci
 
 - type: entity
   parent: ClothingOuterWinterCoatToggleable
@@ -723,29 +711,23 @@
   name: robotics winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: ROBO-icon
-    - state: winterbits-tan-icon #Moffstation
   - type: Item
     inhandVisuals:
       left:
       - state: ROBO-inhand-left
-      - state: winterbits-inhand-left #Moffstation
       right:
       - state: ROBO-inhand-right
-      - state: winterbits-inhand-right #Moffstation
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: ROBO-equipped-OUTERCLOTHING
-      - state: winterbits-tan-equipped-OUTERCLOTHING #Moffstation
 #Moffstation - Begin - Vox Wintecoats
       outerClothing-vox:
       - state: ROBO-equipped-OUTERCLOTHING-vox
-        sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi
-      - state: winterbits-tan-equipped-OUTERCLOTHING-vox
         sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi
   #Moffstation - End - Vox Wintecoats
   - type: ToggleableClothing
@@ -758,7 +740,7 @@
   name: science winter coat
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     layers:
     - state: SCI-icon
   - type: Item
@@ -768,7 +750,7 @@
       right:
       - state: SCI-inhand-right
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coat.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coat.rsi # Moffstation
     clothingVisuals:
       outerClothing:
       - state: SCI-equipped-OUTERCLOTHING
@@ -945,12 +927,12 @@
   description: An oversized, plasticine space tuxedo that'll have people asking "do you know me?"
   components:
   - type: Sprite
-    sprite: Clothing/OuterClothing/WinterCoats/coatnomi.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coatnomi.rsi # Moffstation
   - type: Clothing
-    sprite: Clothing/OuterClothing/WinterCoats/coatnomi.rsi
+    sprite: _Moffstation/Clothing/OuterClothing/WinterCoats/coatnomi.rsi # Moffstation
 
 - type: entity
-  parent: ClothingOuterWinterCoatToggleable
+  parent: [ClothingOuterWinterCoatToggleable, BaseSlicingRefinable]
   id: ClothingOuterWinterWeb
   name: web winter coat
   description: Feels like the inside of a cocoon, not that this would make you less afraid of being in one.
@@ -978,8 +960,8 @@
   - type: Construction
     graph: WebObjects
     node: coat
-  - type: Butcherable
-    spawned:
+  - type: ToolRefinable
+    refineResult:
     - id: MaterialWebSilk1
       amount: 5
   - type: FlavorProfile
@@ -987,13 +969,11 @@
       - cobwebs
     ignoreReagents:
       - Fiber
-  - type: SolutionContainerManager
-    solutions: # 15 (3 (fiber count of web) * 5 (to craft)) + 5 (magical crafting bonus)
-      food:
-        maxVol: 20
-        reagents:
-        - ReagentId: Fiber
-          Quantity: 20
+  - type: Solution
+    solution:
+      reagents:
+      - ReagentId: Fiber
+        Quantity: 50 # 50 (10 (fiber count of web) * 5 (to craft))
   - type: ToggleableClothing
     clothingPrototype: ClothingHeadHatHoodWinterWeb
 

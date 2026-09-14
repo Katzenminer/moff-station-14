@@ -1,5 +1,7 @@
+using Content.Shared.Chat.Prototypes;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.Preferences;
+using Content.Shared.Speech.Components;
 using Robust.Shared.Enums;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
@@ -15,6 +17,14 @@ public sealed partial class HumanoidProfileComponent : Component
 {
     [DataField, AutoNetworkedField]
     public Gender Gender;
+
+    /// <summary>
+    /// Holds the EmoteSoundsPrototype that the humanoid will use to speak with
+    /// To change in-game, you still have to use the <see cref="VoiceChangedEvent"/>
+    /// or edit the <see cref="VocalComponent"/>
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public ProtoId<EmoteSoundsPrototype> Voice = HumanoidCharacterProfile.DefaultVoice;
 
     [DataField, AutoNetworkedField]
     public Sex Sex;
@@ -33,4 +43,10 @@ public sealed partial class HumanoidProfileComponent : Component
     [DataField, AutoNetworkedField]
     public float Height = 1f;
     // Moffstation End
+
+    //Moffstation Start - Re-add Geras
+    //Cent was right, this is basically the only half-decent way to make this available
+    [DataField, AutoNetworkedField]
+    public Color SkinColor = Color.White;
+    //Moffstation End
 }

@@ -1,3 +1,9 @@
+figurines-ainelucia-1 = Just a sec! I gotta revive this red kitty!
+figurines-ainelucia-2 = Meow. Meow. Meow. Meow. Meow. Meow. Meow. Meow. Me- Awhhh fine I'll stop...
+figurines-ainelucia-3 = Officer, I SWEAR I have no clue where all the watermelon juice went! I SWEAR!!
+figurines-ainelucia-4 = Did anyone just hear a bomb go off? ...No? ...Okay.
+figurines-ainelucia-5 = DON'T WORRY, I LIKE TOTALLY GOT THIS ALL HANDLED, TRUST!!
+
 figurines-alfredo-1 = You wanna huff frezon?
 figurines-alfredo-2 = Here's some cold... air...
 figurines-alfredo-3 = Ignore the rotting monkey pit.
@@ -66,6 +72,14 @@ figurines-boxcar-1 = Ey.
 figurines-boxcar-2 = We's love dat!
 figurines-boxcar-3 = You's got anyone you's wanna shout out?
 figurines-boxcar-4 = Still the best.
+
+figurines-buck-1 = Anyone want to hear a SAFETY RAP SONG?
+figurines-buck-2 = Oh Stars above, our beacon's bright, Nanotrasen guides our might! With plasma dreams, and duty's call, we'll serve the station one and all!
+figurines-buck-3 = Through endless void we boldly strive to keep our galaxy alive! Our hearts are true our task is clear, Nanotrasen, we persevere!
+figurines-buck-4 = No, you can't wear my hat.
+figurines-buck-5 = Mark them as wanted, they interrupted the song.
+figurines-buck-6 = Everyone's worthy of respect, even criminals!
+figurines-buck-7 = JUSTICE!!
 
 figurines-brad-1 = I'm the head of Bradcurity!
 figurines-brad-2 = Time to shoot innocents!
@@ -331,6 +345,13 @@ figurines-kaza-1 = Kaza greet!
 figurines-kaza-2 = Mm? What Kaza doing...?
 figurines-kaza-3 = Kaza bid kindness each other self and to.
 figurines-kaza-4 = KAZA KILL!!
+
+figurines-kazo-1 = Kazo say hello!
+figurines-kazo-2 = Kazo say if Kazo just havings lunch with Kazo & Kazo and Kazo & Kazo were togethers, Kazo ask who was watching Kazo...?
+figurines-kazo-3 = Kazo go Skrrt.
+figurines-kazo-4 = Kazo ask if doctor have any bicaridine? Kazo has concussions.
+figurines-kazo-5 = Kazo go meow...
+figurines-kazo-6 = KAZO KILL!!
 
 figurines-kim-1 = Want see me break into the bridge? Want see me do it again?
 figurines-kim-2 = Time to bomb sec!
@@ -620,3 +641,9 @@ figurines-zara-2 = I'm gonna put a portal in the burn chamber.
 figurines-zara-3 = Can't make scientific progress without a few deaths, I thought you guys would know that by now.
 figurines-zara-4 = Okay so from an outside perspective this might look irredeemably evil but think of it from my perspective, it's hella funny.
 figurines-zara-5 = Oh, Liiime~
+
+figurines-zoey-1 = Isn't space pretty?
+figurines-zoey-2 = Citrus bikeshed please!
+figurines-zoey-3 = *squishes*
+figurines-zoey-4 = I'll take a martinez...
+figurines-zoey-5 = Wha- Another hell portal?!

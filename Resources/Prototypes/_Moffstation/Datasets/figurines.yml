@@ -1,4 +1,10 @@
 - type: localizedDataset
+  id: FigurinesAineLucia
+  values:
+    prefix: figurines-ainelucia-
+    count: 5
+
+- type: localizedDataset
   id: FigurinesAlfredo
   values:
     prefix: figurines-alfredo-
@@ -39,6 +45,12 @@
   values:
     prefix: figurines-boxcar-
     count: 4
+
+- type: localizedDataset
+  id: FigurinesBuck
+  values:
+    prefix: figurines-buck-
+    count: 7
 
 - type: localizedDataset
   id: FigurinesBrad
@@ -255,6 +267,12 @@
   values:
     prefix: figurines-kaza-
     count: 4
+
+- type: localizedDataset
+  id: FigurinesKazo
+  values:
+    prefix: figurines-kazo-
+    count: 6
 
 - type: localizedDataset
   id: FigurinesKim
@@ -494,4 +512,10 @@
   id: FigurinesZara
   values:
     prefix: figurines-zara-
+    count: 5
+
+- type: localizedDataset
+  id: FigurinesZoey
+  values:
+    prefix: figurines-zoey-
     count: 5

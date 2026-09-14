@@ -3,17 +3,18 @@ using Content.Shared._DV.CustomObjectiveSummary;
 using Content.Shared.Database;
 using Content.Shared.GameTicking;
 using Content.Shared.Mind;
+using Content.Shared.Objectives.Systems;
 using Robust.Server.Player;
 using Robust.Shared.Network;
 
 namespace Content.Server._DV.CustomObjectiveSummary;
 
-public sealed class CustomObjectiveSummarySystem : EntitySystem
+public sealed partial class CustomObjectiveSummarySystem : EntitySystem
 {
-    [Dependency] private readonly IServerNetManager _net = default!;
-    [Dependency] private readonly SharedMindSystem _mind = default!;
-    [Dependency] private readonly IAdminLogManager _adminLog = default!;
-    [Dependency] private readonly IPlayerManager _playerManager = default!;
+    [Dependency] private IServerNetManager _net = default!;
+    [Dependency] private SharedMindSystem _mind = default!;
+    [Dependency] private IAdminLogManager _adminLog = default!;
+    [Dependency] private IPlayerManager _playerManager = default!;
 
 
     public override void Initialize()

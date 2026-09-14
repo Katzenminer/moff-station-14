@@ -25,30 +25,6 @@
       sprite: Structures/Storage/closet_labels.rsi
       offset: "-0.065,0"
       map: ["enum.PaperLabelVisuals.Layer"]
-  - type: Destructible
-    thresholds:
-    - trigger:
-        !type:DamageTrigger
-        damage: 100
-      behaviors:
-        - !type:DoActsBehavior
-          acts: [ "Destruction" ]
-    - trigger:
-        !type:DamageTrigger
-        damage: 50
-      behaviors:
-      - !type:DoActsBehavior
-        acts: ["Destruction"]
-      - !type:PlaySoundBehavior
-        sound:
-          collection: MetalBreak
-          params:
-            volume: -6
-      - !type:SpawnEntitiesBehavior
-        spawn:
-          SheetSteel1:
-            min: 1
-            max: 2
   - type: Construction
     graph: ClosetSteelSecure
     node: done
@@ -56,23 +32,19 @@
     - entity_storage
   - type: Paintable
     group: Locker
-
-- type: entity
-  id: LockerBaseSecure
-  parent: LockerBase
-  abstract: true
-  components:
   - type: Damageable
-    damageContainer: StructuralInorganic
     damageModifierSet: StructuralMetallic
+  - type: Injurable
+    damageContainer: StructuralInorganic
+  # Moffstation - Begin - Make secure lockers harder to steal
+  - type: LockedAnchorable
+  - type: Transform
+    anchored: true
+  - type: Physics
+    bodyType: Static
+  # Moffstation - End
   - type: Destructible
     thresholds:
-    - trigger:
-        !type:DamageTrigger
-        damage: 300
-      behaviors:
-      - !type:DoActsBehavior
-        acts: ["Destruction"]
     - trigger:
         !type:DamageTrigger
         damage: 150
@@ -89,3 +61,8 @@
           SheetSteel1:
             min: 1
             max: 2
+  # ES START
+  - type: ESSparkOnHit
+    prob: 0.25
+    count: 2
+  # ES END

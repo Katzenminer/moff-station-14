@@ -83,12 +83,8 @@
     speechSounds: MaleAvali
     allowedEmotes: ['Hiss']
   - type: Vocal
-    sounds:
-      Male: MaleAvali
-      Female: FemaleAvali
-      Unsexed: MaleAvali
+    emoteSounds: MaleAvali
   - type: Butcherable
-    butcheringType: Spike
     spawned:
     - id: FoodMeatChicken
       amount: 3
@@ -107,7 +103,6 @@
         Slash: 5
   - type: Temperature
     specificHeat: 48
-    currentTemperature: 296.15
   - type: TemperatureDamage
     heatDamageThreshold: 310
     coldDamageThreshold: 223
@@ -146,7 +141,7 @@
     bloodReferenceSolution:
       reagents:
       - ReagentId: AmmoniaBlood
-        Quantity: 300
+        Quantity: 600
   - type: EmpVulnerable
 
 

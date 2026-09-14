@@ -2,6 +2,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Client.Lobby.UI.Loadouts;
 using Content.Client.Lobby.UI.Roles;
+using Content.Shared.Antag;
 using Content.Shared.Clothing;
 using Content.Shared.Preferences;
 using Content.Shared.Preferences.Loadouts;
@@ -36,7 +37,7 @@ public sealed partial class HumanoidProfileEditor
         foreach (var (jobId, prioritySelector) in _jobPriorities)
         {
             var priority = Profile?.JobPriorities.GetValueOrDefault(jobId, JobPriority.Never) ?? JobPriority.Never;
-            prioritySelector.Select((int)priority);
+            prioritySelector.Select(MoffFromJobPriority(priority)); // Moff - Yes/no selector
         }
     }
 
@@ -135,6 +136,8 @@ public sealed partial class HumanoidProfileEditor
 
         departments.Sort(DepartmentUIComparer.Instance);
 
+        // Moff Start - Multi-character selection: the four-way selector collapses to yes/no
+        /*
         var items = new[]
         {
                 ("humanoid-profile-editor-job-priority-never-button", (int) JobPriority.Never),
@@ -142,6 +145,10 @@ public sealed partial class HumanoidProfileEditor
                 ("humanoid-profile-editor-job-priority-medium-button", (int) JobPriority.Medium),
                 ("humanoid-profile-editor-job-priority-high-button", (int) JobPriority.High),
             };
+        */
+        var items = MoffJobPreferenceItems;
+        HideMoffPreferenceUnavailable();
+        // Moff end
 
         foreach (var department in departments)
         {
@@ -171,14 +178,14 @@ public sealed partial class HumanoidProfileEditor
 
                 category.AddChild(new PanelContainer
                 {
-                    PanelOverride = new StyleBoxFlat { BackgroundColor = Color.FromHex("#464966") },
+                    PanelOverride = new StyleBoxFlat { BackgroundColor = department.Color }, // Moffstation - Colored job list
                     Children =
                         {
-                            new RichTextLabel // Moffstation
+                            new RichTextLabel // Moffstation - Colored job list
                             {
-                                Text = Loc.GetString("humanoid-profile-editor-department-jobs-label",
+                                Text = Loc.GetString("humanoid-profile-editor-department-jobs-label-moffstation", // Moffstation - Colored job list
                                     ("departmentName", departmentName)),
-                                Margin = new Thickness(5f, 0, 0, 0)
+                                Margin = new Thickness(5f, 2f, 0, 2f), // Moffstation - Colored job list
                             }
                         }
                 });
@@ -191,7 +198,8 @@ public sealed partial class HumanoidProfileEditor
                 .Where(job => job.SetPreference)
                 .ToArray();
 
-            Array.Sort(jobs, JobUIComparer.Instance);
+            if (JobUIComparer.TryCreate(_prototypeManager, null, out var comparer))
+                Array.Sort(jobs, comparer);
 
             foreach (var job in jobs)
             {
@@ -226,25 +234,18 @@ public sealed partial class HumanoidProfileEditor
 
                 selector.OnSelected += selectedPrio =>
                 {
-                    var selectedJobPrio = (JobPriority)selectedPrio;
+                    // Moff Start - Yes/no selection; the priority itself is player-global.
+                    var selectedJobPrio = MoffToJobPriority(selectedPrio);
+
                     Profile = Profile?.WithJobPriority(job.ID, selectedJobPrio);
 
                     foreach (var (jobId, other) in _jobPriorities)
                     {
                         // Sync other selectors with the same job in case of multiple department jobs
                         if (jobId == job.ID)
-                        {
                             other.Select(selectedPrio);
-                            continue;
-                        }
-
-                        if (selectedJobPrio != JobPriority.High || (JobPriority)other.Selected != JobPriority.High)
-                            continue;
-
-                        // Lower any other high priorities to medium.
-                        other.Select((int)JobPriority.Medium);
-                        Profile = Profile?.WithJobPriority(jobId, JobPriority.Medium);
                     }
+                    // Moff end
 
                     // TODO: Only reload on high change (either to or from).
                     ReloadPreview();
@@ -300,6 +301,31 @@ public sealed partial class HumanoidProfileEditor
         UpdateJobPriorities();
     }
 
+    // Moffstation - Start - Antag loadout button
+    private void OnAntagLoadoutPressed(ProtoId<AntagPrototype> antagId)
+    {
+        var jobProtoId = LoadoutSystem.GetJobPrototype(antagId);
+        if (!_prototypeManager.TryIndex<RoleLoadoutPrototype>(jobProtoId, out var roleLoadoutProto))
+            return;
+
+        var loadout = new RoleLoadout();
+        Profile?.Loadouts.TryGetValue(jobProtoId, out loadout);
+
+        // Clone so we dont modify the underlying loadout
+        loadout = loadout?.Clone();
+
+        if (loadout == null)
+        {
+            loadout = new RoleLoadout(roleLoadoutProto.ID);
+            loadout.SetDefault(Profile, _playerManager.LocalSession, _prototypeManager);
+        }
+
+        OpenLoadout(null, loadout, roleLoadoutProto);
+    }
+    // Moffstation - End
+
+    // Moffstation - Start - New antagonist tab replaces this
+    /*
     public void RefreshAntags()
     {
         AntagList.RemoveAllChildren();
@@ -352,7 +378,6 @@ public sealed partial class HumanoidProfileEditor
 
             antagContainer.AddChild(selector);
 
-            // Moffstation - Begin - Enable loadouts for antags
             var loadoutWindowBtn = new Button()
             {
                 // Disabled = true,
@@ -389,9 +414,8 @@ public sealed partial class HumanoidProfileEditor
                     OpenLoadout(null, loadout, roleLoadoutProto);
                 };
             }
-            // Moffstation - End
-
             AntagList.AddChild(antagContainer);
         }
     }
+    */ // Moffstation - End
 }

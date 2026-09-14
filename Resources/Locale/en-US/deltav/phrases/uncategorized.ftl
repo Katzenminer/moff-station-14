@@ -1,3 +1,14 @@
+aac-window-footer-flavor = Nanosoft: Helping you find the right words!
+
+aac-window-search-hint = Search for phrases, then press enter to speak a matching phrase
+
+phrase-group-status = Status
+phrase-group-manners = Manners
+phrase-group-numbers = Numbers
+phrase-group-nouns = Nouns
+phrase-group-quality-or-quantity = Qualities and Quantities
+phrase-group-question = Questions
+
 phrase-location-ats = ATS
 phrase-location-shipyard = Shipyard
 phrase-location-boxing-ring = Boxing Ring

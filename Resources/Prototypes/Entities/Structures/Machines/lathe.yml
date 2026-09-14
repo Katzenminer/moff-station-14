@@ -1,6 +1,6 @@
 - type: entity
   id: BaseLathe
-  parent: [ BaseMachinePowered, ConstructibleMachine ]
+  parent: [ BaseMachinePowered, ConstructibleMachine, BaseConstructibleMachineDestructible ]
   abstract: true
   name: lathe
   components:
@@ -23,15 +23,11 @@
     thresholds:
     - trigger:
         !type:DamageTrigger
-        damage: 100
+        damage: 175
       behaviors:
       - !type:PlaySoundBehavior
         sound:
           collection: MetalBreak
-      - !type:ChangeConstructionNodeBehavior
-        node: machineFrame
-      - !type:DoActsBehavior
-        acts: ["Destruction"]
   - type: WiresPanel
   - type: ActivatableUI
     key: enum.LatheUiKey.Key
@@ -42,6 +38,10 @@
         type: LatheBoundUserInterface
       enum.ResearchClientUiKey.Key:
         type: ResearchClientBoundUserInterface
+      # Moffstation - Begin - Expanded Ai Whitelist
+      enum.WiresUiKey.Key:
+        type: WiresBoundUserInterface
+      # Moffstation - End
   - type: Transform
     anchored: true
   - type: Pullable
@@ -54,6 +54,12 @@
   - type: PowerState
     idlePowerDraw: 150
     workingPowerDraw: 1000
+  # Moffstation - Begin - Expanded Ai Whitelist
+  - type: StationAiWhitelist
+  - type: Wires
+    boardName: wires-board-name-lathe
+    layoutId: ComputerAi
+  # Moffstation - End
   # Moffstation - Start
   - type: DeviceLinkSink
     ports:
@@ -71,16 +77,20 @@
     modifiers:
       SpaceLube: 0.25
       SpaceGlue: 5
-  - type: SolutionContainerManager
+  - type: SolutionManager
     solutions:
-      lube:
-        maxVol: 250
+    - SolutionLatheLube
   - type: Spillable
     solution: lube
   - type: RefillableSolution
     solution: lube
   - type: ExaminableSolution
     solution: lube
+
+- type: entity
+  parent: [SolutionLube, SolutionLarge]
+  id: SolutionLatheLube # Its own prototype since some lathes might interface with solutions in other ways
+  categories: [ HideSpawnMenu ]
 
 - type: entity
   abstract: true
@@ -143,6 +153,7 @@
     - ServiceStatic
     - PowerCellsStatic
     - ElectronicsStatic
+    - ModularHudModulesStatic # Moffstation - Modular Eyewear
   - type: EmagLatheRecipes
     emagStaticPacks:
     - SecurityAmmoStatic
@@ -203,6 +214,7 @@
     staticPacks:
     - ChemistryStatic
     - SurgeryStatic
+    - ScienceModularHudModulesStatic # Moffstation - Modular Eyewear
     dynamicPacks:
     - AdvancedTools
     - ScienceEquipment
@@ -218,6 +230,7 @@
     - Instruments
     - Equipment
     - WirelessCameraHandheld # MOFFSTATION CHANGE - Adds wireless handheld camera
+    - LawProgrammer # Moffstation - Cyborg Programming
   - type: EmagLatheRecipes
     emagDynamicPacks:
     - SecurityAmmo
@@ -399,6 +412,7 @@
     - SecurityPracticeStatic
     - SecurityAmmoStatic
     - SecurityWeaponsStatic
+    - SecurityModularHudModulesStatic # Moffstation - Modular Eyewear
     dynamicPacks:
     - SalvageSecurityBoards
     - SalvageSecurityWeapons
@@ -407,7 +421,7 @@
     - SecurityExplosives
     - SecurityAmmo
     - SecurityWeapons
-    - SecurityDisablers
+    #- SecurityDisablers # Moffstation - no stuns
   - type: EmagLatheRecipes
     emagStaticPacks:
     - SyndicateAmmoStatic
@@ -485,6 +499,8 @@
     - EmptyMedkitsStatic
     - SurgeryStatic
     - AACTabletStatic # Moffstation - AAC tablet
+    - ModularHudFramesStatic # Moffstation - Modular Eyewear
+    - MedicalModularHudModulesStatic # Moffstation - Modular Eyewear
     dynamicPacks:
     - Chemistry
   - type: Machine
@@ -494,6 +510,7 @@
   - type: OreSiloClient
   - type: LatheAnnouncing
     channels: [Medical]
+  - type: AmbientMusicMarkerMedical
 
 - type: entity
   parent: BaseLathe
@@ -539,6 +556,7 @@
     - MoffstationClothingService
     - MoffstationClothingEngineering
     - MoffstationCostumes
+    - ModularHudFramesStatic
     # Moffstation - End
   - type: EmagLatheRecipes
     emagStaticPacks:
@@ -683,8 +701,6 @@
   name: cutter machine
   description: This is a cutter. It cuts. Add variety to your station floor with eye-pleasing patterns! Don't stick your fingers in.
   components:
-  - type: Transform
-    noRot: false
   - type: Sprite
     sprite: Structures/Machines/cuttermachine.rsi
     snapCardinals: true
@@ -707,10 +723,15 @@
     - FloorSteelTilesStatic
     - FloorWhiteTilesStatic
     - FloorMaintsTilesStatic
+    - FloorIndustrialTilesStatic
     - FloorWoodTilesStatic
     - FloorConcreteTilesStatic
     - CircuitFloorsStatic
     - FloorMarbleTilesStatic
+    - FloorShuttleTilesStatic
+    - PlasticTilesStatic
+    - CarpetTilesStatic
+    - PreciousTilesStatic
     dynamicPacks:
     - FauxTiles
   - type: MaterialStorage

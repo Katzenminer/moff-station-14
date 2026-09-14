@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Robust.Shared.Utility;
 
 namespace Content.Shared._Moffstation.Extensions;
@@ -22,5 +23,17 @@ public static class EntitySystemExt
             entSys.AssertOrLogError(message);
             return ret;
         }
+
+        /// Throws an exception. For typechecking, returns <typeparamref name="T"/> for use in expressions, though it definitely never returns.
+        [MethodImpl(MethodImplOptions.AggressiveInlining), DoesNotReturn]
+        public T Unreachable<T>(string msg) => throw new Exception(msg);
+
+        /// Throws an exception.
+        [MethodImpl(MethodImplOptions.AggressiveInlining), DoesNotReturn]
+        public void Unreachable(string msg) => throw new Exception(msg);
+
+        /// <see cref="Unreachable{T}"/>, specialized for throwing on unknown enum variants.
+        public TRet UnknownEnumVariant<T, TRet>(T variant) where T : Enum =>
+            entSys.Unreachable<TRet>($"Unknown variant of enum {nameof(T)}: {variant}");
     }
 }

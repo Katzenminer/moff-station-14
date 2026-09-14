@@ -9,7 +9,7 @@
 - type: startingGear
   id: CentcomOfficerGear
   equipment:
-    jumpsuit: ClothingUniformJumpsuitCentcomOfficer
+    jumpsuit: ClothingUniformJumpsuitCentcomFormal
     back: ClothingBackpackSatchelLeather
     gloves: ClothingHandsGlovesHop
     id: CentcomPDA
@@ -17,7 +17,7 @@
     mask: ClothingMaskGasCentcom
     eyes: ClothingEyesGlassesCommand
     ears: ClothingHeadsetCentCom
-    pocket1: WeaponDisabler
+    pocket1: WeaponPistolN1984
     pocket2: BoxFolderCentComClipboard
   storage:
     back:
@@ -32,4 +32,3 @@
     gloves: ClothingHandsGlovesColorBlack
   inhand:
   - BriefcaseBrownFilled
-

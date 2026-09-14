@@ -61,6 +61,7 @@
   - BorgModuleConstruction
   - BorgModuleRCD
   - BorgModuleCable
+  - BorgModuleGravity # Moffstation - Magboots module
 
   requiredModules:
   - simpleDescription: borg-module-requirement-tool
@@ -83,6 +84,7 @@
           state: neck
   # Moffstation - End
   spritePath: _Moffstation/Mobs/Silicon/Chassis/engineer.rsi # Moffstation - Early merge of Borg RSI fix
+  spriteBodyMovementState: borg_moving # Moff
 
   # Pet
   petSuccessString: petting-success-engineer-cyborg
@@ -109,12 +111,19 @@
   - BorgModuleMining
   - BorgModuleTraversal
   - BorgModuleAppraisal
+  - BorgModuleGravity # Moffstation - Magboots module
 
   requiredModules:
   - simpleDescription: borg-module-requirement-mining
     whitelist:
       tags:
       - CyborgMiningModule
+  # Moffstation - Start - Advanced Traversal Module
+  - simpleDescription: borg-module-requirement-traversal
+    whitelist:
+      tags:
+      - CyborgTraversalModule
+  # Moffstation - End
 
   radioChannels:
   - Supply
@@ -123,8 +132,44 @@
   # Moffstation - Start - Salvage Borg Resprite
   addComponents:
   - type: MovementSpeedModifier
-    baseWalkSpeed: 1.5
-    baseSprintSpeed: 3.5
+    baseWalkSpeed: 2.5
+    baseSprintSpeed: 3.5 # Slower because haha big stompy sounds
+  - type: MobThresholds
+    thresholds:
+      0: Alive
+      165: Critical # Just enough to not be oneshot by a mine
+      495: Dead # Same as destruction threshold. Borgs act exactly like crit when dead, except for ghosting on move
+    stateAlertDict:
+      Alive: BorgHealth
+      Critical: BorgCrit
+      Dead: BorgDead
+    showOverlays: false
+    allowRevives: true
+  - type: Destructible # Redefine all of this with the new thresholds!
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 125
+      behaviors:
+      - !type:PlaySoundBehavior
+        sound:
+          path: /Audio/Machines/warning_buzzer.ogg
+          params:
+            volume: 5
+    - trigger:
+        !type:DamageTrigger
+        damage: 495
+      behaviors:
+      - !type:PlaySoundBehavior
+        sound:
+          collection: MetalBreak
+      - !type:EmptyContainersBehaviour
+        containers:
+        - borg_brain
+        - borg_module
+        - cell_slot
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
   footstepCollection:
     path: /Audio/Mecha/sound_mecha_powerloader_step.ogg
     params:
@@ -179,7 +224,7 @@
   - Service
 
   # Visual
-  inventoryTemplateId: borgShort
+  inventoryTemplateId: BorgJanitor  # Moff
   # Moffstation - Start - Add neck slots and displacements
   inventoryDisplacements:
     neck:
@@ -239,6 +284,11 @@
   inventoryTemplateId: borgDutch
   # Moffstation - Start - Add neck slots and displacements
   inventoryDisplacements:
+    head:
+      sizeMaps:
+        32:
+          sprite: _Moffstation/Mobs/Silicon/Displacements/medical.rsi
+          state: head
     neck:
       sizeMaps:
         32:
@@ -251,11 +301,11 @@
   # Pet
   petSuccessString: petting-success-medical-cyborg
   petFailureString: petting-failure-medical-cyborg
-
+# Moff Start - Medical Borgs don't float now
   # Sounds
-  footstepCollection:
-    collection: FootstepHoverBorg
-
+  #footstepCollection:
+  #  collection: FootstepHoverBorg
+# Moff End - Medical Borgs don't float now
 
 # Service borg
 - type: borgType

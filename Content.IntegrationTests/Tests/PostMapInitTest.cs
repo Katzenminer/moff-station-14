@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Content.IntegrationTests.Fixtures;
+using Content.IntegrationTests.Fixtures.Attributes;
 using Content.IntegrationTests.Utility;
 using YamlDotNet.RepresentationModel;
 using Content.Server.Administration.Systems;
@@ -28,8 +30,14 @@ using Robust.Shared.Utility;
 namespace Content.IntegrationTests.Tests
 {
     [TestFixture]
-    public sealed class PostMapInitTest
+    public sealed class PostMapInitTest : GameTest
     {
+        public override PoolSettings PoolSettings => new PoolSettings()
+        {
+            Connected = true,
+            Dirty = true,
+        };
+
         private const bool SkipTestMaps = true;
         private const string TestMapsPath = "/Maps/Test/";
 
@@ -71,12 +79,27 @@ namespace Content.IntegrationTests.Tests
             {"/Maps/_Moffstation/Shuttles/shuttle-nt-grimebreaker.yml", ["ClosetJanitorBombFilled", "ShuttleGunFriendship"]},
             {"/Maps/_Moffstation/PreCrewed/shuttle-nt-grimebreaker.yml", ["ClosetJanitorBombFilled", "ShuttleGunFriendship"]},
             {"/Maps/_Moffstation/Shuttles/shuttle-nt-businessclass.yml", ["BoxFolderCentCom"]},
-            {"/Maps/_Moffstation/Shuttles/shuttle-nt-gunboat.yml", ["ShuttleGunDuster", "ShuttleGunPerforator"]},
-            {"/Maps/_Moffstation/PreCrewed/shuttle-nt-gunboat.yml", ["ShuttleGunDuster", "ShuttleGunPerforator"]},
             {"/Maps/_Moffstation/Nonstations/d1_logic.yml", ["ShuttleGunSvalinnMachineGun"]},
             {"/Maps/_Moffstation/frezon.yml", ["HandheldCrewMonitor"]},
-            {"/Maps/_Moffstation/dugstation.yml", ["ClothingHeadHatCatEarsValid"]},
             {"/Maps/_Moffstation/skeld.yml", ["ShuttleGunDuster"]},
+            {"/Maps/_Moffstation/fairgrounds.yml", [
+                "PlushieGhostRevenant",
+                "RubberStampCaptain",
+                "RubberStampCE",
+                "RubberStampCentcom",
+                "RubberStampChaplain",
+                "RubberStampClown",
+                "RubberStampCMO",
+                "RubberStampDetective",
+                "RubberStampHop",
+                "RubberStampHos",
+                "RubberStampLawyer",
+                "RubberStampMime",
+                "RubberStampPsychologist",
+                "RubberStampQm",
+                "RubberStampRd",
+                "RubberStampWarden",
+            ]},
             // Moffstation - End
         };
 
@@ -104,7 +127,7 @@ namespace Content.IntegrationTests.Tests
             "/Maps/_Moffstation/Shuttles/shuttle-nt-businessclass.yml", // Contains CentComm folder
             "/Maps/_Moffstation/frezon.yml", // Contains handheld crew monitor & other head of staff items
             "/Maps/_Moffstation/Nonstations/d1_logic.yml", // Contains LSE-400c "Svalinn machine gun" defanged and renamed
-            "/Maps/_Moffstation/dugstation.yml" // Contains cat ears and knockback stick
+            "/Maps/_Moffstation/ossuary.yml" // Contains head of staff items
         };
 
         /// <summary>
@@ -124,16 +147,16 @@ namespace Content.IntegrationTests.Tests
         /// Asserts that specific files have been saved as grids and not maps.
         /// </summary>
         [Test, TestCaseSource(nameof(Grids))]
+        [EnsureCVar(Side.Server, typeof(CCVars), nameof(CCVars.GridFill), false)]
         public async Task GridsLoadableTest(string mapFile)
         {
-            await using var pair = await PoolManager.GetServerClient();
+            var pair = Pair;
             var server = pair.Server;
 
             var entManager = server.ResolveDependency<IEntityManager>();
             var mapLoader = entManager.System<MapLoaderSystem>();
             var mapSystem = entManager.System<SharedMapSystem>();
             var cfg = server.ResolveDependency<IConfigurationManager>();
-            Assert.That(cfg.GetCVar(CCVars.GridFill), Is.False);
             var path = new ResPath(mapFile);
 
             await server.WaitPost(() =>
@@ -150,9 +173,6 @@ namespace Content.IntegrationTests.Tests
 
                 mapSystem.DeleteMap(mapId);
             });
-            await server.WaitRunTicks(1);
-
-            await pair.CleanReturnAsync();
         }
 
         /// <summary>
@@ -160,16 +180,16 @@ namespace Content.IntegrationTests.Tests
         /// </summary>
         [Test]
         [TestCaseSource(nameof(ShuttleMapFiles))]
+        [EnsureCVar(Side.Server, typeof(CCVars), nameof(CCVars.GridFill), false)]
         public async Task ShuttlesLoadableTest(ResPath path)
         {
-            await using var pair = await PoolManager.GetServerClient();
+            var pair = Pair;
             var server = pair.Server;
 
             var entManager = server.ResolveDependency<IEntityManager>();
             var mapLoader = entManager.System<MapLoaderSystem>();
             var mapSystem = entManager.System<SharedMapSystem>();
             var cfg = server.ResolveDependency<IConfigurationManager>();
-            Assert.That(cfg.GetCVar(CCVars.GridFill), Is.False);
 
             await server.WaitPost(() =>
             {
@@ -189,17 +209,13 @@ namespace Content.IntegrationTests.Tests
                     mapSystem.DeleteMap(mapId);
                 });
             });
-
-            await server.WaitRunTicks(1);
-
-            await pair.CleanReturnAsync();
         }
 
         [Test]
         [TestCaseSource(nameof(AllMapFiles))]
         public async Task NoSavedPostMapInitTest(ResPath map)
         {
-            await using var pair = await PoolManager.GetServerClient();
+            var pair = Pair;
             var server = pair.Server;
 
             var resourceManager = server.ResolveDependency<IResourceManager>();
@@ -213,7 +229,6 @@ namespace Content.IntegrationTests.Tests
             // ReSharper disable once RedundantLogicalConditionalExpressionOperand
             if (SkipTestMaps && rootedPath.ToString().StartsWith(TestMapsPath, StringComparison.Ordinal))
             {
-                await pair.CleanReturnAsync();
                 return; // We just pass immediately.
             }
 
@@ -270,8 +285,6 @@ namespace Content.IntegrationTests.Tests
             await server.WaitPost(() => mapSys.InitializeMap(id));
             Assert.That(loader.TrySaveMap(id, path));
             Assert.That(IsPreInit(path, loader, deps, ev.RenamedPrototypes, ev.DeletedPrototypes), Is.False);
-
-            await pair.CleanReturnAsync();
         }
 
         private bool IsWhitelistedForMap(EntProtoId protoId, ResPath map)
@@ -356,15 +369,12 @@ namespace Content.IntegrationTests.Tests
         }
 
         [Test, TestCaseSource(nameof(GameMaps))]
+        [EnsureCVar(Side.Server, typeof(CCVars), nameof(CCVars.GridFill), false)]
         public async Task GameMapsLoadableTest(string mapProto)
         {
-            await using var pair = await PoolManager.GetServerClient(new PoolSettings
-            {
-                Dirty = true // Stations spawn a bunch of nullspace entities and maps like centcomm.
-            });
+            var pair = Pair;
             var server = pair.Server;
 
-            var mapManager = server.ResolveDependency<IMapManager>();
             var entManager = server.ResolveDependency<IEntityManager>();
             var mapLoader = entManager.System<MapLoaderSystem>();
             var mapSystem = entManager.System<SharedMapSystem>();
@@ -372,7 +382,6 @@ namespace Content.IntegrationTests.Tests
             var ticker = entManager.EntitySysManager.GetEntitySystem<GameTicker>();
             var shuttleSystem = entManager.EntitySysManager.GetEntitySystem<ShuttleSystem>();
             var cfg = server.ResolveDependency<IConfigurationManager>();
-            Assert.That(cfg.GetCVar(CCVars.GridFill), Is.False);
 
             await server.WaitPost(() =>
             {
@@ -392,7 +401,7 @@ namespace Content.IntegrationTests.Tests
                 EntityUid? targetGrid = null;
                 var memberQuery = entManager.GetEntityQuery<StationMemberComponent>();
 
-                var grids = mapManager.GetAllGrids(mapId).ToList();
+                var grids = mapSystem.GetAllGrids(mapId).ToList();
                 var gridUids = grids.Select(o => o.Owner).ToList();
                 targetGrid = gridUids.First();
 
@@ -473,9 +482,6 @@ namespace Content.IntegrationTests.Tests
                     throw new Exception($"Failed to delete map {mapProto}", ex);
                 }
             });
-            await server.WaitRunTicks(1);
-
-            await pair.CleanReturnAsync();
         }
 
 
@@ -505,36 +511,17 @@ namespace Content.IntegrationTests.Tests
         }
 
         [Test]
-        public async Task AllMapsTested()
-        {
-            await using var pair = await PoolManager.GetServerClient();
-            var server = pair.Server;
-            var protoMan = server.ResolveDependency<IPrototypeManager>();
-
-            var gameMaps = protoMan.EnumeratePrototypes<GameMapPrototype>()
-                .Where(x => !pair.IsTestPrototype(x))
-                .Select(x => x.ID)
-                .ToHashSet();
-
-            Assert.That(gameMaps.Remove(PoolManager.TestMap));
-
-            Assert.That(gameMaps, Is.EquivalentTo(GameMaps.ToHashSet()), "Game map prototype missing from test cases.");
-
-            await pair.CleanReturnAsync();
-        }
-
-        [Test]
         [TestCaseSource(nameof(AllMapFiles))]
+        [EnsureCVar(Side.Server, typeof(CCVars), nameof(CCVars.GridFill), false)]
         public async Task NonGameMapsLoadableTest(ResPath mapPath)
         {
-            await using var pair = await PoolManager.GetServerClient();
+            var pair = Pair;
             var server = pair.Server;
 
             var mapLoader = server.ResolveDependency<IEntitySystemManager>().GetEntitySystem<MapLoaderSystem>();
             var resourceManager = server.ResolveDependency<IResourceManager>();
             var protoManager = server.ResolveDependency<IPrototypeManager>();
             var cfg = server.ResolveDependency<IConfigurationManager>();
-            Assert.That(cfg.GetCVar(CCVars.GridFill), Is.False);
 
             var gameMaps = protoManager.EnumeratePrototypes<GameMapPrototype>().Select(o => o.MapPath).ToHashSet();
 
@@ -543,7 +530,6 @@ namespace Content.IntegrationTests.Tests
             {
                 // TODO: You might be able to save like, 1-2 seconds of test time if you eliminate these before
                 //       actually needing a pair.
-                await pair.CleanReturnAsync();
                 return;
             }
 
@@ -551,7 +537,6 @@ namespace Content.IntegrationTests.Tests
 
             if (SkipTestMaps && rootedPath.ToString().StartsWith(TestMapsPath, StringComparison.Ordinal))
             {
-                await pair.CleanReturnAsync();
                 return;
             }
 
@@ -594,9 +579,6 @@ namespace Content.IntegrationTests.Tests
                     }
                 });
             });
-
-            await server.WaitRunTicks(1);
-            await pair.CleanReturnAsync();
         }
 
         /// <summary>

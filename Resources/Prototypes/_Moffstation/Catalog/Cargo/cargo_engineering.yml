@@ -1,0 +1,25 @@
+﻿- type: cargoProduct
+  id: EngineeringCommonRadioKeys
+  icon:
+    sprite: Objects/Devices/encryption_keys.rsi
+    state: common_label
+  product: BoxEncryptionKeyPassenger
+  container:
+    entity: WrappedParcel
+    containerId: contents
+  cost: 450
+  category: cargoproduct-category-name-engineering
+  group: market
+
+- type: cargoProduct
+  id: BoxFlare
+  icon:
+    sprite: _Moffstation/Objects/Storage/boxes.rsi
+    state: box
+  product: BoxFlare
+  cost: 300
+  category: cargoproduct-category-name-engineering
+  group: market
+  container:
+    entity: WrappedParcel
+    containerId: contents

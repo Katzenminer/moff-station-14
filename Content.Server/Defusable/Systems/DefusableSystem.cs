@@ -6,6 +6,7 @@ using Content.Shared.Administration.Logs;
 using Content.Shared.Construction.Components;
 using Content.Shared.Database;
 using Content.Shared.Defusable;
+using Content.Shared.Emp;
 using Content.Shared.Examine;
 using Content.Shared.Popups;
 using Content.Shared.Trigger.Components;
@@ -19,16 +20,17 @@ using Robust.Shared.Audio.Systems;
 namespace Content.Server.Defusable.Systems;
 
 /// <inheritdoc/>
-public sealed class DefusableSystem : SharedDefusableSystem
+public sealed partial class DefusableSystem : SharedDefusableSystem
 {
-    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
-    [Dependency] private readonly ExplosionSystem _explosion = default!;
-    [Dependency] private readonly PopupSystem _popup = default!;
-    [Dependency] private readonly TriggerSystem _trigger = default!;
-    [Dependency] private readonly SharedAudioSystem _audio = default!;
-    [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;
-    [Dependency] private readonly WiresSystem _wiresSystem = default!;
+    [Dependency] private SharedAppearanceSystem _appearance = default!;
+    [Dependency] private ExplosionSystem _explosion = default!;
+    [Dependency] private PopupSystem _popup = default!;
+    [Dependency] private TriggerSystem _trigger = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
+    [Dependency] private TransformSystem _transform = default!;
+    [Dependency] private SharedEmpSystem _emp = default!; //Moffstation - EMP bomb
+    [Dependency] private ISharedAdminLogManager _adminLogger = default!;
+    [Dependency] private WiresSystem _wiresSystem = default!;
 
     /// <inheritdoc/>
     public override void Initialize()
@@ -161,9 +163,26 @@ public sealed class DefusableSystem : SharedDefusableSystem
 
         RaiseLocalEvent(uid, new BombDetonatedEvent(uid));
 
-        _explosion.TriggerExplosive(uid, user: detonator);
-        QueueDel(uid);
+        // Moff start - EMP bomb
+        // TODO This is kinda gross -- just swapping on the presence of a snowflake component is kinda gross. This could
+        //  have a specialized event for "you screwed up defusal" and then tie behavior to that.
+        if (TryComp<EmpOnTriggerComponent>(uid, out var empOnTrigger))
+        {
+            _emp.EmpPulse(
+                Transform(uid).Coordinates,
+                empOnTrigger.Range,
+                empOnTrigger.EnergyConsumption,
+                empOnTrigger.DisableDuration,
+                detonator
+            );
+        }
+        else
+        {
+            _explosion.TriggerExplosive(uid, user: detonator);
+        }
+        // Moff ened
 
+        QueueDel(uid);
         _appearance.SetData(uid, DefusableVisuals.Active, comp.Activated);
     }
 

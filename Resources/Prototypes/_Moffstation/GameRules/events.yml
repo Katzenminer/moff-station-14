@@ -1,28 +1,116 @@
 ﻿# Derelict service cyborg spawn
 - type: entity
-  parent: BaseGameRule
+  parent: BaseDerelictCyborgSpawn
   id: DerelictServiceCyborgSpawn
   components:
-  - type: StationEvent
-    weight: 2.5
-    earliestStart: 15
-    reoccurrenceDelay: 20
-    minimumPlayers: 4
-    duration: null
-  - type: SpaceSpawnRule
-    spawnDistance: 0
   - type: AntagSpawner
     prototype: PlayerServiceBorgDerelictGhostRole
   - type: AntagSelection
-    definitions:
-    - spawnerPrototype: SpawnPointGhostDerelictServiceCyborg
-      min: 1
-      max: 1
-      pickPlayer: false
+    antags:
+    - !type:FixedAntagCount
+      proto: DerelictServiceCyborg
+
+- type: antagSpecifier
+  parent: DerelictCyborg
+  id: DerelictServiceCyborg
+  spawnerPrototype: SpawnPointGhostDerelictServiceCyborg
+
+- type: entity
+  parent: BaseAntagGhostRoleRule
+  id: RevenantSpawn
+  components:
+  - type: StationEvent
+    weight: 7.5
+    duration: null
+    occursDuringRoundEnd: false
+    earliestStart: 45
+    minimumPlayers: 20
+  - type: AntagRandomSpawn
+  - type: AntagSpawner
+    prototype: MobRevenant
+  - type: AntagSelection
+    antags:
+    - !type:FixedAntagCount
+      proto: Revenant
+  - type: ESSynchronizedVoteManager
+    votes:
+    - RevenantEnroller
+  - type: DynamicRuleCost
+    cost: 25
+
+- type: antagSpecifier
+  parent: RestrictedAntag
+  id: Revenant
+  spawnerPrototype: SpawnPointGhostRevenant
+  pickPlayer: false
+  allowNonHumans: true
+  mindRoles:
+  - MindRoleGhostRoleSoloAntagonist
+
+- type: entity
+  parent: BaseAntagGhostRoleRule
+  id: ClosetSkeleton
+  components:
+  - type: StationEvent
+    weight: 5
+    duration: null
+    occursDuringRoundEnd: false
+    minimumPlayers: 10
+  - type: AntagRandomSpawn
+  - type: AntagSpawner
+    prototype: MobSkeletonCloset
+  - type: AntagSelection
+    antags:
+    - !type:FixedAntagCount
+      proto: ClosetSkeleton
+  - type: ESSynchronizedVoteManager
+    votes:
+    - ClosetSkeletonEnroller
+
+- type: antagSpecifier
+  parent: RestrictedAntag
+  id: ClosetSkeleton
+  spawnerPrototype: SpawnPointGhostClosetSkeleton
+  pickPlayer: false
+  allowNonHumans: true
+  mindRoles:
+  - MindRoleGhostRoleFreeAgent
+
+- type: entity
+  parent: BaseAntagGhostRoleRule
+  id: RatKingSpawn
+  components:
+  - type: StationEvent
+    earliestStart: 15
+    weight: 6
+    duration: null
+    occursDuringRoundEnd: false
+    minimumPlayers: 30
+  - type: AntagRandomSpawn
+  - type: AntagSpawner
+    prototype: MobRatKing
+  - type: AntagSelection
+    antags:
+    - !type:FixedAntagCount
+      proto: RatKing
+  - type: ESSynchronizedVoteManager
+    votes:
+    - RatKingEnroller
+  - type: DynamicRuleCost
+    cost: 25
+
+- type: antagSpecifier
+  parent: RestrictedAntag
+  id: RatKing
+  spawnerPrototype: SpawnPointGhostRatKingAntag
+  pickPlayer: false
+  allowNonHumans: true
+  mindRoles:
+  - MindRoleGhostRoleSoloAntagonist
 
 # Pirate corsair
 - type: entity
-  parent: BasePiratesRule
+  parent: [ BasePiratesRule, BaseUnweightedAntagRule ]
   id: PirateCorsairSpawn
   components:
   - type: StationEvent
@@ -34,34 +122,13 @@
   - type: LoadMapRule
     gridPath: /Maps/_Moffstation/Shuttles/shuttle-sp-sparrow.yml
   - type: AntagSelection
-    definitions:
-    - spawnerPrototype: SpawnPointPirateCorsair
-      min: 1
-      max: 1
-      pickPlayer: false
-      startingGear: PirateGear
-      roleLoadout:
-      - RoleSurvivalNukie
-      - JobPirateCrew
-      briefing:
-        text: pirate-role-greeting
-        color: "#a15608"
-        sound:
-          path: "/Audio/Ambience/Antag/pirate_start.ogg"
-          params:
-            volume: -12
-      components:
-      - type: Pirate
-      - type: RandomMetadata
-        nameSegments:
-        - NamesFirst
-        - Adjectives
-        nameFormat: name-format-pirate-crew
-      - type: NpcFactionMember
-        factions:
-        - Pirate
-      mindRoles:
-      - MindRolePirateCorsair
+    selectionTime: Enroll
+    antags:
+    - !type:FixedAntagCount
+      proto: PirateCorsair
+  - type: ESSynchronizedVoteManager
+    votes:
+    - PirateCorsairEnroller
   - type: DynamicRuleCost
     cost: 75
 
@@ -74,11 +141,59 @@
     startAnnouncement: station-syndicate-dead-drop-announcement
     startAudio:
       path: /Audio/Announcements/attention.ogg
-    earliestStart: 0
+    earliestStart: 25
     duration: 1
     minimumPlayers: 1
     maxOccurrences: 2
     weight: 10
   - type: RandomSpawnRule
     prototype: SyndieDeadDropSpawner
-    radioMessage: {channel: Syndicate, message: "syndicate-dead-drop-announcement"}
+    radioMessage:
+      channel: Syndicate
+      message: "syndicate-dead-drop-announcement"
+
+# Syndicate soldier spawn
+- type: entity
+  parent: [ BaseTraitorRule, BaseUnweightedAntagRule ]
+  id: SyndieVentSoldierSpawn
+  components:
+  - type: StationEvent
+    earliestStart: 20
+    weight: 4
+    duration: null
+    maxOccurrences: 2
+  - type: AntagRandomSpawn
+  - type: AntagLoadProfileRule
+  - type: AntagSelection
+    selectionTime: Enroll
+    antags:
+    - !type:FixedAntagCount
+      proto: SyndieVentSoldier
+  - type: ESSynchronizedVoteManager
+    votes:
+    - SyndieVentSoldierEnroller
+  - type: DynamicRuleCost
+    cost: 25
+
+# Lights go boom
+- type: entity
+  parent: BaseStationEventShortDelay
+  id: LightOverloadRule
+  components:
+  - type: StationEvent
+    startAudio:
+      path: /Audio/Announcements/attention.ogg
+    earliestStart: 10
+    weight: 6
+  - type: LightOverloadRule
+  - type: DynamicRuleCost
+    cost: 5
+
+- type: entity
+  parent: LightOverloadRule
+  id: LightOverloadRuleBlinking
+  components:
+  - type: LightOverloadRule
+    radius: 12.0
+    lightOverloadProbability: 0.1
+    lightBlinkingProbability: 0.4

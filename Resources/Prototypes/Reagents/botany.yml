@@ -12,7 +12,8 @@
   metabolisms:
     Digestion:
       effects:
-      - !type:SatiateHunger
+      - !type:Satiate
+        satiationType: Hunger
         conditions:
         - !type:MetabolizerTypeCondition
           type: [Plant]
@@ -36,7 +37,8 @@
   metabolisms:
     Bloodstream:
       effects:
-      - !type:SatiateHunger
+      - !type:Satiate
+        satiationType: Hunger
         conditions:
         - !type:MetabolizerTypeCondition
           type: [Plant]
@@ -89,6 +91,9 @@
       amount: -20
     - !type:PlantAdjustMutationMod
       amount: 0.1
+    - !type:PlantChangeTraits
+      trait: PlantTraitKudzu
+      remove: true
   metabolisms:
     Bloodstream:
       effects:
@@ -214,7 +219,8 @@
     # Moffstation start - Allow avali to drink ammonia
     Digestion:
       effects:
-      - !type:SatiateThirst
+      - !type:Satiate
+        satiationType: Thirst
         factor: 4
         conditions:
         - !type:MetabolizerTypeCondition
@@ -290,6 +296,11 @@
         - !type:MetabolizerTypeCondition
           type: [ Vox ]
         factor: -4
+      - !type:Oxygenate #macro, thaven don't suffocate from any gases
+        scaling: true
+        conditions:
+        - !type:MetabolizerTypeCondition
+          type: [ Thaven ]
 
 
 - type: reagent
@@ -320,7 +331,8 @@
       metabolites:
         Ethanol: 0.4
       effects:
-      - !type:SatiateThirst
+      - !type:Satiate
+        satiationType: Thirst
         factor: 2
         conditions:
         - !type:MetabolizerTypeCondition

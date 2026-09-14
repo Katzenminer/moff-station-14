@@ -3,3 +3,12 @@
   name: roles-antag-dragon-name
   antagonist: true
   objective: roles-antag-dragon-objective
+
+- type: antagSpecifier
+  parent: RestrictedAntag
+  id: Dragon
+  spawnerPrototype: SpawnPointGhostDragon
+  pickPlayer: false
+  allowNonHumans: true # Moffstation - the assigned dragon body is non-humanoid; needed for enrollment assignment
+  mindRoles:
+  - MindRoleDragon

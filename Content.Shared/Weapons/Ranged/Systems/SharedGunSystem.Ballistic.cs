@@ -5,6 +5,7 @@ using Content.Shared.Emp;
 using Content.Shared.Examine;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
+using Content.Shared.Stacks;
 using Content.Shared.Storage; // Moffstation
 using Content.Shared.Verbs;
 using Content.Shared.Weapons.Ranged.Components;
@@ -17,12 +18,12 @@ namespace Content.Shared.Weapons.Ranged.Systems;
 
 public abstract partial class SharedGunSystem
 {
-    [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
-    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
-    // Moffstation - Start
-    [Dependency] private readonly AreaPickupSystem _areaPickup = default!;
-    [Dependency] private readonly QuickPickupSystem _quickPickup = default!;
-    // Moffstation - End
+    [Dependency] private SharedDoAfterSystem _doAfter = default!;
+    [Dependency] private SharedInteractionSystem _interaction = default!;
+    [Dependency] private SharedStackSystem _stack = null!;
+
+    [Dependency] private AreaPickupSystem _areaPickup = default!; // Moffstation
+    [Dependency] private QuickPickupSystem _quickPickup = default!; // Moffstation
 
     [MustCallBase]
     protected virtual void InitializeBallistic()
@@ -49,6 +50,8 @@ public abstract partial class SharedGunSystem
 
         SubscribeLocalEvent<BallisticAmmoSelfRefillerComponent, MapInitEvent>(OnBallisticRefillerMapInit);
         SubscribeLocalEvent<BallisticAmmoSelfRefillerComponent, EmpPulseEvent>(OnRefillerEmpPulsed);
+
+        SubscribeLocalEvent<BallisticAmmoInteractLoaderComponent, AfterInteractEvent>(OnBallisticAmmoLoad);
     }
 
     private void OnBallisticRefillerMapInit(Entity<BallisticAmmoSelfRefillerComponent> entity, ref MapInitEvent _)
@@ -78,7 +81,6 @@ public abstract partial class SharedGunSystem
     {
         if (args.Handled ||
             !component.MayTransfer ||
-            !Timing.IsFirstTimePredicted ||
             args.Target == null ||
             args.Used == args.Target ||
             Deleted(args.Target) ||
@@ -111,19 +113,17 @@ public abstract partial class SharedGunSystem
 
         if (target.Entities.Count + target.UnspawnedCount == target.Capacity)
         {
-            Popup(
-                Loc.GetString("gun-ballistic-transfer-target-full",
-                    ("entity", args.Target)),
-                args.Target,
+            PopupSystem.PopupEntity(
+                Loc.GetString("gun-ballistic-transfer-target-full", ("entity", args.Target.Value)),
+                args.Target.Value,
                 args.User);
             return;
         }
 
         if (component.Entities.Count + component.UnspawnedCount == 0)
         {
-            Popup(
-                Loc.GetString("gun-ballistic-transfer-empty",
-                    ("entity", uid)),
+            PopupSystem.PopupEntity(
+                Loc.GetString("gun-ballistic-transfer-empty", ("entity", uid)),
                 uid,
                 args.User);
             return;
@@ -146,7 +146,7 @@ public abstract partial class SharedGunSystem
 
             if (_whitelistSystem.IsWhitelistFail(target.Whitelist, ent.Value))
             {
-                Popup(
+                PopupSystem.PopupEntity(
                     Loc.GetString("gun-ballistic-transfer-invalid",
                         ("ammoEntity", ent.Value),
                         ("targetEntity", args.Target.Value)),
@@ -227,7 +227,7 @@ public abstract partial class SharedGunSystem
 
         var text = Loc.GetString(shots == 0 ? "gun-ballistic-cycled-empty" : "gun-ballistic-cycled");
 
-        Popup(text, ent, user);
+        PopupSystem.PopupEntity(text, ent, user);
         UpdateBallisticAppearance(ent);
         UpdateAmmoCount(ent);
     }
@@ -331,7 +331,7 @@ public abstract partial class SharedGunSystem
         var user = args.User;
 
         // Don't play a sound if the user has the silent user tag.
-        var insertSound = ProtoManager.TryIndex(entity.Comp.SilentInsertUserTag, out var tag) &&
+        var insertSound = ProtoMan.TryIndex(entity.Comp.SilentInsertUserTag, out var tag) &&
                           TagSystem.HasTag(args.User, tag)
             ? null
             : entity.Comp.SoundInsert;
@@ -394,11 +394,20 @@ public abstract partial class SharedGunSystem
         bool suppressInsertionSound = false
     )
     {
-        if (!CanInsertBallistic(entity, inserted))
+        inserted = _stack.GetOne(inserted);
+        var ammoEv = new BeforeAmmoLoadedEvent();
+        RaiseLocalEvent(inserted, ref ammoEv);
+
+        if (!ammoEv.CanLoad)
             return false;
 
-        entity.Comp.Entities.Add(inserted);
-        Containers.Insert(inserted, entity.Comp.Container);
+        var ammo = ammoEv.AmmoOverride ?? inserted;
+
+        if (!CanInsertBallistic(entity, ammo))
+            return false;
+
+        entity.Comp.Entities.Add(ammo);
+        Containers.Insert(ammo, entity.Comp.Container);
         if (!suppressInsertionSound)
         {
             Audio.PlayPredicted(entity.Comp.SoundInsert, entity, user);
@@ -413,11 +422,8 @@ public abstract partial class SharedGunSystem
 
     public void UpdateBallisticAppearance(Entity<BallisticAmmoProviderComponent> ent)
     {
-        if (!Timing.IsFirstTimePredicted || !TryComp<AppearanceComponent>(ent, out var appearance))
-            return;
-
-        Appearance.SetData(ent, AmmoVisuals.AmmoCount, GetBallisticShots(ent.Comp), appearance);
-        Appearance.SetData(ent, AmmoVisuals.AmmoMax, ent.Comp.Capacity, appearance);
+        Appearance.SetData(ent, AmmoVisuals.AmmoCount, GetBallisticShots(ent.Comp));
+        Appearance.SetData(ent, AmmoVisuals.AmmoMax, ent.Comp.Capacity);
     }
 
     public void SetBallisticUnspawned(Entity<BallisticAmmoProviderComponent> entity, int count)
@@ -437,6 +443,21 @@ public abstract partial class SharedGunSystem
             return;
 
         PauseSelfRefill(entity, args.Duration);
+    }
+
+    private void OnBallisticAmmoLoad(Entity<BallisticAmmoInteractLoaderComponent> ent, ref AfterInteractEvent args)
+    {
+        if (args.Handled || args.Target == null)
+            return;
+
+        if (!TryComp<BallisticAmmoProviderComponent>(ent, out var ballisticAmmoProviderComp))
+            return;
+
+        if (TryBallisticInsert(
+                (ent, ballisticAmmoProviderComp),
+                args.Target.Value,
+                args.User))
+            args.Handled = true;
     }
 
     private void UpdateBallistic(float frameTime)

@@ -28,8 +28,12 @@
     damage:
       types:
         Blunt: 10
-  - type: StaminaDamageOnCollide
-    damage: 40 # 3 hits to stun
+  # Moff start - beanbag stun now scales with the blunt damage it deals
+  #- type: StaminaDamageOnCollide
+  #  damage: 40 # 3 hits to stun
+  - type: ProjectileScaledStaminaDamage
+    factor: 3.3
+  # Moff end
 
 - type: entity
   parent: BaseBullet
@@ -126,7 +130,7 @@
     spread: 45
 
 - type: entity
-  parent: BaseBulletPractice
+  parent: [SolutionAmmo, SolutionToolVeryTiny, BaseBulletPractice]
   id: PelletShotgunTranquilizer
   categories: [ HideSpawnMenu ]
   name: pellet (.50 tranquilizer)
@@ -135,12 +139,8 @@
     damage:
       types:
         Blunt: 1
-  - type: SolutionContainerManager
-    solutions:
-      ammo:
-        maxVol: 15
   - type: SolutionInjectOnProjectileHit
-    transferAmount: 15
+    transferAmount: 7.5
     solution: ammo
 
 - type: entity

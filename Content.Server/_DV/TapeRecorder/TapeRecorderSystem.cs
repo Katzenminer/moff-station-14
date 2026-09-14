@@ -1,23 +1,23 @@
 ﻿using System.Text;
 using Content.Server.Chat.Systems;
 using Content.Server.Hands.Systems;
-using Content.Server.Speech.Components;
 using Content.Shared._DV.TapeRecorder;
 using Content.Shared._DV.TapeRecorder.Components;
 using Content.Shared._DV.TapeRecorder.Systems;
 using Content.Shared.Chat;
 using Content.Shared.Paper;
 using Content.Shared.Speech;
+using Content.Shared.Speech.Components;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server._DV.TapeRecorder;
 
-public sealed class TapeRecorderSystem : SharedTapeRecorderSystem
+public sealed partial class TapeRecorderSystem : SharedTapeRecorderSystem
 {
-    [Dependency] private readonly ChatSystem _chat = default!;
-    [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly PaperSystem _paper = default!;
+    [Dependency] private ChatSystem _chat = default!;
+    [Dependency] private HandsSystem _hands = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private PaperSystem _paper = default!;
 
     public override void Initialize()
     {

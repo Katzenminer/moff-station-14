@@ -95,6 +95,7 @@
     - !type:GroupSelector
       weight: 23
       children:
+      - id: TravelCamera
       - id: ClothingNeckCloakHerald
       - id: ClothingHeadHelmetTemplar
       # Cloaks
@@ -159,7 +160,7 @@
         - id: ClothingNeckGoldAutismPin
     # Rare Group
     - !type:GroupSelector
-      weight: 2
+      weight: 15
       children:
       - id: DrinkMugDog
       - id: CigarGold
@@ -167,7 +168,11 @@
       - id: WristwatchGold
       - id: RubberStampGreytide
       - id: MysteryLighterBox
-      - id: CrayonInfinite  # Moffstation - infinite crayon in maints loot
+      # Moffstation - Start - custom maints loot
+      - id: CrayonInfinite
+      - !type:NestedSelector
+        tableId: CorpseFill
+      # Moffstation - End
 
 - type: entity
   name: Maint Loot Spawner
@@ -298,6 +303,7 @@
       - id: SpectralLocator
       - id: LidSalami
         weight: 0.05
+      - id: BriefcaseFigurine # Mirasector - Figurine case to maints.
 
 - type: entity
   name: Maint Loot Spawner

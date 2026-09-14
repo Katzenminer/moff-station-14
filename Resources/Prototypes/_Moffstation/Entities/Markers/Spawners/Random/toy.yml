@@ -1,7 +1,7 @@
 - type: entity
-  name: Moffstation Minifigure Spawner
-  id: MoffstationFigureSpawner
   parent: MarkerBase
+  id: MoffstationFigureSpawner
+  name: Moffstation Minifigure Spawner
   components:
   - type: Sprite
     layers:
@@ -20,6 +20,7 @@
       - !type:GroupSelector
         weight: 20
         children:
+        - id: ToyFigurineAineLucia
         - id: ToyFigurineAlfredo
         - id: ToyFigurineAurora
         - id: ToyFigurineAudrina
@@ -28,6 +29,7 @@
         - id: ToyFigurineBoxcar
         - id: ToyFigurineBrad
         - id: ToyFigurineBrisbane
+        - id: ToyFigurineBuck
         - id: ToyFigurineBuckshot
         - id: ToyFigurineCamilla
         - id: ToyFigurineCassiel
@@ -52,6 +54,7 @@
         - id: ToyFigurineHeather
         - id: ToyFigurineHot
         - id: ToyFigurineIcarus
+        - id: ToyFigurineIchabod
         - id: ToyFigurineIo
         - id: ToyFigurineIris
         - id: ToyFigurineJelob
@@ -60,6 +63,7 @@
         - id: ToyFigurineJupiter
         - id: ToyFigurineKatie
         - id: ToyFigurineKaza
+        - id: ToyFigurineKazo
         - id: ToyFigurineKim
         - id: ToyFigurineKrakatoa
         - id: ToyFigurineKylie
@@ -99,6 +103,7 @@
         - id: ToyFigurineWallace
         - id: ToyFigurineWiggles
         - id: ToyFigurineZara
+        - id: ToyFigurineZoey
       - !type:GroupSelector
         weight: 1 # 1/20 chance for rare figurines. I assume that for every 20 of a particular regular figurine, there's 1 chance for a rare figurine?
         children:

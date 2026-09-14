@@ -76,8 +76,10 @@ namespace Content.Server.GameTicking
             var desc = (Decoy == null) ? Loc.GetString(preset.Description) : Loc.GetString(Decoy.Description);
             return Loc.GetString(
                 RunLevel == GameRunLevel.PreRoundLobby
-                    ? "game-ticker-get-info-preround-text"
-                    : "game-ticker-get-info-text",
+                    // Moffstation - Start - Moff text
+                    ? "game-ticker-get-info-preround-text-moff"
+                    : "game-ticker-get-info-text-moff",
+                    // Moffstation - End
                 ("roundId", RoundId),
                 ("playerCount", playerCount),
                 ("readyCount", readyCount),
@@ -134,6 +136,7 @@ namespace Content.Server.GameTicking
             }
 
             RaiseNetworkEvent(new TickerLobbyCountdownEvent(_roundStartTime, Paused));
+            RaiseLocalEvent(new TickerLobbyCountdownEvent(_roundStartTime, Paused)); // Moffstation - Raise to server as well
 
             _chatManager.DispatchServerAnnouncement(Loc.GetString(Paused
                 ? "game-ticker-pause-start"

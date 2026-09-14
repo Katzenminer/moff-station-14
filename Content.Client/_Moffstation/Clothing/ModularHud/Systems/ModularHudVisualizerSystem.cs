@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Content.Shared._Moffstation.Clothing.ModularHud.Components;
 using Content.Shared.Clothing;
+using Content.Shared.Clothing.Components;
 using Content.Shared.Foldable;
 using Content.Shared.Hands;
 using Content.Shared.Inventory;
@@ -14,10 +15,10 @@ namespace Content.Client._Moffstation.Clothing.ModularHud.Systems;
 /// keyed by <see cref="ModularHudVisualKeys"/>. This is what causes modular HUDs to have dynamic visuals.
 /// This system also handles updating the sprite to account for folding, which is used to flip the orientation of eye
 /// patch HUDs.
-public sealed class ModularHudVisualizerSystem : VisualizerSystem<ModularHudVisualsComponent>
+public sealed partial class ModularHudVisualizerSystem : VisualizerSystem<ModularHudVisualsComponent>
 {
-    [Dependency] private readonly SharedItemSystem _item = default!;
-    [Dependency] private readonly IReflectionManager _reflect = default!;
+    [Dependency] private SharedItemSystem _item = default!;
+    [Dependency] private IReflectionManager _reflect = default!;
 
     public override void Initialize()
     {
@@ -113,6 +114,13 @@ public sealed class ModularHudVisualizerSystem : VisualizerSystem<ModularHudVisu
     /// Updates clothing sprites.
     private void OnGetClothingVisuals(Entity<ModularHudVisualsComponent> entity, ref GetEquipmentVisualsEvent args)
     {
+        // No layers if the clothing isn't in an "equipped" slot.
+        if (!TryComp<ClothingComponent>(entity, out var clothing) ||
+            clothing.InSlotFlag is not { } slotFlag ||
+            !clothing.Slots.HasFlag(slotFlag))
+        {
+            return;
+        }
         // Some species use different states, so make sure we consider those here.
         var speciesId = CompOrNull<InventoryComponent>(args.Equipee)?.SpeciesId;
         var excludedLayers = entity.Comp.EquippedExcludedLayers.GetExcludedLayersOrDefaultForSpecies(speciesId);

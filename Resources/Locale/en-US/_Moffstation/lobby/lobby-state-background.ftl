@@ -36,3 +36,9 @@ moffstation-lobby-state-background-heyfred-artist = shedonk
 
 moffstation-lobby-state-background-mimemajorvictory-title = Mime Major Victory
 moffstation-lobby-state-background-mimemajorvictory-artist = youtubepoopfuneral
+
+moffstation-lobby-state-background-kazowatchinngsout-title = Kazo Watchings Out
+moffstation-lobby-state-background-kazowatchinngsout-artist = shedonk
+
+moffstation-lobby-state-background-chadwherestheteg-title = Chad, where's the TEG?
+moffstation-lobby-state-background-chadwherestheteg-artist = Ciraus

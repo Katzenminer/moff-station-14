@@ -1,5 +1,5 @@
 - type: gameMapPool
-  id: DefaultMapPool
+  id: DefaultMapPoolUpstream # Moffstation - Custom Map Pool
   maps:
   - Bagel
   - Box
@@ -9,20 +9,8 @@
   - Oasis
   - Packed
   - Plasma
-  - Reach
   - Exo
   - Snowball
   - Serpentcrest
-  # Moffstation - Start - Our Maps
-  - Amber
-  - Omega
-  - Meta
-  - Frezon
- # - Waterjug
-  - Prime
-  - Barratry
-  - Scylla
-  - Aspid
-  - Wapiti
-  - Skeld
-  # Moffstation - End
+  - Sushi
+  - Tram2

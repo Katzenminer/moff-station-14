@@ -1,0 +1,16 @@
+﻿<controls:BoxContainer xmlns:controls="https://spacestation14.io"
+                       HorizontalExpand="True"
+                       VerticalExpand="True"
+                       Orientation="Vertical">
+    <controls:HistoryLineEdit Name="SearchText"
+                              PlaceHolder="{controls:Loc 'aac-window-search-hint'}"
+                              HorizontalExpand="True" />
+    <controls:ScrollContainer HorizontalExpand="True"
+                              VerticalExpand="True">
+        <controls:BoxContainer HorizontalExpand="True"
+                               Orientation="Vertical"
+                               Name="Content">
+            <!-- Contents added programmatically -->
+        </controls:BoxContainer>
+    </controls:ScrollContainer>
+</controls:BoxContainer>

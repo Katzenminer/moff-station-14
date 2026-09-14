@@ -1,8 +1,6 @@
 using System.Linq;
 using Content.Server.Administration.Logs;
-using Content.Server.CartridgeLoader;
 using Content.Server.Power.Components;
-using Content.Server.Radio;
 using Content.Server.Station.Systems;
 using Content.Shared.Access.Components;
 using Content.Shared.CartridgeLoader;
@@ -10,6 +8,7 @@ using Content.Shared.Database;
 using Content.Shared._CD.CartridgeLoader.Cartridges;
 using Content.Shared._CD.NanoChat;
 using Content.Shared.PDA;
+using Content.Shared.Radio;
 using Content.Shared.Radio.Components;
 using Robust.Server.GameObjects;
 using Robust.Shared.Prototypes;
@@ -17,15 +16,15 @@ using Robust.Shared.Timing;
 
 namespace Content.Server._CD.CartridgeLoader.Cartridges;
 
-public sealed class NanoChatCartridgeSystem : EntitySystem
+public sealed partial class NanoChatCartridgeSystem : EntitySystem
 {
-    [Dependency] private readonly CartridgeLoaderSystem _cartridge = default!;
-    [Dependency] private readonly IAdminLogManager _adminLogger = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
-    [Dependency] private readonly IPrototypeManager _prototype = default!;
-    [Dependency] private readonly SharedNanoChatSystem _nanoChat = default!;
-    [Dependency] private readonly StationSystem _station = default!;
-    [Dependency] private readonly UserInterfaceSystem _ui = default!;
+    [Dependency] private CartridgeLoaderSystem _cartridge = default!;
+    [Dependency] private IAdminLogManager _adminLogger = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] private SharedNanoChatSystem _nanoChat = default!;
+    [Dependency] private StationSystem _station = default!;
+    [Dependency] private UserInterfaceSystem _ui = default!;
 
     // Messages in notifications get cut off after this point
     // no point in storing it on the comp
@@ -514,7 +513,6 @@ public sealed class NanoChatCartridgeSystem : EntitySystem
 
     private void OnUiReady(Entity<NanoChatCartridgeComponent> ent, ref CartridgeUiReadyEvent args)
     {
-        _cartridge.RegisterBackgroundProgram(args.Loader, ent);
         UpdateUI(ent, args.Loader);
     }
 

@@ -144,20 +144,32 @@ jobs:
             | grep '^    ' | sed 's/^[[:space:]]*//' | grep -v '^$' > /tmp/all_tests_full.txt
 
           echo "Full suite: $(wc -l < /tmp/all_tests_full.txt) tests discovered"
+          echo "First 5 lines as actually formatted by --list-tests:"
+          head -5 /tmp/all_tests_full.txt
+          echo "Lines containing 'Construction' anywhere (case-insensitive), first 5:"
+          grep -i "construction" /tmp/all_tests_full.txt | head -5 || echo "  (none found at all)"
 
+          # grep exits 1 on zero matches, which set -e would treat as a hard failure - guard every
+          # grep here so a genuinely-empty result is a visible, diagnosable state instead of a
+          # silent script abort with no further output (which is what happened last time).
           if [ "${{ matrix.group }}" = "Construction" ]; then
-            grep '^Content\.IntegrationTests\.Tests\.Construction\.' /tmp/all_tests_full.txt > /tmp/all_tests.txt
+            grep '^Content\.IntegrationTests\.Tests\.Construction\.' /tmp/all_tests_full.txt > /tmp/all_tests.txt || true
           else
             # Root = the loose files directly under Tests/, i.e. exactly two dot-separated segments
             # after "Tests." (ClassName.MethodName) with no subfolder segment in between. The
             # segment pair must be followed by either an opening paren (a parameterized case, e.g.
             # ...MethodName("SomeId")) or the end of the line (a plain zero-arg [Test]) - requiring
             # just "(" would silently drop plain tests like PrototypeSaveTest.UninitializedSaveTest.
-            grep -E '^Content\.IntegrationTests\.Tests\.[^.(]+\.[^.(]+(\(|$)' /tmp/all_tests_full.txt > /tmp/all_tests.txt
+            grep -E '^Content\.IntegrationTests\.Tests\.[^.(]+\.[^.(]+(\(|$)' /tmp/all_tests_full.txt > /tmp/all_tests.txt || true
           fi
 
           total=$(wc -l < /tmp/all_tests.txt)
           echo "${{ matrix.group }}: $total tests total"
+
+          if [ "$total" -eq 0 ]; then
+            echo "No tests matched for ${{ matrix.group }} - see the diagnostics above. Failing loudly instead of silently."
+            exit 1
+          fi
 
           split -n l/4 -d -a 1 /tmp/all_tests.txt /tmp/chunk_
           chunkfile="/tmp/chunk_${{ matrix.index }}"

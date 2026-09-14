@@ -11,10 +11,16 @@ name: Integration Tests Construction Root Split
 # This run tests whether that floor is actually a property of the underlying test cases, or just of
 # how we're grouping them: it lists each namespace's individual tests via `dotnet test --list-tests`
 # and splits them into 4 sub-buckets per namespace (8 jobs total), rather than treating the whole
-# namespace as one atomic unit. If Construction's and Root's own fan-out is as evenly-shaped as it
-# looks, splitting 4 ways should land each sub-bucket near 724/4 and 602/4 respectively - well inside
-# the ~150-250s range every other namespace already lives in - which would mean the real floor for a
-# rebalanced matrix is set by something else entirely, not these two files.
+# namespace as one atomic unit.
+#
+# First attempt centralized the list+split in one "discover" job and passed the ~800 escaped test
+# names to the matrix job via needs.discover.outputs - that hit GitHub Actions' hard cap on the size
+# of an object the expression evaluator can deserialize ("Maximum object size exceeded"), a platform
+# limit, not something retrying fixes. Fixed by not centralizing at all: every matrix leg gets only
+# {group, index} (four bytes, basically), and independently re-runs --list-tests for its own group
+# and slices out its own chunk locally with `split`. All 4 legs for a group see the same build
+# artifact, so `dotnet test --list-tests` is deterministic across them - no data crosses a job
+# boundary except the tiny matrix itself.
 #
 # Scoped to just these two namespaces (not the full 97-bucket matrix) to get a fast, cheap answer
 # before deciding how to rebalance the whole thing.
@@ -62,12 +68,15 @@ jobs:
           path: bin/
           retention-days: 1
 
-  discover:
+  integration-tests:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      matrix: ${{ steps.gen.outputs.matrix }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [ Construction, Root ]
+        index: [ 0, 1, 2, 3 ]
     steps:
       - uses: actions/checkout@v7
 
@@ -96,8 +105,7 @@ jobs:
           name: build-output
           path: bin/
 
-      - name: List tests and split into sub-buckets
-        id: gen
+      - name: List this group's tests, slice out our own chunk, run it
         shell: bash
         run: |
           set -euo pipefail
@@ -110,90 +118,40 @@ jobs:
                 -e 's/|/\\|/g' -e 's/=/\\=/g' -e 's/!/\\!/g' -e 's/~/\\~/g'
           }
 
-          list_tests() {
-            local ns_filter="$1"
-            dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
-              --filter "$ns_filter" --list-tests 2>/dev/null \
-              | grep '^    ' | sed 's/^[[:space:]]*//' | grep -v '^$'
-          }
+          if [ "${{ matrix.group }}" = "Construction" ]; then
+            NS_FILTER="FullyQualifiedName~Content.IntegrationTests.Tests.Construction."
+          else
+            NS_FILTER="FullyQualifiedName!~Content.IntegrationTests.Tests.Access.&FullyQualifiedName!~Content.IntegrationTests.Tests.Actions.&FullyQualifiedName!~Content.IntegrationTests.Tests.Administration.&FullyQualifiedName!~Content.IntegrationTests.Tests.Afk.&FullyQualifiedName!~Content.IntegrationTests.Tests.Atmos.&FullyQualifiedName!~Content.IntegrationTests.Tests.Audio.&FullyQualifiedName!~Content.IntegrationTests.Tests.Body.&FullyQualifiedName!~Content.IntegrationTests.Tests.Buckle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chameleon.&FullyQualifiedName!~Content.IntegrationTests.Tests.Changeling.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chasm.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chat.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chemistry.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cleanup.&FullyQualifiedName!~Content.IntegrationTests.Tests.Climbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cloning.&FullyQualifiedName!~Content.IntegrationTests.Tests.Commands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Construction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Damageable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Destructible.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceLinking.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceNetwork.&FullyQualifiedName!~Content.IntegrationTests.Tests.Disposal.&FullyQualifiedName!~Content.IntegrationTests.Tests.DoAfter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Doors.&FullyQualifiedName!~Content.IntegrationTests.Tests.Embedding.&FullyQualifiedName!~Content.IntegrationTests.Tests.EncryptionKeys.&FullyQualifiedName!~Content.IntegrationTests.Tests.Engineering.&FullyQualifiedName!~Content.IntegrationTests.Tests.Explosion.&FullyQualifiedName!~Content.IntegrationTests.Tests.Eye.&FullyQualifiedName!~Content.IntegrationTests.Tests.Fluids.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameObjects.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameRules.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameTestTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gibbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gravity.&FullyQualifiedName!~Content.IntegrationTests.Tests.Guidebook.&FullyQualifiedName!~Content.IntegrationTests.Tests.Hands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Helpers.&FullyQualifiedName!~Content.IntegrationTests.Tests.Holosign.&FullyQualifiedName!~Content.IntegrationTests.Tests.Humanoid.&FullyQualifiedName!~Content.IntegrationTests.Tests.Interaction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Internals.&FullyQualifiedName!~Content.IntegrationTests.Tests.Kitchen.&FullyQualifiedName!~Content.IntegrationTests.Tests.Labels.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lathe.&FullyQualifiedName!~Content.IntegrationTests.Tests.Linter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lobby.&FullyQualifiedName!~Content.IntegrationTests.Tests.Localization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mapping.&FullyQualifiedName!~Content.IntegrationTests.Tests.Markings.&FullyQualifiedName!~Content.IntegrationTests.Tests.Materials.&FullyQualifiedName!~Content.IntegrationTests.Tests.Medical.&FullyQualifiedName!~Content.IntegrationTests.Tests.Minds.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mousetrap.&FullyQualifiedName!~Content.IntegrationTests.Tests.Movement.&FullyQualifiedName!~Content.IntegrationTests.Tests.Networking.&FullyQualifiedName!~Content.IntegrationTests.Tests.NPC.&FullyQualifiedName!~Content.IntegrationTests.Tests.Nutrition.&FullyQualifiedName!~Content.IntegrationTests.Tests.Payload.&FullyQualifiedName!~Content.IntegrationTests.Tests.Physics.&FullyQualifiedName!~Content.IntegrationTests.Tests.Power.&FullyQualifiedName!~Content.IntegrationTests.Tests.Preferences.&FullyQualifiedName!~Content.IntegrationTests.Tests.Procedural.&FullyQualifiedName!~Content.IntegrationTests.Tests.PrototypeTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Puller.&FullyQualifiedName!~Content.IntegrationTests.Tests.Replays.&FullyQualifiedName!~Content.IntegrationTests.Tests.Respirator.&FullyQualifiedName!~Content.IntegrationTests.Tests.Roles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Round.&FullyQualifiedName!~Content.IntegrationTests.Tests.Security.&FullyQualifiedName!~Content.IntegrationTests.Tests.Serialization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Shuttle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Silicons.&FullyQualifiedName!~Content.IntegrationTests.Tests.SmartFridge.&FullyQualifiedName!~Content.IntegrationTests.Tests.Sprite.&FullyQualifiedName!~Content.IntegrationTests.Tests.Stacks.&FullyQualifiedName!~Content.IntegrationTests.Tests.Station.&FullyQualifiedName!~Content.IntegrationTests.Tests.Storage.&FullyQualifiedName!~Content.IntegrationTests.Tests.Strip.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tag.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tiles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tools.&FullyQualifiedName!~Content.IntegrationTests.Tests.Toolshed.&FullyQualifiedName!~Content.IntegrationTests.Tests.UserInterface.&FullyQualifiedName!~Content.IntegrationTests.Tests.Utility.&FullyQualifiedName!~Content.IntegrationTests.Tests.Vending.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weapons.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weldable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Wires.&FullyQualifiedName!~Content.IntegrationTests.Tests.WizdenContentFreeze.&FullyQualifiedName!~Content.IntegrationTests.Tests.Zombie.&FullyQualifiedName!~Content.IntegrationTests.Tests._DV.&FullyQualifiedName!~Content.IntegrationTests.Tests._Harmony.&FullyQualifiedName!~Content.IntegrationTests.Tests._MACRO.&FullyQualifiedName!~Content.IntegrationTests.Tests._Moffstation."
+          fi
 
-          entries="[]"
-          declare -A GROUPS=( ["Construction"]="FullyQualifiedName~Content.IntegrationTests.Tests.Construction." ["Root"]="FullyQualifiedName!~Content.IntegrationTests.Tests.Access.&FullyQualifiedName!~Content.IntegrationTests.Tests.Actions.&FullyQualifiedName!~Content.IntegrationTests.Tests.Administration.&FullyQualifiedName!~Content.IntegrationTests.Tests.Afk.&FullyQualifiedName!~Content.IntegrationTests.Tests.Atmos.&FullyQualifiedName!~Content.IntegrationTests.Tests.Audio.&FullyQualifiedName!~Content.IntegrationTests.Tests.Body.&FullyQualifiedName!~Content.IntegrationTests.Tests.Buckle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chameleon.&FullyQualifiedName!~Content.IntegrationTests.Tests.Changeling.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chasm.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chat.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chemistry.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cleanup.&FullyQualifiedName!~Content.IntegrationTests.Tests.Climbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cloning.&FullyQualifiedName!~Content.IntegrationTests.Tests.Commands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Construction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Damageable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Destructible.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceLinking.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceNetwork.&FullyQualifiedName!~Content.IntegrationTests.Tests.Disposal.&FullyQualifiedName!~Content.IntegrationTests.Tests.DoAfter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Doors.&FullyQualifiedName!~Content.IntegrationTests.Tests.Embedding.&FullyQualifiedName!~Content.IntegrationTests.Tests.EncryptionKeys.&FullyQualifiedName!~Content.IntegrationTests.Tests.Engineering.&FullyQualifiedName!~Content.IntegrationTests.Tests.Explosion.&FullyQualifiedName!~Content.IntegrationTests.Tests.Eye.&FullyQualifiedName!~Content.IntegrationTests.Tests.Fluids.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameObjects.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameRules.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameTestTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gibbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gravity.&FullyQualifiedName!~Content.IntegrationTests.Tests.Guidebook.&FullyQualifiedName!~Content.IntegrationTests.Tests.Hands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Helpers.&FullyQualifiedName!~Content.IntegrationTests.Tests.Holosign.&FullyQualifiedName!~Content.IntegrationTests.Tests.Humanoid.&FullyQualifiedName!~Content.IntegrationTests.Tests.Interaction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Internals.&FullyQualifiedName!~Content.IntegrationTests.Tests.Kitchen.&FullyQualifiedName!~Content.IntegrationTests.Tests.Labels.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lathe.&FullyQualifiedName!~Content.IntegrationTests.Tests.Linter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lobby.&FullyQualifiedName!~Content.IntegrationTests.Tests.Localization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mapping.&FullyQualifiedName!~Content.IntegrationTests.Tests.Markings.&FullyQualifiedName!~Content.IntegrationTests.Tests.Materials.&FullyQualifiedName!~Content.IntegrationTests.Tests.Medical.&FullyQualifiedName!~Content.IntegrationTests.Tests.Minds.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mousetrap.&FullyQualifiedName!~Content.IntegrationTests.Tests.Movement.&FullyQualifiedName!~Content.IntegrationTests.Tests.Networking.&FullyQualifiedName!~Content.IntegrationTests.Tests.NPC.&FullyQualifiedName!~Content.IntegrationTests.Tests.Nutrition.&FullyQualifiedName!~Content.IntegrationTests.Tests.Payload.&FullyQualifiedName!~Content.IntegrationTests.Tests.Physics.&FullyQualifiedName!~Content.IntegrationTests.Tests.Power.&FullyQualifiedName!~Content.IntegrationTests.Tests.Preferences.&FullyQualifiedName!~Content.IntegrationTests.Tests.Procedural.&FullyQualifiedName!~Content.IntegrationTests.Tests.PrototypeTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Puller.&FullyQualifiedName!~Content.IntegrationTests.Tests.Replays.&FullyQualifiedName!~Content.IntegrationTests.Tests.Respirator.&FullyQualifiedName!~Content.IntegrationTests.Tests.Roles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Round.&FullyQualifiedName!~Content.IntegrationTests.Tests.Security.&FullyQualifiedName!~Content.IntegrationTests.Tests.Serialization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Shuttle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Silicons.&FullyQualifiedName!~Content.IntegrationTests.Tests.SmartFridge.&FullyQualifiedName!~Content.IntegrationTests.Tests.Sprite.&FullyQualifiedName!~Content.IntegrationTests.Tests.Stacks.&FullyQualifiedName!~Content.IntegrationTests.Tests.Station.&FullyQualifiedName!~Content.IntegrationTests.Tests.Storage.&FullyQualifiedName!~Content.IntegrationTests.Tests.Strip.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tag.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tiles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tools.&FullyQualifiedName!~Content.IntegrationTests.Tests.Toolshed.&FullyQualifiedName!~Content.IntegrationTests.Tests.UserInterface.&FullyQualifiedName!~Content.IntegrationTests.Tests.Utility.&FullyQualifiedName!~Content.IntegrationTests.Tests.Vending.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weapons.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weldable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Wires.&FullyQualifiedName!~Content.IntegrationTests.Tests.WizdenContentFreeze.&FullyQualifiedName!~Content.IntegrationTests.Tests.Zombie.&FullyQualifiedName!~Content.IntegrationTests.Tests._DV.&FullyQualifiedName!~Content.IntegrationTests.Tests._Harmony.&FullyQualifiedName!~Content.IntegrationTests.Tests._MACRO.&FullyQualifiedName!~Content.IntegrationTests.Tests._Moffstation." )
-          SUB_BUCKETS=4
+          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
+            --filter "$NS_FILTER" --list-tests 2>/dev/null \
+            | grep '^    ' | sed 's/^[[:space:]]*//' | grep -v '^$' > /tmp/all_tests.txt
 
-          for group in "${!GROUPS[@]}"; do
-            list_tests "${GROUPS[$group]}" > "/tmp/${group}_tests.txt"
-            total=$(wc -l < "/tmp/${group}_tests.txt")
-            echo "$group: $total tests discovered"
+          total=$(wc -l < /tmp/all_tests.txt)
+          echo "${{ matrix.group }}: $total tests total"
 
-            split -n "l/$SUB_BUCKETS" -d -a 2 "/tmp/${group}_tests.txt" "/tmp/${group}_chunk_"
+          split -n l/4 -d -a 1 /tmp/all_tests.txt /tmp/chunk_
+          chunkfile="/tmp/chunk_${{ matrix.index }}"
 
-            for chunkfile in /tmp/${group}_chunk_*; do
-              idx=$(echo "$chunkfile" | grep -o '[0-9]*$')
-              subname="${group}-$((10#$idx + 1))"
-              count=$(wc -l < "$chunkfile")
-              if [ "$count" -eq 0 ]; then
-                continue
-              fi
-              filter=$(cat "$chunkfile" | escape_filter | awk '{printf "FullyQualifiedName=%s|", $0}' | sed 's/|$//')
-              entries=$(echo "$entries" | jq --arg name "$subname" --arg filter "$filter" --arg count "$count" \
-                '. + [{name:$name, filter:$filter, count:$count}]')
-            done
-          done
+          if [ ! -f "$chunkfile" ]; then
+            echo "No tests in slice ${{ matrix.index }}, nothing to run."
+            exit 0
+          fi
 
-          echo "Generated buckets:"
-          echo "$entries" | jq -c '.[] | {name, count}'
-          echo "matrix=$(echo "$entries" | jq -c 'map({name, filter})')" >> "$GITHUB_OUTPUT"
+          count=$(wc -l < "$chunkfile")
+          echo "${{ matrix.group }}-${{ matrix.index }}: $count tests in this slice"
 
-  integration-tests:
-    needs: [ build, discover ]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.discover.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v7
+          FILTER=$(cat "$chunkfile" | escape_filter | awk '{printf "FullyQualifiedName=%s|", $0}' | sed 's/|$//')
 
-      - name: Setup Submodule
-        run: git submodule update --init --recursive
-
-      - name: Pull engine updates
-        uses: space-wizards/submodule-dependency@v0.1.5
-
-      - name: Update Engine Submodules
-        run: |
-          cd RobustToolbox/
-          git submodule update --init --recursive
-
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Install dependencies
-        run: dotnet restore
-
-      - name: Download build output
-        uses: actions/download-artifact@v4
-        with:
-          name: build-output
-          path: bin/
-
-      - name: Run sub-bucket ${{ matrix.name }}
-        shell: pwsh
-        run: |
-          $env:DOTNET_gcServer=1
-          $filter = '${{ matrix.filter }}'
-          Write-Host "Sub-bucket: ${{ matrix.name }}"
-          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj --filter "$filter" -- NUnit.ConsoleOut=0 NUnit.MapWarningTo=Failed NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"
+          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
+            --filter "$FILTER" -- NUnit.ConsoleOut=0 NUnit.MapWarningTo=Failed NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"
 
       - name: Archive NUnit3 test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nunit3-results-${{ matrix.name }}
+          name: nunit3-results-${{ matrix.group }}-${{ matrix.index }}
           path: test_results/*
           retention-days: 7
           compression-level: 9

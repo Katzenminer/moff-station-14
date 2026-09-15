@@ -79,6 +79,19 @@ name: Integration Tests Experimental
 # so it now runs in its intended bucket (which has headroom: ~130-145s on real CI, well under the
 # other buckets' range) and is covered by verify-coverage going forward.
 #
+# With Root fixed, bucket-16 (GameRules/UserInterface/Cloning) became the tallest remaining bucket at
+# 399s on real CI. Real per-test durations found the same Construction-shaped bug again:
+# AntagGhostRoleTest.TestAntagGhostRoles was [TestCaseSource]'d one case per GameRule (~40 cases), and
+# the fixture's Dirty = true PoolSettings meant every case paid a full round restart for what's ~1-2s
+# of actual per-rule work - 946s of the bucket's 1327s summed test time. The same file's
+# TestAntagGhostRolesSequential already proved one round can safely start/take-from every rule in a
+# row (26s), so TestAntagGhostRoles was rewritten the same way: one test, loop all rules in one round,
+# Assert.EnterMultipleScope() so one bad rule doesn't hide the rest. That surfaced a real, previously-
+# masked bug: ClearGameRules() removes rule tracking but not the ghost-role-spawner entities a rule
+# spawned, so a later rule's spawner query must filter to spawner.Rule == gameRule instead of assuming
+# the world is otherwise empty of them (true under the old fresh-pair-per-case model, never actually
+# exercised before). Measured: bucket-16 664s -> 157s locally (946s -> 87s for this one test).
+#
 # Triggered on push to this branch (and manually) rather than wired into build-test-debug.yml, so it
 # can be evaluated in isolation without touching the real CI gate.
 

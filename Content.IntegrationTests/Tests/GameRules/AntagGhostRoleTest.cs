@@ -33,60 +33,95 @@ public sealed partial class AntagGhostRoleTest : AntagTest
 
     private static readonly string[] AntagGameRules = GameDataScrounger.EntitiesWithComponent("AntagSelection");
 
+    /// <summary>
+    /// This is the one test in this fixture whose cost scales with GameRule count - it used to be
+    /// [TestCaseSource]'d (one case per rule), but this class's Dirty = true PoolSettings meant every
+    /// case paid a full round restart even though each rule's check is only ~1-2s of actual work; on
+    /// real CI that was ~900s for ~40 rules. TestAntagGhostRolesSequential already proves a single
+    /// round can safely start/take-from many rules in a row, so this loops all rules in one round
+    /// instead, calling ClearGameRules() between each rule the same way the per-case version did
+    /// between pooled pairs. That surfaced a real gap: ClearGameRules() removes rule tracking but not
+    /// the ghost-role-spawner entities a rule spawned, so later iterations must filter the spawner
+    /// query down to the current gameRule instead of assuming the world is otherwise empty of them
+    /// (true under the old fresh-pair-per-case model, not true here). Wrapped in
+    /// Assert.EnterMultipleScope() so one bad rule doesn't hide the rest; unlike the per-case version,
+    /// assertions here don't throw-to-short-circuit, so the one spot that dereferences a value from a
+    /// preceding assertion (antag, from the AntagSelectionComponent lookup) gets an explicit continue
+    /// instead of relying on that.
+    /// </summary>
     [Test]
     [TestOf(typeof(GameTicker)), TestOf(typeof(AntagSelectionSystem)), TestOf(typeof(AntagSelectionComponent)), TestOf(typeof(GhostRoleSystem))]
-    [TestCaseSource(nameof(AntagGameRules))]
     [Description($"Ensures all GameRule entities with {nameof(AntagSelectionComponent)} can properly spawn those roles and they can be taken.")]
     [RunOnSide(Side.Server)]
-    public void TestAntagGhostRoles(string ruleId)
+    public void TestAntagGhostRoles()
     {
-        var rule = SProtoMan.Index<EntityPrototype>(ruleId);
-        Assert.That(rule.TryComp<AntagSelectionComponent>(out var antag, SEntMan.ComponentFactory), Is.True);
-
-        STicker.StartGameRule(ruleId, out var gameRule);
-
-        Dictionary<ProtoId<AntagSpecifierPrototype>, int> rules = [];
-
-        // Moff start - Enrolls don't spawn ghost roles. instead we check if vote entities were spawned
-        if (antag!.SelectionTime == AntagSelectionTime.Enroll)
+        using var _ = Assert.EnterMultipleScope();
+        foreach (var ruleId in AntagGameRules)
         {
-            Assert.That(STryComp<ESSynchronizedVoteManagerComponent>(gameRule, out var voteManager), Is.True);
-            Assert.That(voteManager!.VoteEntities, Is.Not.Empty);
-            return;
-        }
-        // Moff end
-
-        foreach (var selector in antag!.Antags)
-        {
-            var specifier = SProtoMan.Index(selector.Proto);
-            var count = selector.GetTargetAntagCount(_random, 1);
-            // We should always spawn at least one antag if we add a GameRule
-            Assert.That(count, Is.GreaterThan(0));
-
-            if (specifier.SpawnerPrototype == null)
+            var rule = SProtoMan.Index<EntityPrototype>(ruleId);
+            if (!rule.TryComp<AntagSelectionComponent>(out var antag, SEntMan.ComponentFactory))
+            {
+                Assert.Fail($"{ruleId} has no {nameof(AntagSelectionComponent)}");
                 continue;
+            }
 
-            var value = rules.GetValueOrDefault(specifier);
-            rules[selector.Proto] = value + count;
+            STicker.StartGameRule(ruleId, out var gameRule);
+
+            Dictionary<ProtoId<AntagSpecifierPrototype>, int> rules = [];
+
+            // Moff start - Enrolls don't spawn ghost roles. instead we check if vote entities were spawned
+            if (antag!.SelectionTime == AntagSelectionTime.Enroll)
+            {
+                if (!STryComp<ESSynchronizedVoteManagerComponent>(gameRule, out var voteManager) || voteManager!.VoteEntities.Count == 0)
+                    Assert.Fail($"{ruleId} (Enroll) did not spawn vote entities");
+
+                STicker.ClearGameRules();
+                continue;
+            }
+            // Moff end
+
+            foreach (var selector in antag!.Antags)
+            {
+                var specifier = SProtoMan.Index(selector.Proto);
+                var count = selector.GetTargetAntagCount(_random, 1);
+                // We should always spawn at least one antag if we add a GameRule
+                Assert.That(count, Is.GreaterThan(0), $"{ruleId}: expected at least one antag from {selector.Proto}");
+
+                if (specifier.SpawnerPrototype == null)
+                    continue;
+
+                var value = rules.GetValueOrDefault(specifier);
+                rules[selector.Proto] = value + count;
+            }
+
+            var roleEnumerator = SEntMan.EntityQueryEnumerator<GhostRoleAntagSpawnerComponent, GhostRoleComponent, TransformComponent>();
+            while (roleEnumerator.MoveNext(out var spawner, out var role, out var xform))
+            {
+                // Only look at spawners belonging to the rule we just started. ClearGameRules()
+                // removes rule tracking but not the spawner entities themselves, so leftover
+                // spawners from earlier rules in this loop are expected here - they were already
+                // checked (and counted) in their own iteration, back when they were the only ones.
+                if (spawner.Rule != gameRule)
+                    continue;
+
+                if (spawner.Definition is null)
+                {
+                    Assert.Fail($"{ruleId}: ghost role spawner has no Definition");
+                    continue;
+                }
+
+                AssertGhostRoleTaken(spawner, role, xform);
+                var value = rules.GetValueOrDefault(spawner.Definition.Value);
+                rules[spawner.Definition.Value] = value - 1;
+            }
+
+            // Ensure all ghost roles spawned and were assigned!!!
+            Assert.That(rules.Values, Is.All.Zero, $"{ruleId}: not all expected ghost roles spawned/were assigned");
+
+            // End all rules
+            STicker.ClearGameRules();
+            Assert.That(STicker.GetAddedGameRules(), Is.Empty, $"{ruleId}: ClearGameRules did not remove all added rules");
         }
-
-        var roleEnumerator = SEntMan.EntityQueryEnumerator<GhostRoleAntagSpawnerComponent, GhostRoleComponent, TransformComponent>();
-        while (roleEnumerator.MoveNext(out var spawner, out var role, out var xform))
-        {
-            // Ensure the ghost role spawner spawned correctly!
-            Assert.That(spawner.Rule, Is.EqualTo(gameRule));
-            Assert.That(spawner.Definition, Is.Not.Null);
-            AssertGhostRoleTaken(spawner, role, xform);
-            var value = rules[spawner.Definition.Value];
-            rules[spawner.Definition.Value] = value - 1;
-        }
-
-        // Ensure all ghost roles spawned and were assigned!!!
-        Assert.That(rules.Values, Is.All.Zero);
-
-        // End all rules
-        STicker.ClearGameRules();
-        Assert.That(STicker.GetAddedGameRules(), Is.Empty);
     }
 
     [Test]

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "license": "CC0-1.0",
+  "copyright": "Placeholder art generated for development, to be replaced with dedicated stamp mark art.",
+  "size": {
+    "x": 192,
+    "y": 96
+  },
+  "states": [
+    { "name": "paper_stamp-generic" },
+    { "name": "paper_stamp-cap" },
+    { "name": "paper_stamp-centcom" },
+    { "name": "paper_stamp-chaplain" },
+    { "name": "paper_stamp-lawyer" },
+    { "name": "paper_stamp-clown" },
+    { "name": "paper_stamp-ce" },
+    { "name": "paper_stamp-cmo" },
+    { "name": "paper_stamp-hop" },
+    { "name": "paper_stamp-hos" },
+    { "name": "paper_stamp-mime" },
+    { "name": "paper_stamp-qm" },
+    { "name": "paper_stamp-rd" },
+    { "name": "paper_stamp-trader" },
+    { "name": "paper_stamp-syndicate" },
+    { "name": "paper_stamp-warden" },
+    { "name": "paper_stamp-ok" },
+    { "name": "paper_stamp-deny" },
+    { "name": "paper_stamp-detective" },
+    { "name": "paper_stamp-greytide" },
+    { "name": "paper_stamp-psychologist" },
+    { "name": "paper_stamp-wizard" }
+  ]
+}

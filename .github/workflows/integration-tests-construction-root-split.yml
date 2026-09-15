@@ -1,0 +1,202 @@
+name: Integration Tests Construction Root Split
+
+# Focused follow-up experiment. The per-namespace run (integration-tests-experimental.yml, run
+# 34792773838) showed Construction (724s) and Root (602s) as the two dominant outliers - both are
+# single test files with heavy [TestCaseSource] fan-out (ConstructionPrototypeTest.cs iterates ~480
+# construction + ~260 constructionGraph prototypes; PostMapInitTest.cs iterates ~262 map files three
+# separate times, with PoolSettings.Dirty = true forcing a full pair rebuild on every case). Every
+# other namespace bucket landed at 602-724s or less, so those two alone set the floor for the whole
+# matrix - no amount of namespace-level rebalancing gets wall-clock below ~724s.
+#
+# This run tests whether that floor is actually a property of the underlying test cases, or just of
+# how we're grouping them: it lists each namespace's individual tests via `dotnet test --list-tests`
+# and splits them into 4 sub-buckets per namespace (8 jobs total), rather than treating the whole
+# namespace as one atomic unit.
+#
+# First attempt centralized the list+split in one "discover" job and passed the ~800 escaped test
+# names to the matrix job via needs.discover.outputs - that hit GitHub Actions' hard cap on the size
+# of an object the expression evaluator can deserialize ("Maximum object size exceeded"), a platform
+# limit, not something retrying fixes. Fixed by not centralizing at all: every matrix leg gets only
+# {group, index} (four bytes, basically), and independently re-runs --list-tests for its own group
+# and slices out its own chunk locally with `split`. All 4 legs for a group see the same build
+# artifact, so `dotnet test --list-tests` is deterministic across them - no data crosses a job
+# boundary except the tiny matrix itself.
+#
+# Second attempt exact-matched full test names (FullyQualifiedName=<escaped name>) OR'd together -
+# every leg failed fast with an MSBuild "invalid property" error, seemingly from dotnet test's own
+# internal MSBuild-property forwarding mangling the backslash-escaped parens once the filter got
+# long/complex. Sidestepped rather than chased further: since Construction/Root's fan-out is always
+# a single string argument (a prototype id or map path - see ConstructionPrototypeTest.cs / the
+# TestCaseSource methods in PostMapInitTest.cs), this now matches on just that inner argument via
+# `~` (contains) instead of the full name via `=` - plain identifiers and paths need none of
+# VSTest's 8 special characters escaped, so there's nothing left for the escaping to break.
+#
+# Third attempt still failed, and the debug output revealed why: `--filter` is silently ignored by
+# `dotnet test --list-tests` in this dotnet-test/NUnit3TestAdapter combination - "Construction: 6443
+# tests total" was every test in the whole suite, not just Construction's ~700-odd, and the sample
+# extracted args were things like TestRoundEndTextMentionsReplicators, nothing to do with
+# Construction at all. That's what produced the 66KB garbage filter and the MSBuild parse error.
+# Fixed by not relying on --filter during listing at all: list every test once, unfiltered (which
+# does work correctly), then narrow to the target namespace with a plain grep. Root's case can't
+# grep on a folder prefix (it has none), so it matches "exactly two dot-separated segments after
+# Tests." (ClassName.MethodName, no subfolder) instead of the 96-way negation used elsewhere.
+#
+# Scoped to just these two namespaces (not the full 97-bucket matrix) to get a fast, cheap answer
+# before deciding how to rebalance the whole thing.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ Integration-Tests-Experimental ]
+    paths:
+      - '.github/workflows/integration-tests-construction-root-split.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Submodule
+        run: git submodule update --init --recursive
+
+      - name: Pull engine updates
+        uses: space-wizards/submodule-dependency@v0.1.5
+
+      - name: Update Engine Submodules
+        run: |
+          cd RobustToolbox/
+          git submodule update --init --recursive
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build Project
+        run: dotnet build --configuration DebugOpt --no-restore -m
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: bin/
+          retention-days: 1
+
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [ Construction, Root ]
+        index: [ 0, 1, 2, 3 ]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Submodule
+        run: git submodule update --init --recursive
+
+      - name: Pull engine updates
+        uses: space-wizards/submodule-dependency@v0.1.5
+
+      - name: Update Engine Submodules
+        run: |
+          cd RobustToolbox/
+          git submodule update --init --recursive
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: bin/
+
+      - name: List this group's tests, slice out our own chunk, run it
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Pull out just the inner test-case argument - e.g. the prototype id or map path inside
+          # Foo("SomeId") - rather than matching the full qualified name. Plain identifiers and
+          # paths contain none of VSTest's special filter characters, so there's nothing to escape,
+          # which sidesteps the MSBuild property-forwarding breakage exact-name matching hit.
+          extract_arg() {
+            sed -E 's/^.*\(("?)(.*)\1\)$/\2/'
+          }
+
+          # --filter is silently ignored during --list-tests here, so list everything once and
+          # narrow locally instead of trusting the filter to do it during discovery.
+          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
+            --list-tests 2>/dev/null \
+            | grep '^    ' | sed 's/^[[:space:]]*//' | grep -v '^$' > /tmp/all_tests_full.txt
+
+          echo "Full suite: $(wc -l < /tmp/all_tests_full.txt) tests discovered"
+          echo "First 5 lines as actually formatted by --list-tests:"
+          head -5 /tmp/all_tests_full.txt
+          echo "Lines containing 'Construction' anywhere (case-insensitive), first 5:"
+          grep -i "construction" /tmp/all_tests_full.txt | head -5 || echo "  (none found at all)"
+
+          # grep exits 1 on zero matches, which set -e would treat as a hard failure - guard every
+          # grep here so a genuinely-empty result is a visible, diagnosable state instead of a
+          # silent script abort with no further output (which is what happened last time).
+          if [ "${{ matrix.group }}" = "Construction" ]; then
+            grep '^Content\.IntegrationTests\.Tests\.Construction\.' /tmp/all_tests_full.txt > /tmp/all_tests.txt || true
+          else
+            # Root = the loose files directly under Tests/, i.e. exactly two dot-separated segments
+            # after "Tests." (ClassName.MethodName) with no subfolder segment in between. The
+            # segment pair must be followed by either an opening paren (a parameterized case, e.g.
+            # ...MethodName("SomeId")) or the end of the line (a plain zero-arg [Test]) - requiring
+            # just "(" would silently drop plain tests like PrototypeSaveTest.UninitializedSaveTest.
+            grep -E '^Content\.IntegrationTests\.Tests\.[^.(]+\.[^.(]+(\(|$)' /tmp/all_tests_full.txt > /tmp/all_tests.txt || true
+          fi
+
+          total=$(wc -l < /tmp/all_tests.txt)
+          echo "${{ matrix.group }}: $total tests total"
+
+          if [ "$total" -eq 0 ]; then
+            echo "No tests matched for ${{ matrix.group }} - see the diagnostics above. Failing loudly instead of silently."
+            exit 1
+          fi
+
+          split -n l/4 -d -a 1 /tmp/all_tests.txt /tmp/chunk_
+          chunkfile="/tmp/chunk_${{ matrix.index }}"
+
+          if [ ! -f "$chunkfile" ]; then
+            echo "No tests in slice ${{ matrix.index }}, nothing to run."
+            exit 0
+          fi
+
+          count=$(wc -l < "$chunkfile")
+          echo "${{ matrix.group }}-${{ matrix.index }}: $count tests in this slice"
+
+          cat "$chunkfile" | extract_arg > /tmp/args.txt
+          echo "Sample extracted args:"
+          head -3 /tmp/args.txt
+
+          FILTER=$(awk '{printf "FullyQualifiedName~%s|", $0}' /tmp/args.txt | sed 's/|$//')
+          echo "Filter length: ${#FILTER} chars"
+
+          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj \
+            --filter "$FILTER" -- NUnit.ConsoleOut=0 NUnit.MapWarningTo=Failed NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"
+
+      - name: Archive NUnit3 test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunit3-results-${{ matrix.group }}-${{ matrix.index }}
+          path: test_results/*
+          retention-days: 7
+          compression-level: 9

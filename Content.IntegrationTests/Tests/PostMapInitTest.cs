@@ -137,8 +137,12 @@ namespace Content.IntegrationTests.Tests
             .Select(glob => new Regex(GlobToRegex(glob), RegexOptions.IgnoreCase | RegexOptions.Compiled))
             .ToArray();
 
-        private static readonly string[] GameMaps = GameDataScrounger.PrototypesOfKind<GameMapPrototype>().Where(x => x != PoolManager.TestMap).ToArray();
-        private static readonly ResPath[] AllMapFiles = GameDataScrounger.FilesInDirectoryInVfs("/Maps", "*.yml");
+        // These two are sharded (see TestSharding) because they dominate this fixture's runtime: at
+        // ~274 map files and ~40 game maps each, run twice over (NoSavedPostMapInitTest /
+        // NonGameMapsLoadableTest both iterate AllMapFiles), they're most of why this namespace was
+        // the CI matrix's remaining bottleneck once Construction got fixed.
+        private static readonly string[] GameMaps = TestSharding.Shard(GameDataScrounger.PrototypesOfKind<GameMapPrototype>().Where(x => x != PoolManager.TestMap).ToArray());
+        private static readonly ResPath[] AllMapFiles = TestSharding.Shard(GameDataScrounger.FilesInDirectoryInVfs("/Maps", "*.yml"));
         private static readonly ResPath[] ShuttleMapFiles = GameDataScrounger.FilesInDirectoryInVfs("/Maps/Shuttles", "*.yml");
 
         private static readonly ProtoId<EntityCategoryPrototype> DoNotMapCategory = "DoNotMap";

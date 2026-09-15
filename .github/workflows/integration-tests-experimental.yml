@@ -1,0 +1,324 @@
+name: Integration Tests Experimental
+
+# Production candidate for splitting Content.IntegrationTests across parallel GitHub Actions jobs.
+# The in-process NUnit LevelOfParallelism is pinned to 2 (Content.IntegrationTests/AssemblyInfo.cs)
+# because of a still-open .NET JIT lock-contention bug (dotnet/runtime#107197) triggered by many
+# threads compiling expression trees in the same process. That cap is per-process, not global, so
+# running buckets as separate matrix jobs (separate runners, separate JITs) sidesteps it instead of
+# waiting on an upstream fix. The build runs once and its output is shared with every test job via
+# an artifact, so the matrix only multiplies test time, not build time.
+#
+# History, in order:
+# - v1 (4 hand-picked buckets by file count): 2 of 4 buckets blew the 15-minute timeout - file count
+#   is a bad proxy for actual runtime.
+# - v2 (97 buckets, one per namespace, discovered dynamically at run time): every leg succeeded and
+#   gave real per-namespace timings (run 34792773838). Result: Construction (724s) and Root (602s,
+#   the loose top-level test files) were dominant outliers; every other namespace landed at 684s or
+#   less. Total account concurrency is capped at 20 jobs (GitHub's Free-tier default, confirmed
+#   empirically - 97 buckets queued through 5 waves of 20 instead of running at once).
+# - Attempted splitting Construction/Root further by individual test case (not just namespace) to
+#   push below the 724s floor those two impose - abandoned after several rounds: `dotnet test
+#   --list-tests` in this dotnet/NUnit3TestAdapter combination prints bare display names with no
+#   namespace or class qualification, so there's no reliable way to enumerate "just this namespace's
+#   tests" from list output alone, only from --filter at actual execution time (which does work).
+#   Parked; the namespace-level result below is what shipped.
+#
+# This version: real per-namespace durations from the v2 run, greedily bin-packed (LPT: sort
+# descending, always drop the next item in the lightest bucket - standard makespan-minimization
+# heuristic) into 19 buckets. Construction and Root each get their own bucket (nothing can be added
+# to them without becoming the new bottleneck); the other 95 namespaces pack into 17 buckets of
+# 602-684s each. Wall-clock floor is ~724s (12m4s) vs the original single-job baseline's 812s
+# (13m32s) - about 11% faster; the real ceiling is Construction's own irreducible cost, not the
+# bucketing. 19 test buckets + content-tests = 20 jobs, exactly the concurrency cap - one wave, no
+# queueing.
+#
+# The bucket list below is static (namespace durations don't change often enough to justify the
+# dynamic-discovery machinery v2 used, and static is easier to review) but the verify-coverage job
+# below checks it against the actual folder tree on every run, so a namespace added or removed later
+# fails the run loudly instead of silently skewing results.
+#
+# Since then, both dominant outliers have been addressed directly rather than worked around:
+# - Construction (724s, sometimes timing out at 918s): ConstructionPrototypeTest.cs used
+#   [TestCaseSource] to spin up a full pooled test pair per prototype (~740 cases) for what's really
+#   pure prototype-data validation (dictionary/graph lookups, no entity spawning or ticking) - all
+#   that per-case pair setup/teardown was pure overhead. Rewritten to validate every prototype in one
+#   pass per test method, matching the pattern MachineBoardTest.cs already used elsewhere. Measured:
+#   724s -> 125s on this same CI.
+# - Root (602-566s): tried the same idea as Construction - split it, this time via
+#   Content.IntegrationTests/Utility/TestSharding.cs, which partitions a [TestCaseSource] array
+#   inside the test source itself (driven by CI_TEST_SHARD_INDEX/COUNT env vars set per matrix leg)
+#   instead of at the CI/--list-tests layer, sidestepping the bare-name listing problem that blocked
+#   this exact split earlier in this file's history. Applied to PostMapInitTest.cs's two largest
+#   arrays and EntityTest.cs's per-prototype leak-check loop, and it worked exactly as designed - but
+#   measuring it on real CI (not just locally) showed the arrays sharded only accounted for ~77s of
+#   Root's ~584s; the other ~507s is fixed cost every shard pays in full regardless of split count
+#   (other loose test files in the same bucket, CI runner overhead). Splitting 1 job into 4 also
+#   pushed the matrix from 19 jobs - deliberately sized to fit GitHub's 20-concurrent-job account cap
+#   in one wave - to 22, and the resulting queueing (95-307s per job) cost more than the per-shard
+#   speedup saved: this file's own real run went from ~902s to 1206s with the split in place.
+#   Reverted to a single Root job for that reason. TestSharding.cs and the two Shard() call sites are
+#   left in place (both are no-ops when the env vars are unset, matching original behavior exactly)
+#   as working, CI-validated infrastructure, in case a future rebalance can use it without paying the
+#   concurrency-cap penalty - e.g. by freeing a job slot elsewhere first (Construction no longer needs
+#   its own dedicated bucket now that it's fast) rather than net-adding jobs.
+#
+# Did exactly that: real per-test NUnit durations (not just per-namespace) showed Root's ~615s wasn't
+# evenly spread - PostMapInitTest.cs alone (GameMapsLoadableTest et al, one case per game/shuttle map)
+# accounted for ~567s of summed test time, EntityTest.cs another ~375s, and the rest (CargoTest,
+# MachineBoardTest, SaveLoad*, etc.) under 100s combined. PostMapInitTest's cost scales with map count
+# (already wired for TestSharding, see above) and doesn't share anything with EntityTest's per-fixture
+# fixed WaitRunTicks(450) costs, so splitting it into its own bucket - unlike the earlier whole-Root
+# split - doesn't force unrelated fixed costs to be paid twice. Gave it Construction's now-spare slot
+# (folded Construction's filter into bucket-18, the lightest peer bucket, instead of leaving it
+# underusing its own dedicated job) rather than adding a 20th job. Total matrix size unchanged at 19.
+# Also found and fixed a real bug this surfaced: Content.IntegrationTests/_Moffstation/Replicator/
+# ReplicatorLifecycleTest.cs lived directly under Content.IntegrationTests/ instead of Content.
+# IntegrationTests/Tests/_Moffstation/, so its FullyQualifiedName never matched the _Moffstation
+# bucket's filter (or verify-coverage's Tests/-only directory scan) and silently fell through into
+# Root, costing it ~103s for nothing. Moved to match the Tests/ convention every other file follows,
+# so it now runs in its intended bucket (which has headroom: ~130-145s on real CI, well under the
+# other buckets' range) and is covered by verify-coverage going forward.
+#
+# With Root fixed, bucket-16 (GameRules/UserInterface/Cloning) became the tallest remaining bucket at
+# 399s on real CI. Real per-test durations found the same Construction-shaped bug again:
+# AntagGhostRoleTest.TestAntagGhostRoles was [TestCaseSource]'d one case per GameRule (~40 cases), and
+# the fixture's Dirty = true PoolSettings meant every case paid a full round restart for what's ~1-2s
+# of actual per-rule work - 946s of the bucket's 1327s summed test time. The same file's
+# TestAntagGhostRolesSequential already proved one round can safely start/take-from every rule in a
+# row (26s), so TestAntagGhostRoles was rewritten the same way: one test, loop all rules in one round,
+# Assert.EnterMultipleScope() so one bad rule doesn't hide the rest. That surfaced a real, previously-
+# masked bug: ClearGameRules() removes rule tracking but not the ghost-role-spawner entities a rule
+# spawned, so a later rule's spawner query must filter to spawner.Rule == gameRule instead of assuming
+# the world is otherwise empty of them (true under the old fresh-pair-per-case model, never actually
+# exercised before). Measured: bucket-16 664s -> 157s locally (946s -> 87s for this one test).
+#
+# Triggered on push to this branch (and manually) rather than wired into build-test-debug.yml, so it
+# can be evaluated in isolation without touching the real CI gate.
+
+on:
+  push:
+    branches: [ Integration-Tests-Experimental ]
+    paths:
+      - '.github/workflows/integration-tests-experimental.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Submodule
+        run: git submodule update --init --recursive
+
+      - name: Pull engine updates
+        uses: space-wizards/submodule-dependency@v0.1.5
+
+      - name: Update Engine Submodules
+        run: |
+          cd RobustToolbox/
+          git submodule update --init --recursive
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build Project
+        run: dotnet build --configuration DebugOpt --no-restore -m
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: bin/
+          retention-days: 1
+
+  verify-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check every namespace folder is assigned to a bucket
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd Content.IntegrationTests/Tests
+          actual=$(find . -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+          assigned=$(cat << 'EOF' | tr ' ' '\n' | grep -v '^$' | sort
+          Construction
+          Preferences Holosign Networking Lobby Markings Strip
+          DeviceLinking Doors Chemistry Destructible Chat Kitchen
+          Actions Commands Administration Gravity Chasm _MACRO
+          Storage Afk Humanoid Labels DoAfter Sprite
+          Station GameTestTests Movement SmartFridge NPC Payload
+          DeviceNetwork Damageable Toolshed Atmos Engineering Roles
+          Zombie GameObjects Security Eye Tools Gibbing
+          Minds Guidebook Respirator Buckle Embedding Cleanup
+          Shuttle Lathe Weldable Localization Hands Mapping
+          Explosion PrototypeTests Vending Mousetrap _DV Medical
+          Changeling EncryptionKeys Puller Nutrition Audio WizdenContentFreeze
+          Silicons Fluids Utility Linter Physics Helpers
+          Power Interaction Tag Access Internals
+          _Moffstation Body Climbing _Harmony Disposal
+          GameRules UserInterface Cloning
+          Procedural Tiles Wires Serialization Chameleon
+          Stacks Materials Round Replays Weapons
+          EOF
+          )
+
+          missing=$(comm -23 <(echo "$actual") <(echo "$assigned"))
+          extra=$(comm -13 <(echo "$actual") <(echo "$assigned"))
+
+          if [ -n "$missing" ]; then
+            echo "::error::These namespace folders exist but aren't assigned to any bucket (add them to a bucket in integration-tests-experimental.yml, or a new one if none fit): $(echo $missing | tr '\n' ' ')"
+          fi
+          if [ -n "$extra" ]; then
+            echo "::error::These namespaces are assigned to a bucket but the folder no longer exists (remove them from integration-tests-experimental.yml): $(echo $extra | tr '\n' ' ')"
+          fi
+          if [ -n "$missing" ] || [ -n "$extra" ]; then
+            exit 1
+          fi
+
+          echo "All $(echo "$actual" | wc -l) namespace folders are covered by the static bucket assignment."
+
+  integration-tests:
+    needs: [ build, verify-coverage ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - { name: "bucket-2", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Preferences.|FullyQualifiedName~Content.IntegrationTests.Tests.Holosign.|FullyQualifiedName~Content.IntegrationTests.Tests.Networking.|FullyQualifiedName~Content.IntegrationTests.Tests.Lobby.|FullyQualifiedName~Content.IntegrationTests.Tests.Markings.|FullyQualifiedName~Content.IntegrationTests.Tests.Strip." }
+        - { name: "bucket-3", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.DeviceLinking.|FullyQualifiedName~Content.IntegrationTests.Tests.Doors.|FullyQualifiedName~Content.IntegrationTests.Tests.Chemistry.|FullyQualifiedName~Content.IntegrationTests.Tests.Destructible.|FullyQualifiedName~Content.IntegrationTests.Tests.Chat.|FullyQualifiedName~Content.IntegrationTests.Tests.Kitchen." }
+        - { name: "bucket-4", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Actions.|FullyQualifiedName~Content.IntegrationTests.Tests.Commands.|FullyQualifiedName~Content.IntegrationTests.Tests.Administration.|FullyQualifiedName~Content.IntegrationTests.Tests.Gravity.|FullyQualifiedName~Content.IntegrationTests.Tests.Chasm.|FullyQualifiedName~Content.IntegrationTests.Tests._MACRO." }
+        - { name: "bucket-5", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Storage.|FullyQualifiedName~Content.IntegrationTests.Tests.Afk.|FullyQualifiedName~Content.IntegrationTests.Tests.Humanoid.|FullyQualifiedName~Content.IntegrationTests.Tests.Labels.|FullyQualifiedName~Content.IntegrationTests.Tests.DoAfter.|FullyQualifiedName~Content.IntegrationTests.Tests.Sprite." }
+        - { name: "bucket-6", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Station.|FullyQualifiedName~Content.IntegrationTests.Tests.GameTestTests.|FullyQualifiedName~Content.IntegrationTests.Tests.Movement.|FullyQualifiedName~Content.IntegrationTests.Tests.SmartFridge.|FullyQualifiedName~Content.IntegrationTests.Tests.NPC.|FullyQualifiedName~Content.IntegrationTests.Tests.Payload." }
+        - { name: "bucket-7", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.DeviceNetwork.|FullyQualifiedName~Content.IntegrationTests.Tests.Damageable.|FullyQualifiedName~Content.IntegrationTests.Tests.Toolshed.|FullyQualifiedName~Content.IntegrationTests.Tests.Atmos.|FullyQualifiedName~Content.IntegrationTests.Tests.Engineering.|FullyQualifiedName~Content.IntegrationTests.Tests.Roles." }
+        - { name: "bucket-8", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Zombie.|FullyQualifiedName~Content.IntegrationTests.Tests.GameObjects.|FullyQualifiedName~Content.IntegrationTests.Tests.Security.|FullyQualifiedName~Content.IntegrationTests.Tests.Eye.|FullyQualifiedName~Content.IntegrationTests.Tests.Tools.|FullyQualifiedName~Content.IntegrationTests.Tests.Gibbing." }
+        - { name: "bucket-9", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Minds.|FullyQualifiedName~Content.IntegrationTests.Tests.Guidebook.|FullyQualifiedName~Content.IntegrationTests.Tests.Respirator.|FullyQualifiedName~Content.IntegrationTests.Tests.Buckle.|FullyQualifiedName~Content.IntegrationTests.Tests.Embedding.|FullyQualifiedName~Content.IntegrationTests.Tests.Cleanup." }
+        - { name: "bucket-10", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Shuttle.|FullyQualifiedName~Content.IntegrationTests.Tests.Lathe.|FullyQualifiedName~Content.IntegrationTests.Tests.Weldable.|FullyQualifiedName~Content.IntegrationTests.Tests.Localization.|FullyQualifiedName~Content.IntegrationTests.Tests.Hands.|FullyQualifiedName~Content.IntegrationTests.Tests.Mapping." }
+        - { name: "bucket-11", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Explosion.|FullyQualifiedName~Content.IntegrationTests.Tests.PrototypeTests.|FullyQualifiedName~Content.IntegrationTests.Tests.Vending.|FullyQualifiedName~Content.IntegrationTests.Tests.Mousetrap.|FullyQualifiedName~Content.IntegrationTests.Tests._DV.|FullyQualifiedName~Content.IntegrationTests.Tests.Medical." }
+        - { name: "bucket-12", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Changeling.|FullyQualifiedName~Content.IntegrationTests.Tests.EncryptionKeys.|FullyQualifiedName~Content.IntegrationTests.Tests.Puller.|FullyQualifiedName~Content.IntegrationTests.Tests.Nutrition.|FullyQualifiedName~Content.IntegrationTests.Tests.Audio.|FullyQualifiedName~Content.IntegrationTests.Tests.WizdenContentFreeze." }
+        - { name: "bucket-13", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Silicons.|FullyQualifiedName~Content.IntegrationTests.Tests.Fluids.|FullyQualifiedName~Content.IntegrationTests.Tests.Utility.|FullyQualifiedName~Content.IntegrationTests.Tests.Linter.|FullyQualifiedName~Content.IntegrationTests.Tests.Physics.|FullyQualifiedName~Content.IntegrationTests.Tests.Helpers." }
+        - { name: "bucket-14", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Power.|FullyQualifiedName~Content.IntegrationTests.Tests.Interaction.|FullyQualifiedName~Content.IntegrationTests.Tests.Tag.|FullyQualifiedName~Content.IntegrationTests.Tests.Access.|FullyQualifiedName~Content.IntegrationTests.Tests.Internals." }
+        - { name: "bucket-15", filter: "FullyQualifiedName~Content.IntegrationTests.Tests._Moffstation.|FullyQualifiedName~Content.IntegrationTests.Tests.Body.|FullyQualifiedName~Content.IntegrationTests.Tests.Climbing.|FullyQualifiedName~Content.IntegrationTests.Tests._Harmony.|FullyQualifiedName~Content.IntegrationTests.Tests.Disposal." }
+        - { name: "bucket-16", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.GameRules.|FullyQualifiedName~Content.IntegrationTests.Tests.UserInterface.|FullyQualifiedName~Content.IntegrationTests.Tests.Cloning." }
+        - { name: "bucket-17", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Procedural.|FullyQualifiedName~Content.IntegrationTests.Tests.Tiles.|FullyQualifiedName~Content.IntegrationTests.Tests.Wires.|FullyQualifiedName~Content.IntegrationTests.Tests.Serialization.|FullyQualifiedName~Content.IntegrationTests.Tests.Chameleon." }
+        - { name: "bucket-18", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.Stacks.|FullyQualifiedName~Content.IntegrationTests.Tests.Materials.|FullyQualifiedName~Content.IntegrationTests.Tests.Round.|FullyQualifiedName~Content.IntegrationTests.Tests.Replays.|FullyQualifiedName~Content.IntegrationTests.Tests.Weapons.|FullyQualifiedName~Content.IntegrationTests.Tests.Construction." }
+        - { name: "PostMapInit", filter: "FullyQualifiedName~Content.IntegrationTests.Tests.PostMapInitTest" }
+        - { name: "Root", filter: "FullyQualifiedName!~Content.IntegrationTests.Tests.Construction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Preferences.&FullyQualifiedName!~Content.IntegrationTests.Tests.Holosign.&FullyQualifiedName!~Content.IntegrationTests.Tests.Networking.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lobby.&FullyQualifiedName!~Content.IntegrationTests.Tests.Markings.&FullyQualifiedName!~Content.IntegrationTests.Tests.Strip.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceLinking.&FullyQualifiedName!~Content.IntegrationTests.Tests.Doors.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chemistry.&FullyQualifiedName!~Content.IntegrationTests.Tests.Destructible.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chat.&FullyQualifiedName!~Content.IntegrationTests.Tests.Kitchen.&FullyQualifiedName!~Content.IntegrationTests.Tests.Actions.&FullyQualifiedName!~Content.IntegrationTests.Tests.Commands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Administration.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gravity.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chasm.&FullyQualifiedName!~Content.IntegrationTests.Tests._MACRO.&FullyQualifiedName!~Content.IntegrationTests.Tests.Storage.&FullyQualifiedName!~Content.IntegrationTests.Tests.Afk.&FullyQualifiedName!~Content.IntegrationTests.Tests.Humanoid.&FullyQualifiedName!~Content.IntegrationTests.Tests.Labels.&FullyQualifiedName!~Content.IntegrationTests.Tests.DoAfter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Sprite.&FullyQualifiedName!~Content.IntegrationTests.Tests.Station.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameTestTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Movement.&FullyQualifiedName!~Content.IntegrationTests.Tests.SmartFridge.&FullyQualifiedName!~Content.IntegrationTests.Tests.NPC.&FullyQualifiedName!~Content.IntegrationTests.Tests.Payload.&FullyQualifiedName!~Content.IntegrationTests.Tests.DeviceNetwork.&FullyQualifiedName!~Content.IntegrationTests.Tests.Damageable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Toolshed.&FullyQualifiedName!~Content.IntegrationTests.Tests.Atmos.&FullyQualifiedName!~Content.IntegrationTests.Tests.Engineering.&FullyQualifiedName!~Content.IntegrationTests.Tests.Roles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Zombie.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameObjects.&FullyQualifiedName!~Content.IntegrationTests.Tests.Security.&FullyQualifiedName!~Content.IntegrationTests.Tests.Eye.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tools.&FullyQualifiedName!~Content.IntegrationTests.Tests.Gibbing.&FullyQualifiedName!~Content.IntegrationTests.Tests.Minds.&FullyQualifiedName!~Content.IntegrationTests.Tests.Guidebook.&FullyQualifiedName!~Content.IntegrationTests.Tests.Respirator.&FullyQualifiedName!~Content.IntegrationTests.Tests.Buckle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Embedding.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cleanup.&FullyQualifiedName!~Content.IntegrationTests.Tests.Shuttle.&FullyQualifiedName!~Content.IntegrationTests.Tests.Lathe.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weldable.&FullyQualifiedName!~Content.IntegrationTests.Tests.Localization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Hands.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mapping.&FullyQualifiedName!~Content.IntegrationTests.Tests.Explosion.&FullyQualifiedName!~Content.IntegrationTests.Tests.PrototypeTests.&FullyQualifiedName!~Content.IntegrationTests.Tests.Vending.&FullyQualifiedName!~Content.IntegrationTests.Tests.Mousetrap.&FullyQualifiedName!~Content.IntegrationTests.Tests._DV.&FullyQualifiedName!~Content.IntegrationTests.Tests.Medical.&FullyQualifiedName!~Content.IntegrationTests.Tests.Changeling.&FullyQualifiedName!~Content.IntegrationTests.Tests.EncryptionKeys.&FullyQualifiedName!~Content.IntegrationTests.Tests.Puller.&FullyQualifiedName!~Content.IntegrationTests.Tests.Nutrition.&FullyQualifiedName!~Content.IntegrationTests.Tests.Audio.&FullyQualifiedName!~Content.IntegrationTests.Tests.WizdenContentFreeze.&FullyQualifiedName!~Content.IntegrationTests.Tests.Silicons.&FullyQualifiedName!~Content.IntegrationTests.Tests.Fluids.&FullyQualifiedName!~Content.IntegrationTests.Tests.Utility.&FullyQualifiedName!~Content.IntegrationTests.Tests.Linter.&FullyQualifiedName!~Content.IntegrationTests.Tests.Physics.&FullyQualifiedName!~Content.IntegrationTests.Tests.Helpers.&FullyQualifiedName!~Content.IntegrationTests.Tests.Power.&FullyQualifiedName!~Content.IntegrationTests.Tests.Interaction.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tag.&FullyQualifiedName!~Content.IntegrationTests.Tests.Access.&FullyQualifiedName!~Content.IntegrationTests.Tests.Internals.&FullyQualifiedName!~Content.IntegrationTests.Tests._Moffstation.&FullyQualifiedName!~Content.IntegrationTests.Tests.Body.&FullyQualifiedName!~Content.IntegrationTests.Tests.Climbing.&FullyQualifiedName!~Content.IntegrationTests.Tests._Harmony.&FullyQualifiedName!~Content.IntegrationTests.Tests.Disposal.&FullyQualifiedName!~Content.IntegrationTests.Tests.GameRules.&FullyQualifiedName!~Content.IntegrationTests.Tests.UserInterface.&FullyQualifiedName!~Content.IntegrationTests.Tests.Cloning.&FullyQualifiedName!~Content.IntegrationTests.Tests.Procedural.&FullyQualifiedName!~Content.IntegrationTests.Tests.Tiles.&FullyQualifiedName!~Content.IntegrationTests.Tests.Wires.&FullyQualifiedName!~Content.IntegrationTests.Tests.Serialization.&FullyQualifiedName!~Content.IntegrationTests.Tests.Chameleon.&FullyQualifiedName!~Content.IntegrationTests.Tests.Stacks.&FullyQualifiedName!~Content.IntegrationTests.Tests.Materials.&FullyQualifiedName!~Content.IntegrationTests.Tests.Round.&FullyQualifiedName!~Content.IntegrationTests.Tests.Replays.&FullyQualifiedName!~Content.IntegrationTests.Tests.Weapons.&FullyQualifiedName!~Content.IntegrationTests.Tests.PostMapInitTest" }
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Submodule
+        run: git submodule update --init --recursive
+
+      - name: Pull engine updates
+        uses: space-wizards/submodule-dependency@v0.1.5
+
+      - name: Update Engine Submodules
+        run: |
+          cd RobustToolbox/
+          git submodule update --init --recursive
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: bin/
+
+      - name: Run Content.IntegrationTests (${{ matrix.name }})
+        shell: pwsh
+        run: |
+          $env:DOTNET_gcServer=1
+          $shardCount = '${{ matrix.shard_count }}'
+          if ($shardCount -ne '') {
+            # PostMapInitTest.cs (part of the Root bucket) partitions its two largest
+            # [TestCaseSource] arrays via TestSharding.Shard() when these are set, so each Root-N
+            # leg here only builds/runs its own slice - see Content.IntegrationTests/Utility/TestSharding.cs.
+            $env:CI_TEST_SHARD_INDEX = '${{ matrix.shard_index }}'
+            $env:CI_TEST_SHARD_COUNT = $shardCount
+            Write-Host "Sharding: index ${{ matrix.shard_index }} of $shardCount"
+          }
+          $filter = '${{ matrix.filter }}'
+          Write-Host "Bucket: ${{ matrix.name }}"
+          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj --filter "$filter" -- NUnit.ConsoleOut=0 NUnit.MapWarningTo=Failed NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"
+
+      - name: Archive NUnit3 test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunit3-results-${{ matrix.name }}
+          path: test_results/*
+          retention-days: 7
+          compression-level: 9
+
+  content-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Submodule
+        run: git submodule update --init --recursive
+
+      - name: Pull engine updates
+        uses: space-wizards/submodule-dependency@v0.1.5
+
+      - name: Update Engine Submodules
+        run: |
+          cd RobustToolbox/
+          git submodule update --init --recursive
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: bin/
+
+      - name: Run Content.Tests
+        shell: pwsh
+        run: dotnet test --no-build --configuration DebugOpt Content.Tests/Content.Tests.csproj -- NUnit.ConsoleOut=0 NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"
+
+      - name: Archive NUnit3 test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nunit3-results-content-tests
+          path: test_results/*
+          retention-days: 7
+          compression-level: 9
+
+  experimental-success:
+    name: Integration Tests Experimental
+    needs:
+      - integration-tests
+      - content-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Done
+        run: exit 0
